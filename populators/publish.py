@@ -9,102 +9,6 @@ sys.path.append( '../util' )
 import util
 
 
-#######################################
-
-# Global data structure
-
-PUBLISH_INFO = \
-{
-    'student': \
-    {
-        'drop_table_names':
-        [
-            'Employees'
-        ],
-        'encipher_column_names':
-        [
-            util.RESIDENT_ID
-        ],
-        'drop_column_names':
-        [
-            util.FIRST_NAME,
-            util.MIDDLE_NAME,
-            util.LAST_NAME,
-            util.DATE_OF_BIRTH,
-            util.OWNER_1_NAME,
-            util.OWNER_2_NAME,
-            util.OWNER_3_NAME,
-            util.PHONE,
-            util.GRANTOR,
-            util.PREVIOUS_GRANTOR,
-            util.PARTY_AFFILIATION,
-            util.PARTY_PREFERENCE_SCORE,
-            util.LEGACY_PREFERENCE_SCORE,
-            util.GENDER,
-            util.IS_FAMILY,
-            util.LIKELY_DEM_SCORE,
-            util.LEGACY_DEM_SCORE,
-            util.D,
-            util.R,
-            util.ABSENT,
-            util.VOTED_BOTH,
-            util.CHANGED_AFFILIATION,
-            util.PARTY_VOTED_HISTORY,
-            util.LIKELY_DEM_COUNT,
-            util.LIKELY_REPUB_COUNT,
-            util.LOCAL_DEM_VOTER_COUNT,
-            util.LOCAL_REPUB_VOTER_COUNT,
-            util.MEAN_LIKELY_DEM_SCORE,
-            util.MEAN_PARTY_PREFERENCE_SCORE,
-            util.MEAN_LIKELY_DEM_VOTER_ENGAGEMENT_SCORE,
-            util.MEAN_LIKELY_REPUB_VOTER_ENGAGEMENT_SCORE,
-        ]
-    },
-    'town': \
-    {
-        'drop_table_names':
-        [
-            'Employees',
-            'Gender_2014',
-            'Lookup'
-        ],
-        'encipher_column_names':
-        [
-        ],
-        'drop_column_names':
-        [
-            util.PARTY_AFFILIATION,
-            util.PARTY_PREFERENCE_SCORE,
-            util.LEGACY_PREFERENCE_SCORE,
-            util.GENDER,
-            util.IS_FAMILY,
-            util.LIKELY_DEM_SCORE,
-            util.LEGACY_DEM_SCORE,
-            util.D,
-            util.R,
-            util.ABSENT,
-            util.VOTED_BOTH,
-            util.CHANGED_AFFILIATION,
-            util.PARTY_VOTED_HISTORY,
-            util.LIKELY_DEM_COUNT,
-            util.LIKELY_REPUB_COUNT,
-            util.LOCAL_DEM_VOTER_COUNT,
-            util.LOCAL_REPUB_VOTER_COUNT,
-            util.MEAN_LIKELY_DEM_SCORE,
-            util.MEAN_PARTY_PREFERENCE_SCORE,
-            util.MEAN_LIKELY_DEM_VOTER_ENGAGEMENT_SCORE,
-            util.MEAN_LIKELY_REPUB_VOTER_ENGAGEMENT_SCORE,
-        ]
-    }
-}
-
-
-
-
-
-
-#######################################
-
 
 def publish_database( input_db, output_filename, publish_info ):
 
@@ -157,7 +61,7 @@ if __name__ == '__main__':
 
     # Publish output databases
     debug = '_debug' if args.debug else ''
-    for output_db_name, publish_info in PUBLISH_INFO.items():
+    for output_db_name, publish_info in util.PUBLISH_INFO.items():
         publish_database( input_db, args.output_folder + '/' + output_db_name + debug + '.sqlite', publish_info )
 
     # Report elapsed time

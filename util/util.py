@@ -579,6 +579,94 @@ COLUMN_ORDER = \
 }
 
 
+# Information on how to publish databases
+PUBLISH_INFO = \
+{
+    'student': \
+    {
+        'drop_table_names':
+        [
+            'Employees'
+        ],
+        'encipher_column_names':
+        [
+            RESIDENT_ID
+        ],
+        'drop_column_names':
+        [
+            FIRST_NAME,
+            MIDDLE_NAME,
+            LAST_NAME,
+            DATE_OF_BIRTH,
+            OWNER_1_NAME,
+            OWNER_2_NAME,
+            OWNER_3_NAME,
+            PHONE,
+            GRANTOR,
+            PREVIOUS_GRANTOR,
+            PARTY_AFFILIATION,
+            PARTY_PREFERENCE_SCORE,
+            LEGACY_PREFERENCE_SCORE,
+            GENDER,
+            IS_FAMILY,
+            LIKELY_DEM_SCORE,
+            LEGACY_DEM_SCORE,
+            D,
+            R,
+            ABSENT,
+            VOTED_BOTH,
+            CHANGED_AFFILIATION,
+            PARTY_VOTED_HISTORY,
+            LIKELY_DEM_COUNT,
+            LIKELY_REPUB_COUNT,
+            LOCAL_DEM_VOTER_COUNT,
+            LOCAL_REPUB_VOTER_COUNT,
+            MEAN_LIKELY_DEM_SCORE,
+            MEAN_PARTY_PREFERENCE_SCORE,
+            MEAN_LIKELY_DEM_VOTER_ENGAGEMENT_SCORE,
+            MEAN_LIKELY_REPUB_VOTER_ENGAGEMENT_SCORE,
+        ]
+    },
+    'town': \
+    {
+        'drop_table_names':
+        [
+            'Employees',
+            'Gender_2014',
+            'Lookup'
+        ],
+        'encipher_column_names':
+        [
+        ],
+        'drop_column_names':
+        [
+            PARTY_AFFILIATION,
+            PARTY_PREFERENCE_SCORE,
+            LEGACY_PREFERENCE_SCORE,
+            GENDER,
+            IS_FAMILY,
+            LIKELY_DEM_SCORE,
+            LEGACY_DEM_SCORE,
+            D,
+            R,
+            ABSENT,
+            VOTED_BOTH,
+            CHANGED_AFFILIATION,
+            PARTY_VOTED_HISTORY,
+            LIKELY_DEM_COUNT,
+            LIKELY_REPUB_COUNT,
+            LOCAL_DEM_VOTER_COUNT,
+            LOCAL_REPUB_VOTER_COUNT,
+            MEAN_LIKELY_DEM_SCORE,
+            MEAN_PARTY_PREFERENCE_SCORE,
+            MEAN_LIKELY_DEM_VOTER_ENGAGEMENT_SCORE,
+            MEAN_LIKELY_REPUB_VOTER_ENGAGEMENT_SCORE,
+        ]
+    }
+}
+
+
+
 # Convert likely_dem_score to party_preference_score
 def likely_dem_to_party_preference_score( dem_score ):
 
