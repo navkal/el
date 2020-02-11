@@ -5,6 +5,7 @@ import sqlite3
 import sqlalchemy
 import pandas as pd
 import string
+from shutil import copyfile
 import time
 START_TIME = time.time()
 print( 'Starting at', time.strftime( '%H:%M:%S', time.localtime( START_TIME ) ) )
@@ -785,6 +786,29 @@ def read_database( input_filename ):
         input_db[table_name] = pd.read_sql_table( table_name, engine, parse_dates=True )
 
     return input_db
+
+
+def copy_views( input_filename, views_filename, output_filename ):
+
+    # Create a copy of the input file
+    copyfile( input_filename, output_filename )
+
+    # Open databases
+    vw_conn, vw_cur, vw_engine = open_database( views_filename, False )
+    out_conn, out_cur, out_engine = open_database( output_filename, False )
+
+    # Fetch views
+    vw_cur.execute( 'SELECT sql FROM sqlite_master WHERE type="view"' )
+    rows = vw_cur.fetchall()
+
+    # Recreate views in output file
+    print( '' )
+    input_db = {}
+    for row in rows:
+        print( row[0] )
+        out_cur.execute( row[0] )
+
+    out_conn.commit
 
 
 # Create table with specified name and model
