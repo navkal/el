@@ -429,10 +429,13 @@ if __name__ == '__main__':
     df_primary[util.PARTY_AFFILIATION] = df_primary[util.PARTY_AFFILIATION].str.strip()
     df_primary[util.PARTY_VOTED] = df_primary[util.PARTY_VOTED].str.strip()
 
-    # Build dictionary of unique primary election dates
+    # Build dictionaries of unique primary election dates and corresponding column names
     dc_primary_dates = OrderedDict()
+    dc_ballot_cols = {}
     for date in df_primary[util.ELECTION_DATE].unique():
-        dc_primary_dates[date.split()[0]] = '-'
+        date_name = date.split()[0]
+        dc_primary_dates[date_name] = '-'
+        dc_ballot_cols[date_name] = 'primary_ballot_' + date_name
 
     # Calculate voter engagement score
     t = time.time()
@@ -450,6 +453,7 @@ if __name__ == '__main__':
     df_residents[util.PARTY_AFFILIATION] = df_residents[util.PARTY_AFFILIATION].fillna( '' )
     df_primary_voters = df_primary.groupby( by=[util.RESIDENT_ID] ).apply( describe_primary_voter )
     df_primary_voters = df_primary_voters.reset_index().drop( columns=['level_1'] )
+    df_primary_voters = df_primary_voters.rename( columns=dc_ballot_cols )
     df_residents = pd.merge( df_residents, df_primary_voters, how='left', on=util.RESIDENT_ID )
     df_residents[util.PARTY_VOTED_HISTORY] = df_residents[util.PARTY_VOTED_HISTORY].fillna( '' )
     util.report_elapsed_time( 'Characterized primary voters -- ', t )
