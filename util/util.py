@@ -45,6 +45,8 @@ SPECIAL_ELECTIONS_VOTED = 'special_elections_voted'
 EARLY_VOTES = 'early_votes'
 VOTED = 'voted'
 
+RED_SCORE = 'red_score'
+
 ELECTION_YEAR = 'election_year'
 TURNOUT = 'turnout'
 TURNOUT_FACTOR = 'turnout_factor'
@@ -587,7 +589,8 @@ PUBLISH_INFO = \
     {
         'drop_table_names':
         [
-            'Employees'
+            'Employees',
+            'Red',
         ],
         'encipher_column_names':
         [
@@ -634,7 +637,8 @@ PUBLISH_INFO = \
         [
             'Employees',
             'Gender_2014',
-            'Lookup'
+            'Lookup',
+            'Red',
         ],
         'encipher_column_names':
         [

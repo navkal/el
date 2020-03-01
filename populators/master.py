@@ -53,6 +53,8 @@ if __name__ == '__main__':
     os.system( 'python local_election_results.py -m ../db/{0}'.format( args.output_filename ) )
     print( '\n=======> Residents' )
     os.system( 'python residents.py -m ../db/{0}'.format( args.output_filename ) + ( ' -d' if args.debug else '' ) )
+    print( '\n=======> Red' )
+    os.system( 'python red.py -m ../db/{0}'.format( args.output_filename ) )
     print( '\n=======> Streets' )
     os.system( 'python partitions.py -m ../db/{0} -p street_name -t Streets'.format( args.output_filename ) )
     print( '\n=======> Precincts' )
