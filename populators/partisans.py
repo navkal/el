@@ -64,7 +64,7 @@ if __name__ == '__main__':
     # Count votes in recent local elections
     recent_local_columns = []
     for col in df.columns:
-        if col.startswith( 'voted_local_' ):
+        if col.startswith( util.VOTED + '_local_' ):
             recent_local_columns.append( col )
     recent_local_columns = recent_local_columns[ ( -1 * util.RECENT_LOCAL_ELECTION_COUNT ) : ]
     df[util.RECENT_LOCAL_ELECTIONS_VOTED] = df.apply( lambda row: count_recent_local_votes( row ), axis=1 )

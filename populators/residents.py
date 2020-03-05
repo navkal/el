@@ -242,7 +242,7 @@ def mark_who_voted_when():
         # Format label representing this election
         date = idx.split()[0]
         type = df_ge.iloc[0][util.ELECTION_TYPE].split()[0].lower()
-        col = 'voted_' + type + '_' + date
+        col = util.VOTED + '_' + type + '_' + date
 
         # Show who participated
         df_ge[col] = util.YES
