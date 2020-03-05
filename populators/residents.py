@@ -348,22 +348,22 @@ if __name__ == '__main__':
     df_pe[util.RESIDENT_ID] = df_pe.index
 
     # Count local election votes
-    df_le = df_e2[ df_e2[util.ELECTION_TYPE] == 'LOCAL ELECTION' ]
+    df_le = df_e2[ df_e2[util.ELECTION_TYPE] == util.ELECTION_TYPES['LOCAL_ELECTION'] ]
     df_le = df_le[util.RESIDENT_ID].value_counts().rename(util.LOCAL_ELECTIONS_VOTED).to_frame()
     df_le[util.RESIDENT_ID] = df_le.index
 
     # Count state election votes
-    df_se = df_e2[ df_e2[util.ELECTION_TYPE] == 'STATE ELECTION' ]
+    df_se = df_e2[ df_e2[util.ELECTION_TYPE] == util.ELECTION_TYPES['STATE_ELECTION'] ]
     df_se = df_se[util.RESIDENT_ID].value_counts().rename(util.STATE_ELECTIONS_VOTED).to_frame()
     df_se[util.RESIDENT_ID] = df_se.index
 
     # Count special election votes
-    df_sp = df_e2[ df_e2[util.ELECTION_TYPE] == 'SPECIAL STATE' ]
+    df_sp = df_e2[ df_e2[util.ELECTION_TYPE] == util.ELECTION_TYPES['SPECIAL_STATE'] ]
     df_sp = df_sp[util.RESIDENT_ID].value_counts().rename(util.SPECIAL_ELECTIONS_VOTED).to_frame()
     df_sp[util.RESIDENT_ID] = df_sp.index
 
     # Count Town Meeting votes
-    df_tm = df_e2[ df_e2[util.ELECTION_TYPE] == 'LOCAL TOWN MEETING' ]
+    df_tm = df_e2[ df_e2[util.ELECTION_TYPE] == util.ELECTION_TYPES['LOCAL_TOWN_MEETING'] ]
     df_tm = df_tm[util.RESIDENT_ID].value_counts().rename(util.TOWN_MEETINGS_ATTENDED).to_frame()
     df_tm[util.RESIDENT_ID] = df_tm.index
 

@@ -45,7 +45,9 @@ SPECIAL_ELECTIONS_VOTED = 'special_elections_voted'
 EARLY_VOTES = 'early_votes'
 VOTED = 'voted'
 
-RED_SCORE = 'red_score'
+PARTISAN_SCORE = 'partisan_score'
+RECENT_LOCAL_ELECTION_COUNT = 3
+RECENT_LOCAL_ELECTIONS_VOTED = 'recent_local_elections_voted'
 
 ELECTION_YEAR = 'election_year'
 TURNOUT = 'turnout'
@@ -590,6 +592,7 @@ PUBLISH_INFO = \
         'drop_table_names':
         [
             'Employees',
+            'Blue',
             'Red',
         ],
         'encipher_column_names':
@@ -638,6 +641,7 @@ PUBLISH_INFO = \
             'Employees',
             'Gender_2014',
             'Lookup',
+            'Blue',
             'Red',
         ],
         'encipher_column_names':
