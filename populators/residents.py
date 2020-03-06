@@ -253,6 +253,37 @@ def mark_who_voted_when():
         df_residents[col] = df_residents[col].fillna( util.NO )
 
 
+def count_town_meeting_attendance():
+
+    # Get town meeting attendance records
+    df_town_meetings = df_e2[ df_e2[util.ELECTION_TYPE] == util.ELECTION_TYPES['LOCAL_TOWN_MEETING'] ]
+
+    # Count attendance at all town meetings
+    df_tm = df_town_meetings[util.RESIDENT_ID].value_counts().rename(util.TOWN_MEETINGS_ATTENDED).to_frame()
+    df_tm[util.RESIDENT_ID] = df_tm.index
+
+    # Isolate town meeting history
+    df_meeting_history = df_election_history[ df_election_history[util.ELECTION_TYPE] == util.ELECTION_TYPES['LOCAL_TOWN_MEETING'] ].sort_values( by=[util.ELECTION_YEAR], ascending=[False] )
+
+    # List recent town meeting dates, organized by year
+    dc_recent_years = {}
+    for idx, df_group in df_meeting_history.groupby( by=[util.ELECTION_YEAR], sort=False ):
+        dc_recent_years[str(idx)] = df_group[util.ELECTION_DATE].tolist()
+        if len( dc_recent_years ) >= util.RECENT_LOCAL_ELECTION_COUNT:
+            break
+
+    # Count attendance at recent town meetings
+    for year in dc_recent_years.keys():
+        col = util.TOWN_MEETINGS_ATTENDED + '_' + year
+        df_tm_year = df_town_meetings[ df_town_meetings[util.ELECTION_DATE].isin( dc_recent_years[year] ) ]
+        df_tm_year = df_tm_year[util.RESIDENT_ID].value_counts().rename(col).to_frame()
+        df_tm_year[util.RESIDENT_ID] = df_tm_year.index
+        df_tm = pd.merge( df_tm, df_tm_year, how='left', on=util.RESIDENT_ID )
+        df_tm[col] = df_tm[col].fillna(0).astype(int)
+
+    return df_tm
+
+
 def make_gal_per_day_col_name( service_type ):
     return service_type.lower() + '_' + util.GAL_PER_DAY
 
@@ -362,10 +393,9 @@ if __name__ == '__main__':
     df_sp = df_sp[util.RESIDENT_ID].value_counts().rename(util.SPECIAL_ELECTIONS_VOTED).to_frame()
     df_sp[util.RESIDENT_ID] = df_sp.index
 
-    # Count Town Meeting votes
-    df_tm = df_e2[ df_e2[util.ELECTION_TYPE] == util.ELECTION_TYPES['LOCAL_TOWN_MEETING'] ]
-    df_tm = df_tm[util.RESIDENT_ID].value_counts().rename(util.TOWN_MEETINGS_ATTENDED).to_frame()
-    df_tm[util.RESIDENT_ID] = df_tm.index
+    # Count attendance at town meetings
+    df_election_history = pd.read_sql_table( 'ElectionHistory', engine, columns=[util.ELECTION_YEAR, util.ELECTION_DATE, util.ELECTION_TYPE, util.SCORE] )
+    df_tm = count_town_meeting_attendance()
 
     # Count early votes
     df_ev = df_e3
@@ -399,7 +429,10 @@ if __name__ == '__main__':
     df_residents = pd.merge( df_residents, df_sp, how='left', on=util.RESIDENT_ID )
     df_residents[util.SPECIAL_ELECTIONS_VOTED] = df_residents[util.SPECIAL_ELECTIONS_VOTED].fillna(0).astype(int)
     df_residents = pd.merge( df_residents, df_tm, how='left', on=util.RESIDENT_ID )
-    df_residents[util.TOWN_MEETINGS_ATTENDED] = df_residents[util.TOWN_MEETINGS_ATTENDED].fillna(0).astype(int)
+    tm_cols = df_tm.columns.tolist()
+    tm_cols.remove( util.RESIDENT_ID )
+    for col in tm_cols:
+        df_residents[col] = df_residents[col].fillna(0).astype(int)
     df_residents = pd.merge( df_residents, df_ev, how='left', on=util.RESIDENT_ID )
     df_residents[util.EARLY_VOTES] = df_residents[util.EARLY_VOTES].fillna(0).astype(int)
 
@@ -440,7 +473,6 @@ if __name__ == '__main__':
     # Calculate voter engagement score
     t = time.time()
     print( 'Calculating voter engagement scores, starting at {0}...'.format( time.strftime( '%H:%M:%S', time.localtime( t ) ) ) )
-    df_election_history = pd.read_sql_table( 'ElectionHistory', engine, columns=[util.ELECTION_DATE, util.ELECTION_TYPE, util.SCORE] )
     df_scores = pd.merge( df_elections, df_election_history, how='left', on=[util.ELECTION_DATE, util.ELECTION_TYPE] )
     df_scores = df_scores.groupby( by=[util.RESIDENT_ID] ).sum()
     df_residents[util.VOTER_ENGAGEMENT_SCORE] = df_residents.apply( lambda row: calculate_voter_engagement_score( row ), axis=1 )

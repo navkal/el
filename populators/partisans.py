@@ -69,36 +69,11 @@ if __name__ == '__main__':
     recent_local_columns = recent_local_columns[ ( -1 * util.RECENT_LOCAL_ELECTION_COUNT ) : ]
     df[util.RECENT_LOCAL_ELECTIONS_VOTED] = df.apply( lambda row: count_recent_local_votes( row ), axis=1 )
 
-    #
-    # Count attendance in recent town meetings
-    #
-
-    # Get history of all town meetings
-    df_election_history = pd.read_sql_table( 'ElectionHistory', engine, columns=[util.ELECTION_YEAR, util.ELECTION_DATE, util.ELECTION_TYPE] )
-    df_meeting_history = df_election_history[ df_election_history[util.ELECTION_TYPE] == util.ELECTION_TYPES['LOCAL_TOWN_MEETING'] ].sort_values( by=[util.ELECTION_YEAR], ascending=[False] )
-
-    # List town meeting dates, organized by year
-    dc_recent_years = {}
-    for idx, df_group in df_meeting_history.groupby( by=[util.ELECTION_YEAR], sort=False ):
-        dc_recent_years[str(idx)] = df_group[util.ELECTION_DATE].tolist()
-        if len( dc_recent_years ) >= util.RECENT_LOCAL_ELECTION_COUNT:
-            break
-
-    # Get town meeting attendance records
-    df_e2 = pd.read_sql_table( 'ElectionModel_02', engine, columns=[util.RESIDENT_ID, util.ELECTION_DATE, util.ELECTION_TYPE] )
-    df_town_meetings = df_e2[ df_e2[util.ELECTION_TYPE] == util.ELECTION_TYPES['LOCAL_TOWN_MEETING'] ]
-
-    # Count meetings attended in each recent year
+    # Find columns counting attendance at recent town meetings
     recent_meeting_columns = []
-    for year in dc_recent_years.keys():
-        col = util.TOWN_MEETINGS_ATTENDED + '_' + year
-        recent_meeting_columns.append( col )
-        df_tm_year = df_town_meetings[ df_town_meetings[util.ELECTION_DATE].isin( dc_recent_years[year] ) ]
-        df_tm_year = df_tm_year[util.RESIDENT_ID].value_counts().rename(col).to_frame()
-        df_tm_year[util.RESIDENT_ID] = df_tm_year.index
-        df = pd.merge( df, df_tm_year, how='left', on=util.RESIDENT_ID )
-        df[col] = df[col].fillna(0).astype(int)
-
+    for col in df.columns:
+        if col.startswith( util.TOWN_MEETINGS_ATTENDED + '_' ):
+            recent_meeting_columns.append( col )
 
     # Set columns for partisan table
     columns_bf = \
@@ -114,11 +89,11 @@ if __name__ == '__main__':
         util.STATE_ELECTIONS_VOTED,
         util.SPECIAL_ELECTIONS_VOTED,
         util.TOWN_MEETINGS_ATTENDED,
-        util.EARLY_VOTES,
     ]
 
     columns_af = \
     [
+        util.EARLY_VOTES,
         util.PRECINCT_NUMBER,
         util.AGE,
         util.GENDER,
