@@ -516,6 +516,33 @@ COLUMN_ORDER = \
         OFFICE,
         CANDIDATE,
     ],
+    'Partisans':
+    [
+        RESIDENT_ID,
+        AGE,
+        GENDER,
+        LAST_NAME,
+        FIRST_NAME,
+        OCCUPATION,
+        VOTED,
+        PARTY_AFFILIATION,
+        VOTER_ENGAGEMENT_SCORE,
+        PRIMARY_ELECTIONS_VOTED,
+        LOCAL_ELECTIONS_VOTED,
+        STATE_ELECTIONS_VOTED,
+        SPECIAL_ELECTIONS_VOTED,
+        TOWN_MEETINGS_ATTENDED,
+        EARLY_VOTES,
+        PRECINCT_NUMBER,
+        NORMALIZED_STREET_NUMBER,
+        RADDR_STREET_NUMBER_SUFFIX,
+        LADDR_ALT_STREET_NUMBER,
+        NORMALIZED_STREET_NAME,
+        RADDR_APARTMENT_NUMBER,
+        ZONING_CODE_1,
+        PARTISAN_SCORE,
+        RECENT_LOCAL_ELECTIONS_VOTED,
+    ],
     'PollingPlaces':
     [
     ],
@@ -530,10 +557,17 @@ COLUMN_ORDER = \
     'Residents':
     [
         RESIDENT_ID,
-        PARTY_AFFILIATION,
+        AGE,
+        GENDER,
+        LAST_NAME,
+        FIRST_NAME,
+        OCCUPATION,
         VOTED,
+        PARTY_AFFILIATION,
         PARTY_PREFERENCE_SCORE,
         LEGACY_PREFERENCE_SCORE,
+        LIKELY_DEM_SCORE,
+        LEGACY_DEM_SCORE,
         VOTER_ENGAGEMENT_SCORE,
         PRIMARY_ELECTIONS_VOTED,
         LOCAL_ELECTIONS_VOTED,
@@ -542,14 +576,9 @@ COLUMN_ORDER = \
         TOWN_MEETINGS_ATTENDED,
         EARLY_VOTES,
         PRECINCT_NUMBER,
-        AGE,
-        GENDER,
         TOTAL_ASSESSED_VALUE,
         IS_HOMEOWNER,
         IS_FAMILY,
-        OCCUPATION,
-        LAST_NAME,
-        FIRST_NAME,
         NORMALIZED_STREET_NUMBER,
         RADDR_STREET_NUMBER_SUFFIX,
         LADDR_ALT_STREET_NUMBER,
@@ -557,8 +586,6 @@ COLUMN_ORDER = \
         RADDR_APARTMENT_NUMBER,
         PARCEL_ID,
         ZONING_CODE_1,
-        LIKELY_DEM_SCORE,
-        LEGACY_DEM_SCORE,
     ],
     'Solar':
     [
@@ -583,6 +610,8 @@ COLUMN_ORDER = \
     ],
 }
 
+COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
+COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 
 # Information on how to publish databases
 PUBLISH_INFO = \
