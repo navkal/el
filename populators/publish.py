@@ -15,6 +15,7 @@ def publish_database( input_db, output_filename, publish_info ):
     drop_table_names = publish_info['drop_table_names']
     drop_column_names = publish_info['drop_column_names']
     encipher_column_names = publish_info['encipher_column_names']
+    number_columns = publish_info['number_columns']
 
     print( '' )
     print( 'Publishing database', output_filename )
@@ -30,6 +31,14 @@ def publish_database( input_db, output_filename, publish_info ):
             output_db[table_name] = input_db[table_name].drop( columns=drop_column_names, errors='ignore' )
             for col_name in encipher_column_names:
                 output_db[table_name] = util.encipher_column( output_db[table_name], col_name )
+
+            if number_columns:
+                n_cols = len( output_db[table_name].columns )
+                num_width = len( str( n_cols ) )
+                col_idx = 0
+                for column_name in output_db[table_name].columns:
+                    col_idx += 1
+                    output_db[table_name] = output_db[table_name].rename( columns={ column_name: str( col_idx ).zfill( num_width ) + '-' + column_name } )
 
 
     # Open output database

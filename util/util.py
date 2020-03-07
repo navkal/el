@@ -479,6 +479,54 @@ CONSISTENT_COLUMN_NAMES = \
     },
 }
 
+
+COLUMN_GROUP = \
+{
+    'RESIDENT':
+    [
+        RESIDENT_ID,
+        AGE,
+        GENDER,
+        LAST_NAME,
+        FIRST_NAME,
+        OCCUPATION,
+        VOTED,
+        PARTY_AFFILIATION,
+    ],
+    'VOTER':
+    [
+        VOTER_ENGAGEMENT_SCORE,
+        PRIMARY_ELECTIONS_VOTED,
+        LOCAL_ELECTIONS_VOTED,
+        STATE_ELECTIONS_VOTED,
+        SPECIAL_ELECTIONS_VOTED,
+        TOWN_MEETINGS_ATTENDED,
+        EARLY_VOTES,
+        PRECINCT_NUMBER,
+    ],
+    'SCORE':
+    [
+        PARTY_PREFERENCE_SCORE,
+        LEGACY_PREFERENCE_SCORE,
+        LIKELY_DEM_SCORE,
+        LEGACY_DEM_SCORE,
+    ],
+    'ADDRESS':
+    [
+        NORMALIZED_STREET_NUMBER,
+        RADDR_STREET_NUMBER_SUFFIX,
+        LADDR_ALT_STREET_NUMBER,
+        NORMALIZED_STREET_NAME,
+        RADDR_APARTMENT_NUMBER,
+    ],
+    'HOME':
+    [
+        TOTAL_ASSESSED_VALUE,
+        IS_HOMEOWNER,
+        IS_FAMILY,
+    ],
+
+}
 COLUMN_ORDER = \
 {
     'Assessment':
@@ -518,27 +566,9 @@ COLUMN_ORDER = \
     ],
     'Partisans':
     [
-        RESIDENT_ID,
-        AGE,
-        GENDER,
-        LAST_NAME,
-        FIRST_NAME,
-        OCCUPATION,
-        VOTED,
-        PARTY_AFFILIATION,
-        VOTER_ENGAGEMENT_SCORE,
-        PRIMARY_ELECTIONS_VOTED,
-        LOCAL_ELECTIONS_VOTED,
-        STATE_ELECTIONS_VOTED,
-        SPECIAL_ELECTIONS_VOTED,
-        TOWN_MEETINGS_ATTENDED,
-        EARLY_VOTES,
-        PRECINCT_NUMBER,
-        NORMALIZED_STREET_NUMBER,
-        RADDR_STREET_NUMBER_SUFFIX,
-        LADDR_ALT_STREET_NUMBER,
-        NORMALIZED_STREET_NAME,
-        RADDR_APARTMENT_NUMBER,
+        * COLUMN_GROUP['RESIDENT'],
+        * COLUMN_GROUP['VOTER'],
+        * COLUMN_GROUP['ADDRESS'],
         ZONING_CODE_1,
         PARTISAN_SCORE,
         RECENT_LOCAL_ELECTIONS_VOTED,
@@ -556,34 +586,11 @@ COLUMN_ORDER = \
     ],
     'Residents':
     [
-        RESIDENT_ID,
-        AGE,
-        GENDER,
-        LAST_NAME,
-        FIRST_NAME,
-        OCCUPATION,
-        VOTED,
-        PARTY_AFFILIATION,
-        PARTY_PREFERENCE_SCORE,
-        LEGACY_PREFERENCE_SCORE,
-        LIKELY_DEM_SCORE,
-        LEGACY_DEM_SCORE,
-        VOTER_ENGAGEMENT_SCORE,
-        PRIMARY_ELECTIONS_VOTED,
-        LOCAL_ELECTIONS_VOTED,
-        STATE_ELECTIONS_VOTED,
-        SPECIAL_ELECTIONS_VOTED,
-        TOWN_MEETINGS_ATTENDED,
-        EARLY_VOTES,
-        PRECINCT_NUMBER,
-        TOTAL_ASSESSED_VALUE,
-        IS_HOMEOWNER,
-        IS_FAMILY,
-        NORMALIZED_STREET_NUMBER,
-        RADDR_STREET_NUMBER_SUFFIX,
-        LADDR_ALT_STREET_NUMBER,
-        NORMALIZED_STREET_NAME,
-        RADDR_APARTMENT_NUMBER,
+        * COLUMN_GROUP['RESIDENT'],
+        * COLUMN_GROUP['SCORE'],
+        * COLUMN_GROUP['VOTER'],
+        * COLUMN_GROUP['HOME'],
+        * COLUMN_GROUP['ADDRESS'],
         PARCEL_ID,
         ZONING_CODE_1,
     ],
@@ -618,6 +625,7 @@ PUBLISH_INFO = \
 {
     'student': \
     {
+        'number_columns': False,
         'drop_table_names':
         [
             'Employees',
@@ -665,6 +673,7 @@ PUBLISH_INFO = \
     },
     'town': \
     {
+        'number_columns': True,
         'drop_table_names':
         [
             'Employees',
@@ -700,7 +709,20 @@ PUBLISH_INFO = \
             MEAN_LIKELY_DEM_VOTER_ENGAGEMENT_SCORE,
             MEAN_LIKELY_REPUB_VOTER_ENGAGEMENT_SCORE,
         ]
-    }
+    },
+    'research': \
+    {
+        'number_columns': True,
+        'drop_table_names':
+        [
+        ],
+        'encipher_column_names':
+        [
+        ],
+        'drop_column_names':
+        [
+        ]
+    },
 }
 
 
