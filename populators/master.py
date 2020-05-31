@@ -17,10 +17,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Read data sources
-    print( '\n=======> Elections' )
+    print( '\n=======> Elections 2012-2019' )
     os.system( 'python elections.py -i ../xl/elections_2012-2019.xlsx -o ../db/{0} -c'.format( args.output_filename ) )
-    print( '\n=======> Town Meetings' )
+    print( '\n=======> Town Meetings 2009-2019' )
     os.system( 'python elections.py -i ../xl/town_meetings_2009-2019.xlsx -o ../db/{0} -e TM'.format( args.output_filename ) )
+    print( '\n=======> Presidential Primary 2020' )
+    os.system( 'python elections.py -i ../xl/presidential_primary_2020.xlsx -o ../db/{0} -e PP'.format( args.output_filename ) )
     print( '\n=======> Census' )
     os.system( 'python xl_to_db.py -i ../xl/census_2019-06.xlsx -o ../db/{0} -t Census'.format( args.output_filename ) )
     print( '\n=======> Gender_2014' )

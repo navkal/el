@@ -629,8 +629,8 @@ PUBLISH_INFO = \
         'drop_table_names':
         [
             'Employees',
-            'Blue',
-            'Red',
+            'Partisans_' + D,
+            'Partisans_' + R,
         ],
         'encipher_column_names':
         [
@@ -679,8 +679,8 @@ PUBLISH_INFO = \
             'Employees',
             'Gender_2014',
             'Lookup',
-            'Blue',
-            'Red',
+            'Partisans_' + D,
+            'Partisans_' + R,
         ],
         'encipher_column_names':
         [

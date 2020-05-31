@@ -45,11 +45,14 @@ if __name__ == '__main__':
     print( '\n=======> Assessment Addendum' )
     os.system( PYTHON + XL_TO_DB + '-i ../xl/assessment_addendum.xlsx -o ../db/assessment_addendum.sqlite -t AssessmentAddendum' + CREATE )
 
-    print( '\n=======> Elections' )
+    print( '\n=======> Elections 2012-2019' )
     os.system( PYTHON + 'elections.py -i ../xl/elections_2012-2019.xlsx -o ../db/elections.sqlite' + CREATE )
 
-    print( '\n=======> Town Meetings' )
+    print( '\n=======> Town Meetings 2009-2019' )
     os.system( PYTHON + 'elections.py -i ../xl/town_meetings_2009-2019.xlsx -o ../db/town_meetings.sqlite -e TM' + CREATE )
+
+    print( '\n=======> Presidential Primary 2020' )
+    os.system( PYTHON + 'elections.py -i ../xl/presidential_primary_2020.xlsx -o ../db/presidential_primary_2020.sqlite -e PP' + CREATE )
 
     print( '\n=======> Master' )
     os.system( PYTHON + 'master.py -o ../db/master.sqlite' )
