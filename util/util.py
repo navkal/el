@@ -625,7 +625,7 @@ PUBLISH_INFO = \
 {
     'student': \
     {
-        'number_columns': False,
+        'number_columns': True,
         'drop_table_names':
         [
             'Employees',
