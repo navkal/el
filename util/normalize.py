@@ -81,7 +81,9 @@ STREET_TYPES = \
 DIRS = \
 {
     'NORTH': 'N',
+    '(NORTH)': 'N',
     'SOUTH': 'S',
+    '(SOUTH)': 'S',
     'EAST': 'E',
     'WEST': 'W',
     'SOUTHWEST': 'SW',
@@ -115,7 +117,7 @@ EXPECTED_KEYS = \
 }
 
 # Normalize street address
-def normalize_address( row, col_name, city=' XXXXXXXXX', verbose=False ):
+def normalize_address( row, col_name, city=' ANDOVER', verbose=False ):
 
     # Create original copy of the address
     original = row[col_name]
