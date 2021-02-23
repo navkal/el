@@ -212,6 +212,13 @@ PRECINCT_8 = PRECINCT + '8'
 PRECINCT_9 = PRECINCT + '9'
 TOTAL = 'total'
 
+PIN = 'PIN'
+PERMITFOR = 'PermitFor'
+PERMIT_FOR = 'permit_for'
+DATE_ISSUED = 'date_issued'
+TOTALFEE = 'TotalFee'
+PROJECTCOST = 'ProjectCost'
+COST = 'Cost'
 
 
 CONSISTENT_COLUMN_NAMES = \
@@ -312,6 +319,30 @@ CONSISTENT_COLUMN_NAMES = \
         'StreetName': LADDR_STREET_NAME,
         'Zone1': ZONING_CODE_1,
     },
+    'BuildingPermits': \
+    {
+        PIN: 'pin',
+        'OwnerName': 'owner_name',
+        PERMITFOR: PERMIT_FOR,
+        'DateIssued': DATE_ISSUED,
+        'DateIssued/Submit': DATE_ISSUED,
+        'DateIssued/': DATE_ISSUED,
+        'ParcelID': PARCEL_ID,
+        'House#': ADDR_STREET_NUMBER,
+        'Street': ADDR_STREET_NAME,
+        'OccupancyType': 'occupancy_type',
+        'Occ.Type': 'occupancy_type',
+        'Occ': 'occupancy_type',
+        'OccType': 'occupancy_type',
+        'Type': 'occupancy_type',
+        'BuildingType': 'building_type',
+        'BldgType': 'building_type',
+        'WorkDescription': 'work_description',
+        'ContractorName': 'contractor_name',
+        PROJECTCOST: 'project_cost',
+        COST: 'project_cost',
+        TOTALFEE: 'total_fee',
+    },
     'Census': \
     {
         'Census Yr': 'census_year',
@@ -331,20 +362,6 @@ CONSISTENT_COLUMN_NAMES = \
         'Ward #': 'ward_number',
         'Precinct #': PRECINCT_NUMBER,
         'Voter Status': VOTER_STATUS,
-    },
-    'RawLocalElectionResults': \
-    {
-        'P-1': PRECINCT_1,
-        'P-2': PRECINCT_2,
-        'P-3': PRECINCT_3,
-        'P-4': PRECINCT_4,
-        'P-5': PRECINCT_5,
-        'P-6': PRECINCT_6,
-        'P-7/7A': PRECINCT_7,
-        'P-8': PRECINCT_8,
-        'P-9': PRECINCT_9,
-        'election_date': ELECTION_DATE,
-        'PRECINCTS:': OFFICE_OR_CANDIDATE,
     },
     'Elections': \
     {
@@ -441,6 +458,20 @@ CONSISTENT_COLUMN_NAMES = \
         'Precinct': 'precinct',
         'Building': 'building',
         'Address': 'address',
+    },
+    'RawLocalElectionResults': \
+    {
+        'P-1': PRECINCT_1,
+        'P-2': PRECINCT_2,
+        'P-3': PRECINCT_3,
+        'P-4': PRECINCT_4,
+        'P-5': PRECINCT_5,
+        'P-6': PRECINCT_6,
+        'P-7/7A': PRECINCT_7,
+        'P-8': PRECINCT_8,
+        'P-9': PRECINCT_9,
+        'election_date': ELECTION_DATE,
+        'PRECINCTS:': OFFICE_OR_CANDIDATE,
     },
     'Solar': \
     {
@@ -983,8 +1014,14 @@ def prepare_for_database( df, table_name ):
     # Strip apostrophes
     df = strip_apostrophes( df )
 
+    # Replace carriage returns
+    df = replace_cr( df )
+
     # Collapse spaces
     df = collapse_spaces( df )
+
+    # Strip leading and trailing spaces
+    df = strip_ends( df )
 
     return df
 
@@ -1023,10 +1060,27 @@ def strip_apostrophes( df ):
     return df
 
 
+# Replace all occurrences of carriage return character with single space
+def replace_cr( df ):
+
+    df = df.replace( to_replace=r'\r', value=' ', regex=True )
+
+    return df
+
+
 # Replace all occurrences of multiple consecutive spaces with single space
 def collapse_spaces( df ):
 
     df = df.replace( to_replace=r' +', value=' ', regex=True )
+
+    return df
+
+
+# Strip leading and trailing spaces
+def strip_ends( df ):
+
+    df = df.replace( to_replace=r'^\s', value='', regex=True )
+    df = df.replace( to_replace=r'\s$', value='', regex=True )
 
     return df
 
