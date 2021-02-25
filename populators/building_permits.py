@@ -34,6 +34,10 @@ DROP_COLUMNS = \
 
 REQUIRED_COLUMNS = [ util.PERMIT_FOR, util.DATE_ISSUED, util.PARCEL_ID ]
 
+df_audit = pd.DataFrame( columns=[ 'year', 'month', 'published_total_cost', 'calculated_total_cost', 'published_total_fee', 'calculated_total_fee' ] )
+audit_year = ''
+audit_month = ''
+
 ######################
 
 
@@ -85,8 +89,14 @@ def clean_df( df ):
     # Prepare for database
     df = util.prepare_for_database( df, 'BuildingPermits' )
 
-    # Drop rows that do not have specific required fields
+    # Drop row that lists cost and fee totals
+    df_copy = df.copy()
     df = df.dropna( axis='rows', how='all', subset=REQUIRED_COLUMNS )
+
+    # Create row for current input file in audit dataframe
+    global df_audit, audit_year, audit_month
+    sr_audit = df_copy[~df_copy.index.isin( df.index )].iloc[0]
+    df_audit = df_audit.append( { 'year': audit_year, 'month': audit_month, 'published_total_cost': sr_audit['project_cost'], 'calculated_total_cost': df['project_cost'].sum(), 'published_total_fee': sr_audit['total_fee'], 'calculated_total_fee': df['total_fee'].sum() }, ignore_index=True )
 
     return df
 
@@ -101,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     parser.add_argument( '-t', dest='output_table_name',  help='Output table name - Name of target table in SQLite database file', required=True )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
+    parser.add_argument( '-a', dest='audit_filename', help='Optional audit output Excel filename' )
     args = parser.parse_args()
 
     # Initialize empty result
@@ -111,7 +122,6 @@ if __name__ == '__main__':
 
         # Get next input file
         input_path = args.input_directory + '/' + filename
-        print( '\n"{0}"'.format( input_path ) )
         extension = os.path.splitext(filename)[1]
 
         # Read input file
@@ -120,14 +130,15 @@ if __name__ == '__main__':
         elif extension == '.pdf':
             df, = tabula.read_pdf( input_path, pages='all', multiple_tables=False, lattice=True, )
         else:
-            df = None
-            print( 'Unexpected file type:', extension )
+            print( '\nWarning: Ignoring input file "{0}" due to unexpected file type: "{1}"\n'.format( input_path, extension ) )
+            continue
 
-        # If we got input, clean it
-        if df is not None:
-            df = clean_table( df )
-        else:
-            print( 'Could not clean table' )
+        # Save information for audit
+        audit_year = int( filename.split()[0] )
+        audit_month = int( filename.split()[1] )
+
+        # Clean the input
+        df = clean_table( df )
 
         # If we got a clean table, append it to the result
         if df is not None:
@@ -136,6 +147,8 @@ if __name__ == '__main__':
                 df_result = df
             else:
                 df_result = df_result.append( df )
+        else:
+            exit( '\nError: Could not clean table for "{0}"\n'.format( input_path ) )
 
     # Sort result table on date
     df_result = df_result.sort_values( by=[util.DATE_ISSUED] )
@@ -145,6 +158,11 @@ if __name__ == '__main__':
 
     # Save result to database
     util.create_table( args.output_table_name, conn, cur, df=df_result )
+
+    # Optionally save audit to Excel file
+    if args.audit_filename is not None:
+        print( '\nSaving audit to {}'.format( args.audit_filename ) )
+        df_audit.to_excel( args.audit_filename, index=False )
 
     # Report elapsed time
     util.report_elapsed_time()

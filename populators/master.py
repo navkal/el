@@ -41,6 +41,8 @@ if __name__ == '__main__':
     os.system( 'python xl_to_db.py -i ../xl/employees_2017.xlsx -o ../db/{0} -t Employees'.format( args.output_filename ) )
     print( '\n=======> Assessment Addendum' )
     os.system( 'python xl_to_db.py -i ../xl/assessment_addendum.xlsx -o ../db/{0} -t AssessmentAddendum'.format( args.output_filename ) )
+    print( '\n=======> Building Permits' )
+    os.system( 'python building_permits.py -d ../xl/building_permits -o ../db/{0} -t BuildingPermits'.format( args.output_filename ) )
 
     # Add value
     print( '\n=======> Lookup' )

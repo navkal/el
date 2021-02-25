@@ -45,6 +45,9 @@ if __name__ == '__main__':
     print( '\n=======> Assessment Addendum' )
     os.system( PYTHON + XL_TO_DB + '-i ../xl/assessment_addendum.xlsx -o ../db/assessment_addendum.sqlite -t AssessmentAddendum' + CREATE )
 
+    print( '\n=======> Building Permits' )
+    os.system( PYTHON + 'building_permits.py -d ../xl/building_permits -o ../db/building_permits.sqlite -t BuildingPermits' + CREATE )
+
     print( '\n=======> Elections 2012-2019' )
     os.system( PYTHON + 'elections.py -i ../xl/elections_2012-2019.xlsx -o ../db/elections.sqlite' + CREATE )
 
