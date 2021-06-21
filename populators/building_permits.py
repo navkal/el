@@ -120,6 +120,8 @@ if __name__ == '__main__':
     # Process all files in specified directory
     for filename in os.listdir( args.input_directory ):
 
+        print( '\nReading file "{0}"\n'.format( filename ) )
+
         # Get next input file
         input_path = args.input_directory + '/' + filename
         extension = os.path.splitext(filename)[1]
