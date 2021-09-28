@@ -208,8 +208,15 @@ def calculate_voter_engagement_score( row ):
                     if row[util.PREVIOUS_NAL_DESCRIPTION] not in util.NAL_IGNORE:
                         ls_dates.append( row[util.PREVIOUS_LEGAL_REFERENCE_SALE_DATE] )
 
-        # Try dates in reverse order, until one produces a score within range
         ls_dates.sort( reverse=True )
+
+        # Ignore property transfer date if it conflicts with actual voting record
+        first_vote_date = df_elections[df_elections[util.RESIDENT_ID] == row[util.RESIDENT_ID]][util.ELECTION_DATE].iloc[0]
+        if ls_dates[0] > first_vote_date:
+            # Use 18th birthday
+            ls_dates = [ age_18_date ]
+
+        # Try dates in reverse order, until one produces a score within accepted range
         for s_date in ls_dates:
             df_eligible = df_election_history.loc[ df_election_history[util.ELECTION_DATE] >= s_date ]
             score = round( 100 * df_scores.loc[ row[util.RESIDENT_ID] ][util.SCORE] / df_eligible[util.SCORE].sum(), 2 )
@@ -365,8 +372,9 @@ if __name__ == '__main__':
     df_e2 = pd.read_sql_table( 'ElectionModel_02', engine, columns=election_columns )
     df_e3 = pd.read_sql_table( 'ElectionModel_03', engine, columns=election_columns )
 
-    # Combine all elections into one dataframe
+    # Combine all elections into one dataframe and sort on resident ID and date
     df_elections = df_e1.append( df_e2 ).append( df_e3 )
+    df_elections = df_elections.sort_values( by=[util.RESIDENT_ID,util.ELECTION_DATE] )
 
     # Build list of all voters
     df_all_voters = df_elections.copy().drop_duplicates( subset=[util.RESIDENT_ID] )
