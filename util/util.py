@@ -459,6 +459,20 @@ CONSISTENT_COLUMN_NAMES = \
         'Building': 'building',
         'Address': 'address',
     },
+    'RawGeographicReport': \
+    {
+        'year': 'year',
+        'County': 'county',
+        'Town': 'town',
+        'Zip Code': 'zip_code',
+        'Sector': 'sector',
+        'Annual Electric Usage (MWh)': 'annual_electric_usage_mwh',
+        'Annual Electric Savings (MWh)': 'annual_electric_savings_mwh',
+        'Electric Incentives': 'electric_incentives_$',
+        'Annual Gas Usage (Therms)': 'annual_gas_usage_therms',
+        'Annual Gas Savings (Therms)': 'annual_gas_savings_therms',
+        'Gas Incentives': 'gas_incentives_$',
+    },
     'RawLocalElectionResults': \
     {
         'P-1': PRECINCT_1,
@@ -609,6 +623,20 @@ COLUMN_ORDER = \
     ],
     'Precincts':
     [
+    ],
+    'RawGeographicReport':
+    [
+        'year',
+        'county',
+        'town',
+        'zip_code',
+        'sector',
+        'annual_electric_usage_mwh',
+        'annual_electric_savings_mwh',
+        'electric_incentives_$',
+        'annual_gas_usage_therms',
+        'annual_gas_savings_therms',
+        'gas_incentives_$',
     ],
     'RawLocalElectionResults':
     [

@@ -48,6 +48,8 @@ if __name__ == '__main__':
         # Error: No input specified
         exit( 'Input filename or directory + prefix required' )
 
+    # Collapse excess whitespace in column heads
+    df_xl.columns = df_xl.columns.str.replace( '\s+', ' ', regex=True )
 
     # Drop unwanted rows
     if args.dropna_subset != None:
