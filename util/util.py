@@ -225,12 +225,7 @@ ZIP = 'zip_code'
 YEAR = 'year'
 COUNTY = 'county'
 SECTOR = 'sector'
-ANNUAL_ELECTRIC_USAGE = 'annual_electric_usage_mwh'
-ANNUAL_ELECTRIC_SAVINGS = 'annual_electric_savings_mwh'
-ELECTRIC_INCENTIVES = 'electric_incentives_$'
-ANNUAL_GAS_USAGE = 'annual_gas_usage_therms'
-ANNUAL_GAS_SAVINGS = 'annual_gas_savings_therms'
-GAS_INCENTIVES = 'gas_incentives_$'
+
 JAN = 'jan'
 FEB = 'feb'
 MAR = 'mar'
@@ -243,7 +238,19 @@ SEP = 'sep'
 OCT = 'oct'
 NOV = 'nov'
 DEC = 'dec'
+
 ANNUAL = 'annual'
+ELECTRIC_USAGE = '_electric_usage_mwh'
+GAS_USAGE = '_gas_usage_therms'
+ELECTRIC_SAVINGS = '_electric_savings_mwh'
+GAS_SAVINGS = '_gas_savings_therms'
+ANNUAL_ELECTRIC_USAGE = ANNUAL + ELECTRIC_USAGE
+ANNUAL_GAS_USAGE = ANNUAL + GAS_USAGE
+ANNUAL_ELECTRIC_SAVINGS = ANNUAL + ELECTRIC_SAVINGS
+ANNUAL_GAS_SAVINGS = ANNUAL + GAS_SAVINGS
+ELECTRIC_INCENTIVES = 'electric_incentives_$'
+GAS_INCENTIVES = 'gas_incentives_$'
+
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -500,7 +507,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Oct': OCT,
         'Nov': NOV,
         'Dec': DEC,
-        'Annual': ANNUAL,
+        'Annual': ANNUAL_ELECTRIC_USAGE,
     },
     'RawGasUsage': \
     {
@@ -519,7 +526,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Oct': OCT,
         'Nov': NOV,
         'Dec': DEC,
-        'Annual': ANNUAL,
+        'Annual': ANNUAL_GAS_USAGE,
     },
     'RawGeographicReport': \
     {
@@ -703,7 +710,7 @@ COLUMN_ORDER = \
         OCT,
         NOV,
         DEC,
-        ANNUAL,
+        ANNUAL_ELECTRIC_USAGE,
     ],
     'RawGasUsage':
     [
@@ -722,7 +729,7 @@ COLUMN_ORDER = \
         OCT,
         NOV,
         DEC,
-        ANNUAL,
+        ANNUAL_GAS_USAGE,
     ],
     'RawGeographicReport':
     [

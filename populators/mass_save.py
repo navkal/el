@@ -17,17 +17,19 @@ if __name__ == '__main__':
 
     # Read data sources
     print( '\n=======> Raw Electric Usage' )
-    os.system( 'python xl_to_db.py -d ../xl/mass_save/electric_usage -l year -r 2 -n "Annual" -o ../db/{0} -t RawElectricUsage'.format( args.output_filename ) )
+    os.system( 'python xl_to_db.py -d ../xl/mass_save/electric_usage -l year -r 2 -n "Annual" -o ../db/{0} -t RawElectricUsage -c'.format( args.output_filename ) )
     print( '\n=======> Raw Gas Usage' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/gas_usage -l year -r 2 -n "Annual" -o ../db/{0} -t RawGasUsage'.format( args.output_filename ) )
     print( '\n=======> Raw Geographic Report' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/geographic_report -l year -r 1 -n "Gas Incentives" -o ../db/{0} -t RawGeographicReport'.format( args.output_filename ) )
 
     # Clean raw data
-    numeric_columns = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec,annual'
+    month_columns = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec,'
     print( '\n=======> Electric Usage' )
+    numeric_columns = month_columns + 'annual_electric_usage_mwh'
     os.system( 'python energy_usage.py -i RawElectricUsage -o ElectricUsage -n {0} -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
     print( '\n=======> Gas Usage' )
+    numeric_columns = month_columns + 'annual_gas_usage_therms'
     os.system( 'python energy_usage.py -i RawGasUsage -o GasUsage -n {0} -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
     print( '\n=======> Geographic Report' )
     numeric_columns = 'annual_electric_usage_mwh,annual_electric_savings_mwh,electric_incentives_$,annual_gas_usage_therms,annual_gas_savings_therms,gas_incentives_$'
