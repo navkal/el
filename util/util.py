@@ -221,6 +221,30 @@ PROJECTCOST = 'ProjectCost'
 COST = 'Cost'
 
 
+ZIP = 'zip_code'
+YEAR = 'year'
+COUNTY = 'county'
+SECTOR = 'sector'
+ANNUAL_ELECTRIC_USAGE = 'annual_electric_usage_mwh'
+ANNUAL_ELECTRIC_SAVINGS = 'annual_electric_savings_mwh'
+ELECTRIC_INCENTIVES = 'electric_incentives_$'
+ANNUAL_GAS_USAGE = 'annual_gas_usage_therms'
+ANNUAL_GAS_SAVINGS = 'annual_gas_savings_therms'
+GAS_INCENTIVES = 'gas_incentives_$'
+JAN = 'jan'
+FEB = 'feb'
+MAR = 'mar'
+APR = 'apr'
+MAY = 'may'
+JUN = 'jun'
+JUL = 'jul'
+AUG = 'aug'
+SEP = 'sep'
+OCT = 'oct'
+NOV = 'nov'
+DEC = 'dec'
+ANNUAL = 'annual'
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \
@@ -454,24 +478,62 @@ CONSISTENT_COLUMN_NAMES = \
     },
     'PollingPlaces': \
     {
-        'Year': 'year',
+        'Year': YEAR,
         'Precinct': 'precinct',
         'Building': 'building',
         'Address': 'address',
     },
+    'RawElectricUsage': \
+    {
+        'year': YEAR,
+        'Town': TOWN_NAME,
+        'Sector': SECTOR,
+        'Jan': JAN,
+        'Feb': FEB,
+        'Mar': MAR,
+        'Apr': APR,
+        'May': MAY,
+        'Jun': JUN,
+        'Jul': JUL,
+        'Aug': AUG,
+        'Sept': SEP,
+        'Oct': OCT,
+        'Nov': NOV,
+        'Dec': DEC,
+        'Annual': ANNUAL,
+    },
+    'RawGasUsage': \
+    {
+        'year': YEAR,
+        'Town': TOWN_NAME,
+        'Sector': SECTOR,
+        'Jan': JAN,
+        'Feb': FEB,
+        'Mar': MAR,
+        'Apr': APR,
+        'May': MAY,
+        'Jun': JUN,
+        'Jul': JUL,
+        'Aug': AUG,
+        'Sept': SEP,
+        'Oct': OCT,
+        'Nov': NOV,
+        'Dec': DEC,
+        'Annual': ANNUAL,
+    },
     'RawGeographicReport': \
     {
-        'year': 'year',
-        'County': 'county',
-        'Town': 'town',
-        'Zip Code': 'zip_code',
-        'Sector': 'sector',
-        'Annual Electric Usage (MWh)': 'annual_electric_usage_mwh',
-        'Annual Electric Savings (MWh)': 'annual_electric_savings_mwh',
-        'Electric Incentives': 'electric_incentives_$',
-        'Annual Gas Usage (Therms)': 'annual_gas_usage_therms',
-        'Annual Gas Savings (Therms)': 'annual_gas_savings_therms',
-        'Gas Incentives': 'gas_incentives_$',
+        'year': YEAR,
+        'County': COUNTY,
+        'Town': TOWN_NAME,
+        'Zip Code': ZIP,
+        'Sector': SECTOR,
+        'Annual Electric Usage (MWh)': ANNUAL_ELECTRIC_USAGE,
+        'Annual Electric Savings (MWh)': ANNUAL_ELECTRIC_SAVINGS,
+        'Electric Incentives': ELECTRIC_INCENTIVES,
+        'Annual Gas Usage (Therms)': ANNUAL_GAS_USAGE,
+        'Annual Gas Savings (Therms)': ANNUAL_GAS_SAVINGS,
+        'Gas Incentives': GAS_INCENTIVES,
     },
     'RawLocalElectionResults': \
     {
@@ -624,19 +686,57 @@ COLUMN_ORDER = \
     'Precincts':
     [
     ],
+    'RawElectricUsage':
+    [
+        YEAR,
+        TOWN_NAME,
+        SECTOR,
+        JAN,
+        FEB,
+        MAR,
+        APR,
+        MAY,
+        JUN,
+        JUL,
+        AUG,
+        SEP,
+        OCT,
+        NOV,
+        DEC,
+        ANNUAL,
+    ],
+    'RawGasUsage':
+    [
+        YEAR,
+        TOWN_NAME,
+        SECTOR,
+        JAN,
+        FEB,
+        MAR,
+        APR,
+        MAY,
+        JUN,
+        JUL,
+        AUG,
+        SEP,
+        OCT,
+        NOV,
+        DEC,
+        ANNUAL,
+    ],
     'RawGeographicReport':
     [
-        'year',
-        'county',
-        'town',
-        'zip_code',
-        'sector',
-        'annual_electric_usage_mwh',
-        'annual_electric_savings_mwh',
-        'electric_incentives_$',
-        'annual_gas_usage_therms',
-        'annual_gas_savings_therms',
-        'gas_incentives_$',
+        YEAR,
+        COUNTY,
+        TOWN_NAME,
+        ZIP,
+        SECTOR,
+        ANNUAL_ELECTRIC_USAGE,
+        ANNUAL_ELECTRIC_SAVINGS,
+        ELECTRIC_INCENTIVES,
+        ANNUAL_GAS_USAGE,
+        ANNUAL_GAS_SAVINGS,
+        GAS_INCENTIVES,
     ],
     'RawLocalElectionResults':
     [
