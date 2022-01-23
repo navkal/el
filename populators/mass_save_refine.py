@@ -26,7 +26,7 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.db_filename, False )
 
     # Read table from database
-    df_raw = pd.read_sql_table( args.input_table, engine, index_col=util.ID, parse_dates=True )
+    df_raw = pd.read_sql_table( args.input_table, engine, index_col=util.ID )
 
     # Create copy of dataframe
     df = df_raw.copy()
