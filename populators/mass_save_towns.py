@@ -34,6 +34,9 @@ if __name__ == '__main__':
     df = df.sort_values( by=[util.TOWN_NAME] )
     df = df.reset_index( drop=True )
 
+    # Add column representing percent low income
+    df[util.PCT_LOW_INCOME] = 5
+
     # Save result to database
     util.create_table( "Towns", conn, cur, df=df )
 
