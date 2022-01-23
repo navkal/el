@@ -222,6 +222,7 @@ COST = 'Cost'
 
 
 ZIP = 'zip_code'
+ZIP_CODES = 'zip_codes'
 YEAR = 'year'
 COUNTY = 'county'
 SECTOR = 'sector'

@@ -40,6 +40,6 @@ if __name__ == '__main__':
 
     # Create table of towns
     print( '\n=======> Towns' )
-    os.system( 'python mass_save_towns.py -d ../db/{0}'.format( args.output_filename ) )
+    os.system( 'python mass_save_towns.py -d ../db/{0} -z ../xl/mass_save/towns/zip_code_database.csv'.format( args.output_filename ) )
 
     util.report_elapsed_time()
