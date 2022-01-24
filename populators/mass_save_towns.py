@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Retrieve and validate arguments
     parser = argparse.ArgumentParser( description='Clean up raw energy usage table from MassSave' )
     parser.add_argument( '-d', dest='db_filename',  help='Database filename' )
-    parser.add_argument( '-z', dest='zip_code_filename',  help='Input file containing list of ZIP codes' )
+    parser.add_argument( '-p', dest='population_filename',  help='Input file containing list of town populations' )
     args = parser.parse_args()
 
     # Open the database
@@ -35,28 +35,17 @@ if __name__ == '__main__':
     df_towns = df_towns.sort_values( by=[util.TOWN_NAME] )
     df_towns = df_towns.reset_index( drop=True )
 
-    # Read zip code data
-    df_zip = pd.read_csv( args.zip_code_filename )
-    df_zip = df_zip[ (df_zip['state'] == 'MA') & (df_zip['type'] == 'STANDARD') ]
-    df_zip = df_zip.rename( columns={ 'primary_city': util.TOWN_NAME } )
+    # Read population data
+    df_pop = pd.read_excel( args.population_filename, dtype=object )
+    df_pop = df_pop.rename( columns={ 'Municipality': util.TOWN_NAME, '2020': util.POPULATION } )
+    df_pop = df_pop[ [util.TOWN_NAME, util.POPULATION] ]
 
-    # Merge towns and zip codes
-    df_merge = pd.merge( df_towns, df_zip, how='left', on=[util.TOWN_NAME] )
+    # Fix some naming discrepancies
+    df_pop.at[ df_pop[ df_pop[util.TOWN_NAME] == 'Manchester By The Sea' ].index, util.TOWN_NAME] = 'Manchester'
+    df_pop.at[ df_pop[ df_pop[util.TOWN_NAME] == 'North Attleborough' ].index, util.TOWN_NAME] = 'North Attleboro'
 
-    # Associate each town with one or more zip codes
-    for idx, df_group in df_merge.groupby( by=[util.TOWN_NAME] ):
-
-        df_group = df_group.fillna( '' )
-
-        # Format list of zip codes
-        zip_list = util.fix_zip_code( df_group['zip'] ).tolist()
-        zip_string = ','.join( zip_list )
-
-        # Save zip code list with current town
-        current_town = df_group[util.TOWN_NAME].iloc[0]
-        current_town_index = df_towns[df_towns[util.TOWN_NAME] == current_town].index[0]
-        df_towns.at[ current_town_index, util.ZIP_CODES ] = zip_string
-
+    # Merge towns and populations
+    df_towns = pd.merge( df_towns, df_pop, how='left', on=[util.TOWN_NAME] )
 
     # Add column representing percent low income
     df_towns[util.PCT_LOW_INCOME] = 5
