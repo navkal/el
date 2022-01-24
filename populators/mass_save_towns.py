@@ -48,7 +48,7 @@ if __name__ == '__main__':
     df_towns = pd.merge( df_towns, df_pop, how='left', on=[util.TOWN_NAME] )
 
     # Add column representing percent low income
-    df_towns[util.PCT_LOW_INCOME] = 5
+    df_towns[util.PERCENT_ENERGY_BURDENED] = 5
 
     # Save result to database
     util.create_table( "Towns", conn, cur, df=df_towns )

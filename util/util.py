@@ -252,7 +252,7 @@ ANNUAL_GAS_SAVINGS = ANNUAL + GAS_SAVINGS
 ELECTRIC_INCENTIVES = 'electric_incentives_$'
 GAS_INCENTIVES = 'gas_incentives_$'
 POPULATION = 'population'
-PCT_LOW_INCOME = 'percent_low_income'
+PERCENT_ENERGY_BURDENED = 'percent_energy_burdened'
 
 CONSISTENT_COLUMN_NAMES = \
 {
