@@ -38,7 +38,7 @@ if __name__ == '__main__':
     # Read zip code data
     df_zip = pd.read_csv( args.zip_code_filename )
     df_zip = df_zip[ (df_zip['state'] == 'MA') & (df_zip['type'] == 'STANDARD') ]
-    df_zip = df_zip.rename( columns={ 'zip': util.ZIP, 'primary_city': util.TOWN_NAME } )
+    df_zip = df_zip.rename( columns={ 'primary_city': util.TOWN_NAME } )
 
     # Merge towns and zip codes
     df_merge = pd.merge( df_towns, df_zip, how='left', on=[util.TOWN_NAME] )
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         df_group = df_group.fillna( '' )
 
         # Format list of zip codes
-        zip_list = util.fix_zip_code( df_group[util.ZIP] ).tolist()
+        zip_list = util.fix_zip_code( df_group['zip'] ).tolist()
         zip_string = ','.join( zip_list )
 
         # Save zip code list with current town
