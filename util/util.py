@@ -252,6 +252,8 @@ ANNUAL_GAS_SAVINGS = ANNUAL + GAS_SAVINGS
 ELECTRIC_INCENTIVES = 'electric_incentives_$'
 GAS_INCENTIVES = 'gas_incentives_$'
 POPULATION = 'population'
+TRACT_POPULATION = 'tract_population'
+ENERGY_BURDENED_POPULATION = 'energy_burdened_population'
 PCT_ENERGY_BURDENED = 'pct_energy_burdened'
 
 CONSISTENT_COLUMN_NAMES = \
@@ -492,13 +494,13 @@ CONSISTENT_COLUMN_NAMES = \
         'Building': 'building',
         'Address': 'address',
     },
-    'RawEjCommunities': \
+    'EjCommunities': \
     {
         'TOWN_NAME': TOWN_NAME,
         'COUNTY_NAME': 'county_name',
         'TRACT_NAME': 'tract_name',
         'Census Tract': 'census_tract',
-        'Tot_Pop': 'tract_population',
+        'Tot_Pop': TRACT_POPULATION,
         'AvgEnergyBurden': 'avg_energy_burden',
         'AvgEnergyBurden_Screen': 'avg_energy_burden_screen',
         'PCT_LowIncome': 'pct_low_income',

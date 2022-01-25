@@ -16,14 +16,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Read data sources
+
     print( '\n=======> Raw Electric Usage' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/electric_usage -l year -r 2 -n "Annual" -o ../db/{0} -t RawElectricUsage -c'.format( args.output_filename ) )
+
     print( '\n=======> Raw Gas Usage' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/gas_usage -l year -r 2 -n "Annual" -o ../db/{0} -t RawGasUsage'.format( args.output_filename ) )
+
     print( '\n=======> Raw Geographic Report' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/geographic_report -l year -r 1 -n "Gas Incentives" -o ../db/{0} -t RawGeographicReport'.format( args.output_filename ) )
 
+    print( '\n=======> Raw EJ Communities' )
+    os.system( 'python xl_to_db.py -i ../xl/mass_save/towns/ej_communites.xlsx -o ../db/{0} -t EjCommunities'.format( args.output_filename ) )
+
+
     # Refine raw tables
+
     month_columns = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec,'
 
     print( '\n=======> Electric Usage' )
