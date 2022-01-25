@@ -252,7 +252,7 @@ ANNUAL_GAS_SAVINGS = ANNUAL + GAS_SAVINGS
 ELECTRIC_INCENTIVES = 'electric_incentives_$'
 GAS_INCENTIVES = 'gas_incentives_$'
 POPULATION = 'population'
-PERCENT_ENERGY_BURDENED = 'percent_energy_burdened'
+PCT_ENERGY_BURDENED = 'pct_energy_burdened'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -491,6 +491,44 @@ CONSISTENT_COLUMN_NAMES = \
         'Precinct': 'precinct',
         'Building': 'building',
         'Address': 'address',
+    },
+    'RawEjCommunities': \
+    {
+        'TOWN_NAME': TOWN_NAME,
+        'COUNTY_NAME': 'county_name',
+        'TRACT_NAME': 'tract_name',
+        'Census Tract': 'census_tract',
+        'Tot_Pop': 'tract_population',
+        'AvgEnergyBurden': 'avg_energy_burden',
+        'AvgEnergyBurden_Screen': 'avg_energy_burden_screen',
+        'PCT_LowIncome': 'pct_low_income',
+        'PCT_LowIncome_Screen': 'pct_low_income_screen',
+        'FE_Comm': 'fe_comm',
+        'FE_Comm.1': 'fe_comm_l',
+        'EJ_Indicators': 'ej_indicators',
+        'EJ_Comm_Screen': 'ej_comm_screen',
+        'P_LDPNT_D2': 'p_ldpnt_d2',
+        'P_DSLPM_D2': 'p_dslpm_d2',
+        'P_CANCR_D2': 'p_cancr_d2',
+        'P_RESP_D2': 'p_resp_d2',
+        'P_PTRAF_D2': 'p_ptraf_d2',
+        'P_PWDIS_D2': 'p_pwdis_d2',
+        'P_PNPL_D2': 'p_pnpl_d2',
+        'P_PRMP_D2': 'p_prmp_d2',
+        'P_PTSDF_D2': 'p_ptsdf_d2',
+        'P_OZONE_D2': 'p_ozone_d2',
+        'P_PM25_D2': 'p_pm25_d2',
+        'P_60_LDPNT_D2': 'p_60_ldpnt_d2',
+        'P_60_DSLPM_D2': 'p_60_dslpm_d2',
+        'P_60_CANCR_D2': 'p_60_cancr_d2',
+        'P_60_RESP_D2': 'p_60_resp_d2',
+        'P_60_PTRAF_D2': 'p_60_ptraf_d2',
+        'P_60_PWDIS_D2': 'p_60_pwdis_d2',
+        'P_60_PNPL_D2': 'p_60_pnpl_d2',
+        'P_60_PRMP_D2': 'p_60_prmp_d2',
+        'P_60_PTSDF_D2': 'p_60_ptsdf_d2',
+        'P_60_OZONE_D2': 'p_60_ozone_d2',
+        'P_60_PM25_D2': 'p_60_pm25_d2',
     },
     'RawElectricUsage': \
     {
