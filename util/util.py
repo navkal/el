@@ -253,6 +253,7 @@ ELECTRIC_INCENTIVES = 'electric_incentives_$'
 GAS_INCENTIVES = 'gas_incentives_$'
 POPULATION = 'population'
 TRACT_POPULATION = 'tract_population'
+PCT_LOW_INCOME = 'pct_low_income'
 ENERGY_BURDENED_POPULATION = 'energy_burdened_population'
 PCT_ENERGY_BURDENED = 'pct_energy_burdened'
 
@@ -503,7 +504,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Tot_Pop': TRACT_POPULATION,
         'AvgEnergyBurden': 'avg_energy_burden',
         'AvgEnergyBurden_Screen': 'avg_energy_burden_screen',
-        'PCT_LowIncome': 'pct_low_income',
+        'PCT_LowIncome': PCT_LOW_INCOME,
         'PCT_LowIncome_Screen': 'pct_low_income_screen',
         'FE_Comm': 'fe_comm',
         'FE_Comm.1': 'fe_comm_l',

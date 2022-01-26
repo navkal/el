@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     # Read energy burden data from database
     df_ej = pd.read_sql_table( 'EjCommunities', engine, index_col=util.ID )
-    df_ej = df_ej[ [util.TOWN_NAME, util.TRACT_POPULATION] ]
+    df_ej = df_ej[ [util.TOWN_NAME, util.TRACT_POPULATION, util.PCT_LOW_INCOME] ]
     df_merge = pd.merge( df_towns, df_ej, how='left', on=[util.TOWN_NAME] )
 
     # Set default values
@@ -68,8 +68,8 @@ if __name__ == '__main__':
 
             # Calculate energy burden statistics
             population = df_group[util.POPULATION].values[0]
-            energy_burdened_population = df_group[util.TRACT_POPULATION].sum()
-            pct_energy_burdened = int( 100 * energy_burdened_population / population )
+            energy_burdened_population = int( ( df_group[util.TRACT_POPULATION] * df_group[util.PCT_LOW_INCOME] ).sum() )
+            pct_energy_burdened = 100 * energy_burdened_population / population
 
             # Save statistics in town dataframe
             town = df_group[util.TOWN_NAME].iloc[0]
@@ -78,6 +78,9 @@ if __name__ == '__main__':
             df_towns.at[ town_index, util.PCT_ENERGY_BURDENED ] = pct_energy_burdened
 
     # Save result to database
+    df_towns[util.POPULATION] = df_towns[util.POPULATION].astype(int)
+    df_towns[util.ENERGY_BURDENED_POPULATION] = df_towns[util.ENERGY_BURDENED_POPULATION]
+    df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED].astype(int)
     util.create_table( "Towns", conn, cur, df=df_towns )
 
     # Report elapsed time
