@@ -14,7 +14,7 @@ import util
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Clean up raw energy usage table from MassSave' )
+    parser = argparse.ArgumentParser( description='Create table of MA towns' )
     parser.add_argument( '-d', dest='db_filename',  help='Database filename' )
     parser.add_argument( '-p', dest='population_filename',  help='Input file containing list of town populations' )
     args = parser.parse_args()

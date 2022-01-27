@@ -256,6 +256,11 @@ TRACT_POPULATION = 'tract_population'
 PCT_LOW_INCOME = 'pct_low_income'
 ENERGY_BURDENED_POPULATION = 'energy_burdened_population'
 PCT_ENERGY_BURDENED = 'pct_energy_burdened'
+RESIDENTIAL_DOL_PER_MWH = 'residential_dol_per_mwh'
+DISCOUNT_DOL_PER_MWH = 'discount_dol_per_mwh'
+COMMERCIAL_DOL_PER_MWH = 'commercial_dol_per_mwh'
+RESIDENTIAL_DOL_PER_THERM = 'residential_dol_per_therm'
+COMMERCIAL_DOL_PER_THERM = 'commercial_dol_per_therm'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -613,6 +618,15 @@ CONSISTENT_COLUMN_NAMES = \
         'EST_KWH_CN': 'estimated_kwh',
         'MAX_BEHAV_SCORE': 'max_behavior_score',
         'PHONE': PHONE,
+    },
+    'EnergyEfficiencySurcharge': \
+    {
+        'Year': YEAR,
+        'Electric Residential': RESIDENTIAL_DOL_PER_MWH,
+        'Electric Discount': DISCOUNT_DOL_PER_MWH,
+        'Electric Commercial': COMMERCIAL_DOL_PER_MWH,
+        'Gas Residential': RESIDENTIAL_DOL_PER_THERM,
+        'Gas Commercial': COMMERCIAL_DOL_PER_THERM,
     },
     'Water': \
     {
