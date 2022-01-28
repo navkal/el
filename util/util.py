@@ -619,7 +619,7 @@ CONSISTENT_COLUMN_NAMES = \
         'MAX_BEHAV_SCORE': 'max_behavior_score',
         'PHONE': PHONE,
     },
-    'EnergyEfficiencySurcharge': \
+    'EfficiencySurcharge': \
     {
         'Year': YEAR,
         'Electric Residential': RESIDENTIAL_DOL_PER_MWH,

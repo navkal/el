@@ -26,8 +26,8 @@ if __name__ == '__main__':
     print( '\n=======> Raw Geographic Report' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/geographic_report -l year -r 1 -n "Gas Incentives" -o ../db/{0} -t RawGeographicReport'.format( args.output_filename ) )
 
-    print( '\n=======> Energy Efficiency Surcharge' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_save/energy_efficiency_surcharge.xlsx -o ../db/{0} -t EnergyEfficiencySurcharge'.format( args.output_filename ) )
+    print( '\n=======> Efficiency Surcharge' )
+    os.system( 'python xl_to_db.py -i ../xl/mass_save/efficiency_surcharge.xlsx -o ../db/{0} -t EfficiencySurcharge'.format( args.output_filename ) )
 
     print( '\n=======> EJ Communities' )
     os.system( 'python xl_to_db.py -i ../xl/mass_save/ej_communites.xlsx -o ../db/{0} -t EjCommunities'.format( args.output_filename ) )
@@ -52,5 +52,9 @@ if __name__ == '__main__':
     # Create table of towns
     print( '\n=======> Towns' )
     os.system( 'python mass_save_towns.py -d ../db/{0} -p ../xl/mass_save/population_2020.xlsx'.format( args.output_filename ) )
+
+
+    # Analyze MassSave data
+    os.system( 'python mass_save_analyze.py -d ../db/{0}'.format( args.output_filename ) )
 
     util.report_elapsed_time()
