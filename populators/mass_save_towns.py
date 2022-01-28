@@ -11,12 +11,15 @@ import util
 
 #------------------------------------------------------
 
+DEFAULT_POVERTY_RATE = 6.5
+
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
     parser = argparse.ArgumentParser( description='Create table of MA towns' )
     parser.add_argument( '-d', dest='db_filename',  help='Database filename' )
     parser.add_argument( '-p', dest='population_filename',  help='Input file containing list of town populations' )
+    parser.add_argument( '-e', dest='energy_burden_filename',  help='Input file containing poverty data' )
     args = parser.parse_args()
 
     # Open the database
@@ -45,13 +48,17 @@ if __name__ == '__main__':
     df_pop.at[ df_pop[ df_pop[util.TOWN_NAME] == 'North Attleborough' ].index, util.TOWN_NAME] = 'North Attleboro'
     df_towns = pd.merge( df_towns, df_pop, how='left', on=[util.TOWN_NAME] )
 
-    # Set energy burden values
-    df_towns[util.PCT_ENERGY_BURDENED] = 9.4
-    df_towns[util.ENERGY_BURDENED_POPULATION] = df_towns[util.POPULATION] * df_towns[util.PCT_ENERGY_BURDENED] / 100
+    # Read energy burden data
+    df_eb = pd.read_excel( args.energy_burden_filename, dtype=object )
+    df_eb = df_eb.rename( columns={ 'town_name': util.TOWN_NAME, 'poverty_rate': util.PCT_ENERGY_BURDENED } )
+
+    # Merge energy burden data
+    df_towns = pd.merge( df_towns, df_eb, how='left', on=[util.TOWN_NAME] )
+    df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED] * 100
+    df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED].fillna( DEFAULT_POVERTY_RATE )
 
     # Save result to database
     df_towns[util.POPULATION] = df_towns[util.POPULATION].astype(int)
-    df_towns[util.ENERGY_BURDENED_POPULATION] = df_towns[util.ENERGY_BURDENED_POPULATION].astype(int)
     util.create_table( "Towns", conn, cur, df=df_towns )
 
     # Report elapsed time

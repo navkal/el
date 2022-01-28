@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     # Create table of towns
     print( '\n=======> Towns' )
-    os.system( 'python mass_save_towns.py -d ../db/{0} -p ../xl/mass_save/population_2020.xlsx'.format( args.output_filename ) )
+    os.system( 'python mass_save_towns.py -d ../db/{0} -p ../xl/mass_save/population_2020.xlsx -e ../xl/mass_save/poverty_rates.xlsx'.format( args.output_filename ) )
 
 
     # Analyze MassSave data
