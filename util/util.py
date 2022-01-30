@@ -255,11 +255,11 @@ POPULATION = 'population'
 TRACT_POPULATION = 'tract_population'
 PCT_LOW_INCOME = 'pct_low_income'
 PCT_ENERGY_BURDENED = 'pct_energy_burdened'
-RESIDENTIAL_DOL_PER_MWH = 'residential_dol_per_mwh'
-DISCOUNT_DOL_PER_MWH = 'discount_dol_per_mwh'
-COMMERCIAL_DOL_PER_MWH = 'commercial_dol_per_mwh'
-RESIDENTIAL_DOL_PER_THERM = 'residential_dol_per_therm'
-COMMERCIAL_DOL_PER_THERM = 'commercial_dol_per_therm'
+RESIDENTIAL_DOL_PER_MWH = 'residential_$_per_mwh'
+DISCOUNT_DOL_PER_MWH = 'discount_$_per_mwh'
+COMMERCIAL_DOL_PER_MWH = 'commercial_$_per_mwh'
+RESIDENTIAL_DOL_PER_THERM = 'residential_$_per_therm'
+COMMERCIAL_DOL_PER_THERM = 'commercial_$_per_therm'
 
 CONSISTENT_COLUMN_NAMES = \
 {

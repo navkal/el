@@ -15,11 +15,11 @@ SECTOR_RES_AND_LOW = 'Residential & Low-Income'
 SECTOR_COM_AND_IND = 'Commercial & Industrial'
 SECTOR_TOTAL = 'Total'
 
-ELECTRIC_SURCHARGE_PROCEEDS = 'electric_surcharge_proceeds'
-GAS_SURCHARGE_PROCEEDS = 'gas_surcharge_proceeds'
-SURPLUS_ELECTRIC_PROCEEDS = 'surplus_electric_proceeds'
-SURPLUS_GAS_PROCEEDS = 'surplus_gas_proceeds'
-SURPLUS_PROCEEDS_TOTAL = 'surplus_proceeds_total'
+ELECTRIC_EES = 'electric_ees_$'
+GAS_EES = 'gas_ees_$'
+ELECTRIC_EES_MINUS_INCENTIVES = 'electric_ees_minus_incentives_$'
+GAS_EES_MINUS_INCENTIVES = 'gas_ees_minus_incentives_$'
+TOTAL_EES_MINUS_INCENTIVES = 'total_ees_minus_incentives_$'
 
 
 def get_usage_values( df_group, sector ):
@@ -48,11 +48,11 @@ def report_findings( year, town, sector, proceeds_electric, proceeds_gas ):
     surplus_proceeds_total = surplus_proceeds_electric + surplus_proceeds_gas
 
     index = row.index.values[0]
-    df_analysis.at[index, ELECTRIC_SURCHARGE_PROCEEDS] = proceeds_electric
-    df_analysis.at[index, GAS_SURCHARGE_PROCEEDS] = proceeds_gas
-    df_analysis.at[index, SURPLUS_ELECTRIC_PROCEEDS] = surplus_proceeds_electric
-    df_analysis.at[index, SURPLUS_GAS_PROCEEDS] = surplus_proceeds_gas
-    df_analysis.at[index, SURPLUS_PROCEEDS_TOTAL] = surplus_proceeds_total
+    df_analysis.at[index, ELECTRIC_EES] = proceeds_electric
+    df_analysis.at[index, GAS_EES] = proceeds_gas
+    df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = surplus_proceeds_electric
+    df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = surplus_proceeds_gas
+    df_analysis.at[index, TOTAL_EES_MINUS_INCENTIVES] = surplus_proceeds_total
 
 
 def report_totals( year, town ):
@@ -61,11 +61,11 @@ def report_totals( year, town ):
 
     if len( df_findings ) and len( df_totals ):
         index = df_totals.index.values[0]
-        df_analysis.at[index, ELECTRIC_SURCHARGE_PROCEEDS] = df_findings[ELECTRIC_SURCHARGE_PROCEEDS].sum()
-        df_analysis.at[index, GAS_SURCHARGE_PROCEEDS] = df_findings[GAS_SURCHARGE_PROCEEDS].sum()
-        df_analysis.at[index, SURPLUS_ELECTRIC_PROCEEDS] = df_findings[SURPLUS_ELECTRIC_PROCEEDS].sum()
-        df_analysis.at[index, SURPLUS_GAS_PROCEEDS] = df_findings[SURPLUS_GAS_PROCEEDS].sum()
-        df_analysis.at[index, SURPLUS_PROCEEDS_TOTAL] = df_findings[SURPLUS_PROCEEDS_TOTAL].sum()
+        df_analysis.at[index, ELECTRIC_EES] = df_findings[ELECTRIC_EES].sum()
+        df_analysis.at[index, GAS_EES] = df_findings[GAS_EES].sum()
+        df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = df_findings[ELECTRIC_EES_MINUS_INCENTIVES].sum()
+        df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = df_findings[GAS_EES_MINUS_INCENTIVES].sum()
+        df_analysis.at[index, TOTAL_EES_MINUS_INCENTIVES] = df_findings[TOTAL_EES_MINUS_INCENTIVES].sum()
 
 
 def analyze_town( town_row ):
@@ -141,11 +141,11 @@ if __name__ == '__main__':
 
     # Initialize dataframe of analysis results
     df_analysis = df_gr.copy( deep=True )
-    df_analysis[ELECTRIC_SURCHARGE_PROCEEDS] = 0
-    df_analysis[GAS_SURCHARGE_PROCEEDS] = 0
-    df_analysis[SURPLUS_ELECTRIC_PROCEEDS] = 0
-    df_analysis[SURPLUS_GAS_PROCEEDS] = 0
-    df_analysis[SURPLUS_PROCEEDS_TOTAL] = 0
+    df_analysis[ELECTRIC_EES] = 0
+    df_analysis[GAS_EES] = 0
+    df_analysis[ELECTRIC_EES_MINUS_INCENTIVES] = 0
+    df_analysis[GAS_EES_MINUS_INCENTIVES] = 0
+    df_analysis[TOTAL_EES_MINUS_INCENTIVES] = 0
 
     # Analyze the towns
     for index, row in df_towns.iterrows():
