@@ -97,7 +97,7 @@ def analyze_town( town_row ):
         sector = SECTOR_RES_AND_LOW
         usage_mwh, usage_therms = get_usage_values( df_group, sector )
 
-        if usage_mwh and usage_therms:
+        if usage_mwh is not None and usage_therms is not None:
 
             # Calculate proceeds
             proceeds_r1 = ( 1 - eb_factor ) * usage_mwh * surcharge_row[util.RESIDENTIAL_DOL_PER_MWH].values[0]
@@ -112,7 +112,7 @@ def analyze_town( town_row ):
         sector = SECTOR_COM_AND_IND
         usage_mwh, usage_therms = get_usage_values( df_group, sector )
 
-        if usage_mwh and usage_therms:
+        if usage_mwh is not None and usage_therms is not None:
 
             # Calculate proceeds
             proceeds_electric = int( usage_mwh * surcharge_row[util.COMMERCIAL_DOL_PER_MWH].values[0] )

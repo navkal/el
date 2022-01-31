@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument( '-o', dest='output_table',  help='Output table name' )
     parser.add_argument( '-r', dest='remove_columns',  help='Remove columns' )
     parser.add_argument( '-n', dest='numeric_columns',  help='Numeric columns' )
+    parser.add_argument( '-z', dest='zero_value',  help='Value to replace with zero' )
     args = parser.parse_args()
 
     # Open the database
@@ -43,6 +44,10 @@ if __name__ == '__main__':
 
     # Clean up numeric columns
     col_names = args.numeric_columns.split( ',' )
+
+    # Replace text with 0
+    if args.zero_value:
+        df = df.replace( args.zero_value, '0' )
 
     for col in col_names:
 
