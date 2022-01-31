@@ -7,6 +7,30 @@ sys.path.append( '../util' )
 import util
 
 
+
+# Information on how to publish databases
+PUBLISH_INFO = \
+{
+    'mass_save_ees_analysis': \
+    {
+        'number_columns': True,
+        'drop_table_names':
+        [
+            'RawElectricUsage',
+            'RawGasUsage',
+            'ElectricUsage',
+            'GasUsage',
+        ],
+        'encipher_column_names':
+        [
+        ],
+        'drop_column_names':
+        [
+        ]
+    },
+}
+
+
 #######################################
 
 
@@ -25,7 +49,7 @@ if __name__ == '__main__':
 
     # Publish output databases
     debug = '_debug' if args.debug else ''
-    for output_db_name, publish_info in util.PUBLISH_INFO.items():
+    for output_db_name, publish_info in PUBLISH_INFO.items():
         util.publish_database( input_db, args.output_folder + '/' + output_db_name + debug + '.sqlite', publish_info )
 
     # Report elapsed time

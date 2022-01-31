@@ -15,8 +15,9 @@ if __name__ == '__main__':
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     args = parser.parse_args()
 
+    #
     # Read data sources
-
+    #
     print( '\n=======> Raw Electric Usage' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/electric_usage -l year -r 2 -n "Annual" -o ../db/{0} -t RawElectricUsage -c'.format( args.output_filename ) )
 
@@ -29,12 +30,10 @@ if __name__ == '__main__':
     print( '\n=======> Efficiency Surcharge' )
     os.system( 'python xl_to_db.py -i ../xl/mass_save/efficiency_surcharge.xlsx -o ../db/{0} -t EfficiencySurcharge'.format( args.output_filename ) )
 
-    print( '\n=======> EJ Communities' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_save/ej_communites.xlsx -o ../db/{0} -t EjCommunities'.format( args.output_filename ) )
 
-
+    #
     # Refine raw tables
-
+    #
     common_columns = 'year,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec,'
 
     print( '\n=======> Electric Usage' )
@@ -54,7 +53,17 @@ if __name__ == '__main__':
     os.system( 'python mass_save_towns.py -d ../db/{0} -p ../xl/mass_save/population_2020.xlsx -e ../xl/mass_save/poverty_rates.xlsx'.format( args.output_filename ) )
 
 
+    #
     # Analyze MassSave data
+    #
     os.system( 'python mass_save_analyze.py -d ../db/{0}'.format( args.output_filename ) )
+
+
+    #
+    # Publish database
+    #
+    print( '\n=======> Publish' )
+    os.system( 'python mass_save_publish.py -i ../db/{0} -o ../db'.format( args.output_filename ) )
+
 
     util.report_elapsed_time()
