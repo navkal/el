@@ -23,7 +23,7 @@ COMBINED_EES_IN = 'combined_ees_in_$'
 COMBINED_INCENTIVES_OUT = 'combined_incentives_out_$'
 COMBINED_EES_MINUS_INCENTIVES = 'combined_ees_minus_incentives_$'
 
-FIRST_NUMERIC_COLUMN = 5
+FIRST_NUMERIC_COLUMN = 4
 
 def get_usage_values( df_group, sector ):
 
@@ -188,8 +188,14 @@ if __name__ == '__main__':
 
     # Insert missing Total rows into analysis dataframe
     df_analysis = pd.concat( [df_analysis, df_analysis_totals], ignore_index=True ).reset_index( drop=True )
+
+    # Sort analysis dataframe
     df_analysis[util.SECTOR] = pd.Categorical( df_analysis[util.SECTOR], [SECTOR_RES_AND_LOW, SECTOR_COM_AND_IND, SECTOR_TOTAL] )
     df_analysis = df_analysis.sort_values( by=[util.YEAR, util.TOWN_NAME, util.SECTOR] ).reset_index( drop=True )
+
+    # Set int type on numeric columns in analysis dataframe
+    for column in df_analysis.columns[FIRST_NUMERIC_COLUMN:]:
+        df_analysis[column] = df_analysis[column].astype(int)
 
     # Save analysis results to database
     util.create_table( "Analysis", conn, cur, df=df_analysis )
