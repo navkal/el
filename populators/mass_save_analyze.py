@@ -23,6 +23,7 @@ COMBINED_EES_IN = 'combined_ees_in_$'
 COMBINED_INCENTIVES_OUT = 'combined_incentives_out_$'
 COMBINED_EES_MINUS_INCENTIVES = 'combined_ees_minus_incentives_$'
 
+FIRST_NUMERIC_COLUMN = 5
 
 def get_usage_values( df_group, sector ):
 
@@ -63,18 +64,38 @@ def report_findings( year, town, sector, electric_ees, gas_ees ):
 
 
 def report_totals( year, town ):
-    df_findings = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] != SECTOR_TOTAL ) ]
-    df_totals = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] == SECTOR_TOTAL ) ]
 
-    if len( df_findings ) and len( df_totals ):
-        index = df_totals.index.values[0]
-        df_analysis.at[index, ELECTRIC_EES] = df_findings[ELECTRIC_EES].sum()
-        df_analysis.at[index, GAS_EES] = df_findings[GAS_EES].sum()
-        df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = df_findings[ELECTRIC_EES_MINUS_INCENTIVES].sum()
-        df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = df_findings[GAS_EES_MINUS_INCENTIVES].sum()
-        df_analysis.at[index, COMBINED_EES_IN] = df_findings[COMBINED_EES_IN].sum()
-        df_analysis.at[index, COMBINED_INCENTIVES_OUT] = df_findings[COMBINED_INCENTIVES_OUT].sum()
-        df_analysis.at[index, COMBINED_EES_MINUS_INCENTIVES] = df_findings[COMBINED_EES_MINUS_INCENTIVES].sum()
+    global df_analysis_totals
+
+    df_findings = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] != SECTOR_TOTAL ) ]
+
+    if len( df_findings ):
+
+        df_totals = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] == SECTOR_TOTAL ) ]
+
+        if len( df_totals ):
+            # Load new totals into existing row provided by Mass Save
+
+            index = df_totals.index.values[0]
+
+            for column in df_totals.columns[FIRST_NUMERIC_COLUMN:]:
+                df_analysis.at[index, column] = df_findings[column].sum()
+
+        else:
+            # Mass Save did not provide a row of totals
+
+            # Create missing row
+            df_totals = df_findings.copy().reset_index( drop=True )
+            df_totals = df_totals.loc[[df_totals.index[0]]]
+            df_totals[util.SECTOR] = SECTOR_TOTAL
+
+            # Load totals into new row
+            for column in df_totals.columns[FIRST_NUMERIC_COLUMN:]:
+                df_totals[column] = df_findings[column].sum()
+
+            # Save new row to be incorporated into analysis
+            df_analysis_totals = pd.concat( [df_analysis_totals, df_totals], ignore_index=True ).reset_index( drop=True )
+
 
 
 def analyze_town( town_row ):
@@ -158,9 +179,17 @@ if __name__ == '__main__':
     df_analysis[COMBINED_INCENTIVES_OUT] = 0
     df_analysis[COMBINED_EES_MINUS_INCENTIVES] = 0
 
+    # Create dataframe for 'Total' rows that were missing from original data
+    df_analysis_totals = pd.DataFrame( columns=df_analysis.columns )
+
     # Analyze the towns
     for index, row in df_towns.iterrows():
         analyze_town( row )
+
+    # Insert missing Total rows into analysis dataframe
+    df_analysis = pd.concat( [df_analysis, df_analysis_totals], ignore_index=True ).reset_index( drop=True )
+    df_analysis[util.SECTOR] = pd.Categorical( df_analysis[util.SECTOR], [SECTOR_RES_AND_LOW, SECTOR_COM_AND_IND, SECTOR_TOTAL] )
+    df_analysis = df_analysis.sort_values( by=[util.YEAR, util.TOWN_NAME, util.SECTOR] ).reset_index( drop=True )
 
     # Save analysis results to database
     util.create_table( "Analysis", conn, cur, df=df_analysis )
