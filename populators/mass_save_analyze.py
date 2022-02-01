@@ -19,7 +19,9 @@ ELECTRIC_EES = 'electric_ees_$'
 GAS_EES = 'gas_ees_$'
 ELECTRIC_EES_MINUS_INCENTIVES = 'electric_ees_minus_incentives_$'
 GAS_EES_MINUS_INCENTIVES = 'gas_ees_minus_incentives_$'
-TOTAL_EES_MINUS_INCENTIVES = 'total_ees_minus_incentives_$'
+COMBINED_EES_MINUS_INCENTIVES = 'combined_ees_minus_incentives_$'
+COMBINED_EES_IN = 'combined_ees_in_$'
+COMBINED_INCENTIVES_OUT = 'combined_incentives_out_$'
 
 
 def get_usage_values( df_group, sector ):
@@ -39,20 +41,25 @@ def get_usage_values( df_group, sector ):
     return ( usage_mwh, usage_therms )
 
 
-def report_findings( year, town, sector, proceeds_electric, proceeds_gas ):
+def report_findings( year, town, sector, electric_ees, gas_ees ):
 
-    # Find row and retrieve values
+    # Retrieve values and calculate findings
     row = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] == sector ) ]
-    surplus_proceeds_electric = proceeds_electric - row[util.ELECTRIC_INCENTIVES]
-    surplus_proceeds_gas = proceeds_gas - row[util.GAS_INCENTIVES]
-    surplus_proceeds_total = surplus_proceeds_electric + surplus_proceeds_gas
+    electric_ees_minus_incentives = electric_ees - row[util.ELECTRIC_INCENTIVES]
+    gas_ees_minus_incentives = gas_ees - row[util.GAS_INCENTIVES]
+    combined_ees_minus_incentives = electric_ees_minus_incentives + gas_ees_minus_incentives
+    combined_ees_in = electric_ees + gas_ees
+    combined_incentives_out = row[util.ELECTRIC_INCENTIVES].values[0] + row[util.GAS_INCENTIVES].values[0]
 
+    # Report findings in analysis dataframe
     index = row.index.values[0]
-    df_analysis.at[index, ELECTRIC_EES] = proceeds_electric
-    df_analysis.at[index, GAS_EES] = proceeds_gas
-    df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = surplus_proceeds_electric
-    df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = surplus_proceeds_gas
-    df_analysis.at[index, TOTAL_EES_MINUS_INCENTIVES] = surplus_proceeds_total
+    df_analysis.at[index, ELECTRIC_EES] = electric_ees
+    df_analysis.at[index, GAS_EES] = gas_ees
+    df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = electric_ees_minus_incentives
+    df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = gas_ees_minus_incentives
+    df_analysis.at[index, COMBINED_EES_MINUS_INCENTIVES] = combined_ees_minus_incentives
+    df_analysis.at[index, COMBINED_EES_IN] = combined_ees_in
+    df_analysis.at[index, COMBINED_INCENTIVES_OUT] = combined_incentives_out
 
 
 def report_totals( year, town ):
@@ -65,7 +72,9 @@ def report_totals( year, town ):
         df_analysis.at[index, GAS_EES] = df_findings[GAS_EES].sum()
         df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = df_findings[ELECTRIC_EES_MINUS_INCENTIVES].sum()
         df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = df_findings[GAS_EES_MINUS_INCENTIVES].sum()
-        df_analysis.at[index, TOTAL_EES_MINUS_INCENTIVES] = df_findings[TOTAL_EES_MINUS_INCENTIVES].sum()
+        df_analysis.at[index, COMBINED_EES_MINUS_INCENTIVES] = df_findings[COMBINED_EES_MINUS_INCENTIVES].sum()
+        df_analysis.at[index, COMBINED_EES_IN] = df_findings[COMBINED_EES_IN].sum()
+        df_analysis.at[index, COMBINED_INCENTIVES_OUT] = df_findings[COMBINED_INCENTIVES_OUT].sum()
 
 
 def analyze_town( town_row ):
@@ -99,14 +108,14 @@ def analyze_town( town_row ):
 
         if usage_mwh is not None and usage_therms is not None:
 
-            # Calculate proceeds
-            proceeds_r1 = ( 1 - eb_factor ) * usage_mwh * surcharge_row[util.RESIDENTIAL_DOL_PER_MWH].values[0]
-            proceeds_r2 = eb_factor * usage_mwh * surcharge_row[util.DISCOUNT_DOL_PER_MWH].values[0]
-            proceeds_electric = int( proceeds_r1 + proceeds_r2 )
-            proceeds_gas = int( usage_therms * surcharge_row[util.RESIDENTIAL_DOL_PER_THERM].values[0] )
+            # Calculate EES
+            r1_ees = ( 1 - eb_factor ) * usage_mwh * surcharge_row[util.RESIDENTIAL_DOL_PER_MWH].values[0]
+            r2_ees = eb_factor * usage_mwh * surcharge_row[util.DISCOUNT_DOL_PER_MWH].values[0]
+            electric_ees = int( r1_ees + r2_ees )
+            gas_ees = int( usage_therms * surcharge_row[util.RESIDENTIAL_DOL_PER_THERM].values[0] )
 
             # Report findings
-            report_findings( year, town, sector, proceeds_electric, proceeds_gas )
+            report_findings( year, town, sector, electric_ees, gas_ees )
 
         # Commercial
         sector = SECTOR_COM_AND_IND
@@ -114,12 +123,12 @@ def analyze_town( town_row ):
 
         if usage_mwh is not None and usage_therms is not None:
 
-            # Calculate proceeds
-            proceeds_electric = int( usage_mwh * surcharge_row[util.COMMERCIAL_DOL_PER_MWH].values[0] )
-            proceeds_gas = int( usage_therms * surcharge_row[util.COMMERCIAL_DOL_PER_THERM].values[0] )
+            # Calculate EES
+            electric_ees = int( usage_mwh * surcharge_row[util.COMMERCIAL_DOL_PER_MWH].values[0] )
+            gas_ees = int( usage_therms * surcharge_row[util.COMMERCIAL_DOL_PER_THERM].values[0] )
 
             # Report findings
-            report_findings( year, town, sector, proceeds_electric, proceeds_gas )
+            report_findings( year, town, sector, electric_ees, gas_ees )
 
         report_totals( year, town )
 
@@ -145,7 +154,9 @@ if __name__ == '__main__':
     df_analysis[GAS_EES] = 0
     df_analysis[ELECTRIC_EES_MINUS_INCENTIVES] = 0
     df_analysis[GAS_EES_MINUS_INCENTIVES] = 0
-    df_analysis[TOTAL_EES_MINUS_INCENTIVES] = 0
+    df_analysis[COMBINED_EES_MINUS_INCENTIVES] = 0
+    df_analysis[COMBINED_EES_IN] = 0
+    df_analysis[COMBINED_INCENTIVES_OUT] = 0
 
     # Analyze the towns
     for index, row in df_towns.iterrows():
