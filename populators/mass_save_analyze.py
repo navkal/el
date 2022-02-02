@@ -15,8 +15,6 @@ ELECTRIC_EES = 'electric_ees_$'
 GAS_EES = 'gas_ees_$'
 ELECTRIC_EES_MINUS_INCENTIVES = 'electric_ees_minus_incentives_$'
 GAS_EES_MINUS_INCENTIVES = 'gas_ees_minus_incentives_$'
-COMBINED_EES_IN = 'combined_ees_in_$'
-COMBINED_INCENTIVES_OUT = 'combined_incentives_out_$'
 
 FIRST_NUMERIC_COLUMN = 4
 
@@ -53,8 +51,8 @@ def report_findings( year, town, sector, electric_ees, gas_ees ):
     df_analysis.at[index, GAS_EES] = gas_ees
     df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = electric_ees_minus_incentives
     df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = gas_ees_minus_incentives
-    df_analysis.at[index, COMBINED_EES_IN] = combined_ees_in
-    df_analysis.at[index, COMBINED_INCENTIVES_OUT] = combined_incentives_out
+    df_analysis.at[index, util.COMBINED_EES_IN] = combined_ees_in
+    df_analysis.at[index, util.COMBINED_INCENTIVES_OUT] = combined_incentives_out
     df_analysis.at[index, util.COMBINED_EES_MINUS_INCENTIVES] = combined_ees_minus_incentives
 
 
@@ -170,8 +168,8 @@ if __name__ == '__main__':
     df_analysis[GAS_EES] = 0
     df_analysis[ELECTRIC_EES_MINUS_INCENTIVES] = 0
     df_analysis[GAS_EES_MINUS_INCENTIVES] = 0
-    df_analysis[COMBINED_EES_IN] = 0
-    df_analysis[COMBINED_INCENTIVES_OUT] = 0
+    df_analysis[util.COMBINED_EES_IN] = 0
+    df_analysis[util.COMBINED_INCENTIVES_OUT] = 0
     df_analysis[util.COMBINED_EES_MINUS_INCENTIVES] = 0
 
     # Create dataframe for 'Total' rows that were missing from original data

@@ -24,14 +24,19 @@ if __name__ == '__main__':
 
     # Read table from database
     df_analysis = pd.read_sql_table( 'Analysis', engine, index_col=util.ID )
-    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.COMBINED_EES_MINUS_INCENTIVES] ]
+    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE, util.COMBINED_EES_IN, util.COMBINED_EES_MINUS_INCENTIVES] ]
 
     # Determine column names
     column_name_map = { util.TOWN_NAME: util.TOWN_NAME }
     years = df_analysis[util.YEAR].sort_values().drop_duplicates().tolist()
+    last_year = int( years[-1] )
 
     for year in years:
-        column_name_map[year] = year + '_to_' + years[-1]
+        period = '_' + str( last_year - int( year ) + 1 ) + '_yr'
+        column_name_map[year + '$'] = '$_lost' + period
+        column_name_map[year + '%'] = '%_lost' + period
+        column_name_map[year + 'm'] = 'avg_annual_mwh' + period
+        column_name_map[year + 't'] = 'avg_annual_therms' + period
 
     # Create empty summary dataframe
     df_summary = pd.DataFrame( columns=column_name_map.keys() )
@@ -39,9 +44,14 @@ if __name__ == '__main__':
     # Iterate over analysis rows, grouped by town
     for idx, df_group in df_analysis.groupby( by=[util.TOWN_NAME] ):
 
+        # Get current town
+        town = df_group.iloc[0][util.TOWN_NAME]
+        print( town )
+
         # Initialize summary row for current town
         summary_row = pd.Series( dtype=object )
-        summary_row[util.TOWN_NAME] = df_group.iloc[0][util.TOWN_NAME]
+        summary_row[util.TOWN_NAME] = town
+
 
         # Select 'Total' rows from group
         df_group = df_group[df_group[util.SECTOR] == util.SECTOR_TOTAL]
@@ -53,12 +63,18 @@ if __name__ == '__main__':
             df_range = df_group[ df_group[util.YEAR] >= row[util.YEAR] ]
             df_range = df_range.reset_index( drop=True )
 
-            # Calculate average annual loss over range
-            sum = int( df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() )
-            avg = int( sum / len( df_range ) )
+            # Calculate summary statistics for this time range
+            dol = int( df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() )
+            pct = int( 100 * df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() / df_range[util.COMBINED_EES_IN].sum() )
+            mwh = int( df_range[util.ANNUAL_ELECTRIC_USAGE].sum() / len( df_range ) )
+            thm = int( df_range[util.ANNUAL_GAS_USAGE].sum() / len( df_range ) )
 
-            # Save average in summary row
-            summary_row[df_range.at[0, util.YEAR]] = avg
+            # Save statistics in summary row
+            range_start = df_range.at[0, util.YEAR]
+            summary_row[range_start + '$'] = dol
+            summary_row[range_start + '%'] = pct
+            summary_row[range_start + 'm'] = mwh
+            summary_row[range_start + 't'] = thm
 
         # Save summary row in dataframe
         df_summary = df_summary.append( summary_row, ignore_index=True )
@@ -66,11 +82,9 @@ if __name__ == '__main__':
     # Fix column names and datatypes
     df_summary = df_summary.rename( columns=column_name_map )
     df_summary = df_summary.fillna( 0 )
-    for column in df_summary.columns[1:]:
-        df_summary[column] = df_summary[column].astype(int)
 
     # Save summary results to database
-    util.create_table( "AverageAnnualEesMinusIncentives", conn, cur, df=df_summary )
+    util.create_table( "Summary", conn, cur, df=df_summary )
 
     # Report elapsed time
     util.report_elapsed_time()
