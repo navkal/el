@@ -11,17 +11,12 @@ import util
 
 #------------------------------------------------------
 
-SECTOR_RES_AND_LOW = 'Residential & Low-Income'
-SECTOR_COM_AND_IND = 'Commercial & Industrial'
-SECTOR_TOTAL = 'Total'
-
 ELECTRIC_EES = 'electric_ees_$'
 GAS_EES = 'gas_ees_$'
 ELECTRIC_EES_MINUS_INCENTIVES = 'electric_ees_minus_incentives_$'
 GAS_EES_MINUS_INCENTIVES = 'gas_ees_minus_incentives_$'
 COMBINED_EES_IN = 'combined_ees_in_$'
 COMBINED_INCENTIVES_OUT = 'combined_incentives_out_$'
-COMBINED_EES_MINUS_INCENTIVES = 'combined_ees_minus_incentives_$'
 
 FIRST_NUMERIC_COLUMN = 4
 
@@ -60,18 +55,18 @@ def report_findings( year, town, sector, electric_ees, gas_ees ):
     df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = gas_ees_minus_incentives
     df_analysis.at[index, COMBINED_EES_IN] = combined_ees_in
     df_analysis.at[index, COMBINED_INCENTIVES_OUT] = combined_incentives_out
-    df_analysis.at[index, COMBINED_EES_MINUS_INCENTIVES] = combined_ees_minus_incentives
+    df_analysis.at[index, util.COMBINED_EES_MINUS_INCENTIVES] = combined_ees_minus_incentives
 
 
 def report_totals( year, town ):
 
     global df_analysis_totals
 
-    df_findings = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] != SECTOR_TOTAL ) ]
+    df_findings = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] != util.SECTOR_TOTAL ) ]
 
     if len( df_findings ):
 
-        df_totals = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] == SECTOR_TOTAL ) ]
+        df_totals = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] == util.SECTOR_TOTAL ) ]
 
         if len( df_totals ):
             # Load new totals into existing row provided by Mass Save
@@ -87,7 +82,7 @@ def report_totals( year, town ):
             # Create missing row
             df_totals = df_findings.copy().reset_index( drop=True )
             df_totals = df_totals.loc[[df_totals.index[0]]]
-            df_totals[util.SECTOR] = SECTOR_TOTAL
+            df_totals[util.SECTOR] = util.SECTOR_TOTAL
 
             # Load totals into new row
             for column in df_totals.columns[FIRST_NUMERIC_COLUMN:]:
@@ -124,7 +119,7 @@ def analyze_town( town_row ):
         #
 
         # Residential
-        sector = SECTOR_RES_AND_LOW
+        sector = util.SECTOR_RES_AND_LOW
         usage_mwh, usage_therms = get_usage_values( df_group, sector )
 
         if usage_mwh is not None and usage_therms is not None:
@@ -139,7 +134,7 @@ def analyze_town( town_row ):
             report_findings( year, town, sector, electric_ees, gas_ees )
 
         # Commercial
-        sector = SECTOR_COM_AND_IND
+        sector = util.SECTOR_COM_AND_IND
         usage_mwh, usage_therms = get_usage_values( df_group, sector )
 
         if usage_mwh is not None and usage_therms is not None:
@@ -177,7 +172,7 @@ if __name__ == '__main__':
     df_analysis[GAS_EES_MINUS_INCENTIVES] = 0
     df_analysis[COMBINED_EES_IN] = 0
     df_analysis[COMBINED_INCENTIVES_OUT] = 0
-    df_analysis[COMBINED_EES_MINUS_INCENTIVES] = 0
+    df_analysis[util.COMBINED_EES_MINUS_INCENTIVES] = 0
 
     # Create dataframe for 'Total' rows that were missing from original data
     df_analysis_totals = pd.DataFrame( columns=df_analysis.columns )
@@ -190,7 +185,7 @@ if __name__ == '__main__':
     df_analysis = pd.concat( [df_analysis, df_analysis_totals], ignore_index=True ).reset_index( drop=True )
 
     # Sort analysis dataframe
-    df_analysis[util.SECTOR] = pd.Categorical( df_analysis[util.SECTOR], [SECTOR_RES_AND_LOW, SECTOR_COM_AND_IND, SECTOR_TOTAL] )
+    df_analysis[util.SECTOR] = pd.Categorical( df_analysis[util.SECTOR], [util.SECTOR_RES_AND_LOW, util.SECTOR_COM_AND_IND, util.SECTOR_TOTAL] )
     df_analysis = df_analysis.sort_values( by=[util.YEAR, util.TOWN_NAME, util.SECTOR] ).reset_index( drop=True )
 
     # Set int type on numeric columns in analysis dataframe

@@ -227,6 +227,11 @@ YEAR = 'year'
 COUNTY = 'county'
 SECTOR = 'sector'
 
+SECTOR_RES_AND_LOW = 'Residential & Low-Income'
+SECTOR_COM_AND_IND = 'Commercial & Industrial'
+SECTOR_TOTAL = 'Total'
+COMBINED_EES_MINUS_INCENTIVES = 'combined_ees_minus_incentives_$'
+
 JAN = 'jan'
 FEB = 'feb'
 MAR = 'mar'

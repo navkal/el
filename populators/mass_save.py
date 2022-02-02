@@ -57,6 +57,7 @@ if __name__ == '__main__':
     # Analyze MassSave data
     #
     os.system( 'python mass_save_analyze.py -d ../db/{0}'.format( args.output_filename ) )
+    os.system( 'python mass_save_summarize.py -d ../db/{0}'.format( args.output_filename ) )
 
 
     #
