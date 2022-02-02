@@ -65,6 +65,7 @@ if __name__ == '__main__':
 
     # Fix column names and datatypes
     df_summary = df_summary.rename( columns=column_name_map )
+    df_summary = df_summary.fillna( 0 )
     for column in df_summary.columns[1:]:
         df_summary[column] = df_summary[column].astype(int)
 
