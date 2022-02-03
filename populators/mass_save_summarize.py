@@ -32,11 +32,11 @@ if __name__ == '__main__':
     last_year = int( years[-1] )
 
     for year in years:
-        period = '_' + str( last_year - int( year ) + 1 ) + '_yr'
-        column_name_map[year + '$'] = 'ees_minus_incentives_$' + period
-        column_name_map[year + '%'] = 'incentives_as_%_of_ees' + period
-        column_name_map[year + 'm'] = 'avg_annual_mwh' + period
-        column_name_map[year + 't'] = 'avg_annual_therms' + period
+        prefix = str( last_year - int( year ) + 1 ) + '_yr_'
+        column_name_map[year + '$'] = prefix + 'ees_minus_incentives_$'
+        column_name_map[year + '%'] = prefix + 'incentives_as_%_of_ees'
+        column_name_map[year + 'm'] = prefix + 'mwh_avg'
+        column_name_map[year + 't'] = prefix + 'therms_avg'
 
     # Create empty summary dataframe
     df_summary = pd.DataFrame( columns=column_name_map.keys() )
