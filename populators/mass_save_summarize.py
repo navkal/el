@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     # Read table from database
     df_analysis = pd.read_sql_table( 'Analysis', engine, index_col=util.ID )
-    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE, util.COMBINED_EES_IN, util.COMBINED_EES_MINUS_INCENTIVES] ]
+    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE, util.COMBINED_EES_IN, util.COMBINED_INCENTIVES_OUT, util.COMBINED_EES_MINUS_INCENTIVES] ]
 
     # Determine column names
     column_name_map = { util.TOWN_NAME: util.TOWN_NAME }
@@ -33,8 +33,8 @@ if __name__ == '__main__':
 
     for year in years:
         period = '_' + str( last_year - int( year ) + 1 ) + '_yr'
-        column_name_map[year + '$'] = '$_lost' + period
-        column_name_map[year + '%'] = '%_lost' + period
+        column_name_map[year + '$'] = 'ees_minus_incentives_$' + period
+        column_name_map[year + '%'] = 'incentives_as_%_of_ees' + period
         column_name_map[year + 'm'] = 'avg_annual_mwh' + period
         column_name_map[year + 't'] = 'avg_annual_therms' + period
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
             # Calculate summary statistics for this time range
             dol = int( df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() )
-            pct = int( 100 * df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() / df_range[util.COMBINED_EES_IN].sum() )
+            pct = int( 100 * df_range[util.COMBINED_INCENTIVES_OUT].sum() / df_range[util.COMBINED_EES_IN].sum() )
             mwh = int( df_range[util.ANNUAL_ELECTRIC_USAGE].sum() / len( df_range ) )
             thm = int( df_range[util.ANNUAL_GAS_USAGE].sum() / len( df_range ) )
 
