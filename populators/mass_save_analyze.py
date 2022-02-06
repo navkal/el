@@ -21,7 +21,7 @@ FIRST_NUMERIC_COLUMN = 4
 def get_usage_values( df_group, sector ):
 
     try:
-        # Retrieve residential row
+        # Retrieve row for given sector
         row = df_group[ df_group[util.SECTOR] == sector ]
 
         # Retrieve usage
@@ -37,12 +37,20 @@ def get_usage_values( df_group, sector ):
 
 def report_findings( year, town, sector, electric_ees, gas_ees ):
 
-    # Retrieve values and calculate findings
+    # Retrieve values
     row = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] == sector ) ]
-    electric_ees_minus_incentives = electric_ees - row[util.ELECTRIC_INCENTIVES]
-    gas_ees_minus_incentives = gas_ees - row[util.GAS_INCENTIVES]
+    electric_incentives = row[util.ELECTRIC_INCENTIVES].values[0]
+    gas_incentives = row[util.GAS_INCENTIVES].values[0]
+    mwh_saved = row[util.ANNUAL_ELECTRIC_SAVINGS].values[0]
+    therms_saved = row[util.ANNUAL_GAS_SAVINGS].values[0]
+
+    # Calculate findings
+    electric_ees_minus_incentives = electric_ees - electric_incentives
+    gas_ees_minus_incentives = gas_ees - gas_incentives
+    incentives_per_saved_mwh = ( electric_incentives / mwh_saved ) if mwh_saved else 0
+    incentives_per_saved_therm = ( gas_incentives / therms_saved ) if therms_saved else 0
     combined_ees_in = electric_ees + gas_ees
-    combined_incentives_out = row[util.ELECTRIC_INCENTIVES].values[0] + row[util.GAS_INCENTIVES].values[0]
+    combined_incentives_out = electric_incentives + gas_incentives
     combined_ees_minus_incentives = electric_ees_minus_incentives + gas_ees_minus_incentives
 
     # Report findings in analysis dataframe
@@ -51,6 +59,8 @@ def report_findings( year, town, sector, electric_ees, gas_ees ):
     df_analysis.at[index, GAS_EES] = gas_ees
     df_analysis.at[index, ELECTRIC_EES_MINUS_INCENTIVES] = electric_ees_minus_incentives
     df_analysis.at[index, GAS_EES_MINUS_INCENTIVES] = gas_ees_minus_incentives
+    df_analysis.at[index, util.INCENTIVES_PER_SAVED_MWH] = incentives_per_saved_mwh
+    df_analysis.at[index, util.INCENTIVES_PER_SAVED_THERM] = incentives_per_saved_therm
     df_analysis.at[index, util.COMBINED_EES_IN] = combined_ees_in
     df_analysis.at[index, util.COMBINED_INCENTIVES_OUT] = combined_incentives_out
     df_analysis.at[index, util.COMBINED_EES_MINUS_INCENTIVES] = combined_ees_minus_incentives
@@ -144,6 +154,7 @@ def analyze_town( town_row ):
             # Report findings
             report_findings( year, town, sector, electric_ees, gas_ees )
 
+        # Calculate totals of Residential and Commercial values
         report_totals( year, town )
 
 
@@ -168,6 +179,8 @@ if __name__ == '__main__':
     df_analysis[GAS_EES] = 0
     df_analysis[ELECTRIC_EES_MINUS_INCENTIVES] = 0
     df_analysis[GAS_EES_MINUS_INCENTIVES] = 0
+    df_analysis[util.INCENTIVES_PER_SAVED_MWH] = 0.0
+    df_analysis[util.INCENTIVES_PER_SAVED_THERM] = 0.0
     df_analysis[util.COMBINED_EES_IN] = 0
     df_analysis[util.COMBINED_INCENTIVES_OUT] = 0
     df_analysis[util.COMBINED_EES_MINUS_INCENTIVES] = 0
@@ -187,8 +200,17 @@ if __name__ == '__main__':
     df_analysis = df_analysis.sort_values( by=[util.YEAR, util.TOWN_NAME, util.SECTOR] ).reset_index( drop=True )
 
     # Set int type on numeric columns in analysis dataframe
+    float_columns = \
+    {
+        util.INCENTIVES_PER_SAVED_MWH: 2,
+        util.INCENTIVES_PER_SAVED_THERM: 2,
+    }
+
     for column in df_analysis.columns[FIRST_NUMERIC_COLUMN:]:
-        df_analysis[column] = df_analysis[column].astype(int)
+        if column in float_columns:
+            df_analysis[column] = df_analysis[column].round( float_columns[column] )
+        else:
+            df_analysis[column] = df_analysis[column].astype(int)
 
     # Save analysis results to database
     util.create_table( "Analysis", conn, cur, df=df_analysis )

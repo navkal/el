@@ -13,6 +13,12 @@ import util
 
 DEFAULT_POVERTY_RATE = 6.5
 
+DATA_YEAR = '2019'
+MWH_USED = DATA_YEAR + util.ELECTRIC_USAGE
+THERMS_USED = DATA_YEAR + util.GAS_USAGE
+KWH_USED_PER_CAPITA = 'kwh_used_per_capita'
+THERMS_USED_PER_CAPITA = 'therms_used_per_capita'
+
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
@@ -55,10 +61,27 @@ if __name__ == '__main__':
     # Merge energy burden data
     df_towns = pd.merge( df_towns, df_eb, how='left', on=[util.TOWN_NAME] )
     df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED] * 100
-    df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED].fillna( DEFAULT_POVERTY_RATE )
+    df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED].fillna( DEFAULT_POVERTY_RATE ).round( 1 )
+
+    # Isolate 2019 residential usage statistics
+    df_usage = df_gr.copy()
+    df_usage = df_usage[ ( df_usage[util.SECTOR]==util.SECTOR_RES_AND_LOW ) & ( df_usage[util.YEAR]==int( DATA_YEAR ) ) ]
+    df_usage = df_usage[ [util.TOWN_NAME, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE] ]
+
+    # Calculate per-capita energy usage
+    df_towns = pd.merge( df_towns, df_usage, how='left', on=[util.TOWN_NAME] )
+    df_towns = df_towns.rename( columns={ util.ANNUAL_ELECTRIC_USAGE: MWH_USED, util.ANNUAL_GAS_USAGE: THERMS_USED } )
+    df_towns[KWH_USED_PER_CAPITA] = 1000 * df_towns[MWH_USED] / df_towns[util.POPULATION]
+    df_towns[THERMS_USED_PER_CAPITA] = df_towns[THERMS_USED] / df_towns[util.POPULATION]
+
+    # Fix datatypes and precision
+    df_towns[util.POPULATION] = df_towns[util.POPULATION].astype(int)
+    df_towns[MWH_USED] = df_towns[MWH_USED].fillna(0).astype(int)
+    df_towns[THERMS_USED] = df_towns[THERMS_USED].fillna(0).astype(int)
+    df_towns[KWH_USED_PER_CAPITA] = df_towns[KWH_USED_PER_CAPITA].fillna(0).round( 2 )
+    df_towns[THERMS_USED_PER_CAPITA] = df_towns[THERMS_USED_PER_CAPITA].fillna(0).round( 2 )
 
     # Save result to database
-    df_towns[util.POPULATION] = df_towns[util.POPULATION].astype(int)
     util.create_table( "Towns", conn, cur, df=df_towns )
 
     # Report elapsed time

@@ -268,6 +268,8 @@ DISCOUNT_DOL_PER_MWH = 'discount_$_per_mwh'
 COMMERCIAL_DOL_PER_MWH = 'commercial_$_per_mwh'
 RESIDENTIAL_DOL_PER_THERM = 'residential_$_per_therm'
 COMMERCIAL_DOL_PER_THERM = 'commercial_$_per_therm'
+INCENTIVES_PER_SAVED_MWH = 'incentives_per_saved_mwh_$'
+INCENTIVES_PER_SAVED_THERM = 'incentives_per_saved_therm_$'
 
 CONSISTENT_COLUMN_NAMES = \
 {
