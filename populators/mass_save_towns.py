@@ -16,8 +16,8 @@ DEFAULT_POVERTY_RATE = 6.5
 DATA_YEAR = '2019'
 MWH_USED = DATA_YEAR + util.ELECTRIC_USAGE
 THERMS_USED = DATA_YEAR + util.GAS_USAGE
-KWH_USED_PER_CAPITA = 'kwh_used_per_capita'
-THERMS_USED_PER_CAPITA = 'therms_used_per_capita'
+KWH_USED_PER_CAPITA = DATA_YEAR + '_kwh_used_per_capita'
+THERMS_USED_PER_CAPITA = DATA_YEAR + '_therms_used_per_capita'
 
 if __name__ == '__main__':
 
