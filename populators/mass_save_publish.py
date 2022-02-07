@@ -28,6 +28,23 @@ PUBLISH_INFO = \
         [
         ]
     },
+    'mass_save_for_viraj': \
+    {
+        'number_columns': False,
+        'drop_table_names':
+        [
+            'RawElectricUsage',
+            'RawGasUsage',
+            'ElectricUsage',
+            'GasUsage',
+        ],
+        'encipher_column_names':
+        [
+        ],
+        'drop_column_names':
+        [
+        ]
+    },
 }
 
 
