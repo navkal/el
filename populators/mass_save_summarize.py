@@ -17,6 +17,8 @@ if __name__ == '__main__':
     # Retrieve and validate arguments
     parser = argparse.ArgumentParser( description='Summarize MassSave analysis' )
     parser.add_argument( '-d', dest='db_filename',  help='Database filename' )
+    parser.add_argument( '-s', dest='sector',  help='Sector to summarize' )
+    parser.add_argument( '-t', dest='table',  help='Summary table' )
     args = parser.parse_args()
 
     # Open the database
@@ -54,7 +56,7 @@ if __name__ == '__main__':
 
 
         # Select 'Total' rows from group
-        df_group = df_group[df_group[util.SECTOR] == util.SECTOR_TOTAL]
+        df_group = df_group[df_group[util.SECTOR] == args.sector]
 
         # Iterate over totals
         for index, row in df_group.iterrows():
@@ -84,7 +86,7 @@ if __name__ == '__main__':
     df_summary = df_summary.fillna( 0 )
 
     # Save summary results to database
-    util.create_table( "Summary", conn, cur, df=df_summary )
+    util.create_table( args.table, conn, cur, df=df_summary )
 
     # Report elapsed time
     util.report_elapsed_time()

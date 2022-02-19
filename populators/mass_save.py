@@ -57,7 +57,9 @@ if __name__ == '__main__':
     # Analyze MassSave data
     #
     os.system( 'python mass_save_analyze.py -d ../db/{0}'.format( args.output_filename ) )
-    os.system( 'python mass_save_summarize.py -d ../db/{0}'.format( args.output_filename ) )
+    os.system( 'python mass_save_summarize.py -s "Residential & Low-Income" -t SummaryResidential -d ../db/{0}'.format( args.output_filename ) )
+    os.system( 'python mass_save_summarize.py -s "Commercial & Industrial" -t SummaryCommercial -d ../db/{0}'.format( args.output_filename ) )
+    os.system( 'python mass_save_summarize.py -s "Total" -t SummaryTotal -d ../db/{0}'.format( args.output_filename ) )
 
 
     #
