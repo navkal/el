@@ -24,12 +24,15 @@ if __name__ == '__main__':
     # Open the database
     conn, cur, engine = util.open_database( args.db_filename, False )
 
-    # Read table from database
+    # Read Towns table from database
+    df_towns = pd.read_sql_table( 'Towns', engine, index_col=util.ID )
+
+    # Read Analysis table from database
     df_analysis = pd.read_sql_table( 'Analysis', engine, index_col=util.ID )
     df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE, util.COMBINED_EES_IN, util.COMBINED_INCENTIVES_OUT, util.COMBINED_EES_MINUS_INCENTIVES] ]
 
     # Determine column names
-    column_name_map = { util.TOWN_NAME: util.TOWN_NAME }
+    column_name_map = { util.TOWN_NAME: util.TOWN_NAME, util.POPULATION: util.POPULATION }
     years = df_analysis[util.YEAR].sort_values().drop_duplicates().tolist()
     last_year = int( years[-1] )
 
@@ -53,7 +56,7 @@ if __name__ == '__main__':
         # Initialize summary row for current town
         summary_row = pd.Series( dtype=object )
         summary_row[util.TOWN_NAME] = town
-
+        summary_row[util.POPULATION] = df_towns[df_towns[util.TOWN_NAME]==town][util.POPULATION].values[0]
 
         # Select 'Total' rows from group
         df_group = df_group[df_group[util.SECTOR] == args.sector]
