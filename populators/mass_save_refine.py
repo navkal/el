@@ -40,14 +40,15 @@ if __name__ == '__main__':
     df = df.dropna( axis='rows', how='any' )
 
     # Drop rows reporting totals
-    df = df[ df[util.TOWN_NAME] != 'All Towns' ]
-
-    # Clean up numeric columns
-    col_names = args.numeric_columns.split( ',' )
+    if util.TOWN_NAME in df.columns:
+        df = df[ df[util.TOWN_NAME] != 'All Towns' ]
 
     # Replace text with 0
     if args.zero_value:
         df = df.replace( args.zero_value, '0' )
+
+    # Clean up numeric columns
+    col_names = args.numeric_columns.split( ',' )
 
     for col in col_names:
 

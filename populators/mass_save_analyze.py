@@ -187,9 +187,7 @@ if __name__ == '__main__':
     df_gr = pd.read_sql_table( 'GeographicReport', engine, index_col=util.ID )
     df_towns = pd.read_sql_table( 'Towns', engine, index_col=util.ID )
     df_elec_ees = pd.read_sql_table( 'ElectricEesRates', engine, index_col=util.ID )
-    df_elec_ees[util.YEAR] = df_elec_ees[util.YEAR].astype(int)
     df_gas_ees = pd.read_sql_table( 'GasEesRates', engine, index_col=util.ID )
-    df_gas_ees[util.YEAR] = df_gas_ees[util.YEAR].astype(int)
 
     # Initialize dataframe of analysis results
     df_analysis = df_gr.copy( deep=True )
