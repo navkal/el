@@ -26,6 +26,8 @@ if __name__ == '__main__':
     parser.add_argument( '-d', dest='db_filename',  help='Database filename' )
     parser.add_argument( '-p', dest='population_filename',  help='Input file containing list of town populations' )
     parser.add_argument( '-e', dest='energy_burden_filename',  help='Input file containing poverty data' )
+    parser.add_argument( '-u', dest='elec_utilities_filename',  help='Input file mapping town to electric utility' )
+    parser.add_argument( '-v', dest='gas_utilities_filename',  help='Input file mapping town to gas utility' )
     args = parser.parse_args()
 
     # Open the database
@@ -73,6 +75,16 @@ if __name__ == '__main__':
     df_towns = df_towns.rename( columns={ util.ANNUAL_ELECTRIC_USAGE: MWH_USED, util.ANNUAL_GAS_USAGE: THERMS_USED } )
     df_towns[KWH_USED_PER_CAPITA] = 1000 * df_towns[MWH_USED] / df_towns[util.POPULATION]
     df_towns[THERMS_USED_PER_CAPITA] = df_towns[THERMS_USED] / df_towns[util.POPULATION]
+
+    # Read and merge electric utility data
+    df_e_ut = pd.read_excel( args.elec_utilities_filename, dtype=object )
+    df_e_ut = df_e_ut.rename( columns={ 'Town': util.TOWN_NAME, 'Electric Utility': util.ELECTRIC_UTILITY, 'Electric Utility URL': util.ELECTRIC_UTILITY_URL } )
+    df_towns = pd.merge( df_towns, df_e_ut, how='left', on=[util.TOWN_NAME] )
+
+    # Read and merge gas utility data
+    df_g_ut = pd.read_excel( args.gas_utilities_filename, dtype=object )
+    df_g_ut = df_g_ut.rename( columns={ 'Town': util.TOWN_NAME, 'Gas Utility 1': util.GAS_UTILITY_1, 'Gas Utility URL 1': util.GAS_UTILITY_URL_1, 'Gas Utility 2': util.GAS_UTILITY_2, 'Gas Utility URL 2': util.GAS_UTILITY_URL_2 } )
+    df_towns = pd.merge( df_towns, df_g_ut, how='left', on=[util.TOWN_NAME] )
 
     # Fix datatypes and precision
     df_towns[util.POPULATION] = df_towns[util.POPULATION].astype(int)

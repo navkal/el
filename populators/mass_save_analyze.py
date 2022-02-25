@@ -100,14 +100,16 @@ def report_totals( year, town ):
             df_analysis_totals = pd.concat( [df_analysis_totals, df_totals], ignore_index=True ).reset_index( drop=True )
 
 
-
 def analyze_town( town_row ):
 
     town = town_row[util.TOWN_NAME]
+    print( town )
+
+    elec_utility = town_row[util.ELECTRIC_UTILITY]
+    gas_utility_1 = town_row[util.GAS_UTILITY_1]
+    gas_utility_2 = town_row[util.GAS_UTILITY_2]
 
     eb_factor = town_row[util.PCT_ENERGY_BURDENED] / 100
-
-    print( town )
 
     # Get geographic report for this town
     df_gr_town = df_gr[ df_gr[util.TOWN_NAME] == town ]
@@ -118,8 +120,12 @@ def analyze_town( town_row ):
         # Get year of group
         year = df_group.iloc[0][util.YEAR]
 
-        # Retrieve surcharge values used in this year
-        surcharge_row = df_ees[ df_ees[util.YEAR] == year ]
+        # Retrieve EES rates charged in specified year, by specified utility
+        elec_ees_row = df_elec_ees[ ( df_elec_ees[util.YEAR] == year ) & ( df_elec_ees[util.ELECTRIC_UTILITY] == elec_utility )]
+        gas_ees_row_1 = df_gas_ees[ ( df_gas_ees[util.YEAR] == year ) & ( df_gas_ees[util.GAS_UTILITY] == gas_utility_1 ) ]
+        gas_ees_row_2 = df_gas_ees[ ( df_gas_ees[util.YEAR] == year ) & ( df_gas_ees[util.GAS_UTILITY] == gas_utility_2 ) ]
+        if len( gas_ees_row_2 ) == 0:
+            gas_ees_row_2 = gas_ees_row_1
 
         #
         # df_group typically contains 3 rows: Residential sector, Commercial sector, and Total
@@ -132,11 +138,16 @@ def analyze_town( town_row ):
 
         if usage_mwh is not None and usage_therms is not None:
 
+            # Extract EES rates
+            elec_r1_rate = elec_ees_row[util.RESIDENTIAL_R1_RATE].values[0] * 1000
+            elec_r2_rate = elec_ees_row[util.RESIDENTIAL_R2_RATE].values[0] * 1000
+            gas_res_rate = ( ( gas_ees_row_1[util.RESIDENTIAL_RATE].values[0] + gas_ees_row_2[util.RESIDENTIAL_RATE].values[0] ) / 2 ) if len(gas_ees_row_1) else 0
+
             # Calculate EES
-            r1_ees = ( 1 - eb_factor ) * usage_mwh * surcharge_row[util.RESIDENTIAL_DOL_PER_MWH].values[0]
-            r2_ees = eb_factor * usage_mwh * surcharge_row[util.DISCOUNT_DOL_PER_MWH].values[0]
+            r1_ees = ( 1 - eb_factor ) * usage_mwh * elec_r1_rate
+            r2_ees = eb_factor * usage_mwh * elec_r2_rate
             electric_ees = int( r1_ees + r2_ees )
-            gas_ees = int( usage_therms * surcharge_row[util.RESIDENTIAL_DOL_PER_THERM].values[0] )
+            gas_ees = int( usage_therms * gas_res_rate )
 
             # Report findings
             report_findings( year, town, sector, electric_ees, gas_ees )
@@ -147,9 +158,13 @@ def analyze_town( town_row ):
 
         if usage_mwh is not None and usage_therms is not None:
 
+            # Extract EES rates
+            elec_com_rate = elec_ees_row[util.COMMERCIAL_RATE].values[0] * 1000
+            gas_com_rate = ( ( gas_ees_row_1[util.COMMERCIAL_RATE].values[0] + gas_ees_row_2[util.COMMERCIAL_RATE].values[0] ) / 2 ) if len(gas_ees_row_1) else 0
+
             # Calculate EES
-            electric_ees = int( usage_mwh * surcharge_row[util.COMMERCIAL_DOL_PER_MWH].values[0] )
-            gas_ees = int( usage_therms * surcharge_row[util.COMMERCIAL_DOL_PER_THERM].values[0] )
+            electric_ees = int( usage_mwh * elec_com_rate )
+            gas_ees = int( usage_therms * gas_com_rate )
 
             # Report findings
             report_findings( year, town, sector, electric_ees, gas_ees )
@@ -171,7 +186,11 @@ if __name__ == '__main__':
     # Read tables from database
     df_gr = pd.read_sql_table( 'GeographicReport', engine, index_col=util.ID )
     df_towns = pd.read_sql_table( 'Towns', engine, index_col=util.ID )
-    df_ees = pd.read_sql_table( 'EfficiencySurcharge', engine, index_col=util.ID )
+    df_elec_ees = pd.read_sql_table( 'ElectricEesRates', engine, index_col=util.ID )
+    df_elec_ees[util.YEAR] = df_elec_ees[util.YEAR].astype(int)
+    df_gas_ees = pd.read_sql_table( 'GasEesRates', engine, index_col=util.ID )
+    df_gas_ees[util.YEAR] = df_gas_ees[util.YEAR].astype(int)
+    df_gas_ees[util.COMMERCIAL_RATE] = df_gas_ees[util.COMMERCIAL_RATE].astype(float)
 
     # Initialize dataframe of analysis results
     df_analysis = df_gr.copy( deep=True )

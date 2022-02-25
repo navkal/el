@@ -27,8 +27,11 @@ if __name__ == '__main__':
     print( '\n=======> Raw Geographic Report' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/geographic_report -l year -r 1 -n "Gas Incentives" -o ../db/{0} -t RawGeographicReport'.format( args.output_filename ) )
 
-    print( '\n=======> Efficiency Surcharge' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_save/efficiency_surcharge.xlsx -o ../db/{0} -t EfficiencySurcharge'.format( args.output_filename ) )
+    print( '\n=======> Electric EES Rates' )
+    os.system( 'python xl_to_db.py -i ../xl/mass_save/electric_ees_rates.xlsx -o ../db/{0} -t ElectricEesRates -n "Electric Utility" -s "Year,Electric Utility"'.format( args.output_filename ) )
+
+    print( '\n=======> Gas EES Rates' )
+    os.system( 'python xl_to_db.py -i ../xl/mass_save/gas_ees_rates.xlsx -o ../db/{0} -t GasEesRates -n "Gas Utility" -s "Year,Gas Utility"'.format( args.output_filename ) )
 
 
     #
@@ -50,13 +53,16 @@ if __name__ == '__main__':
 
     # Create table of towns
     print( '\n=======> Towns' )
-    os.system( 'python mass_save_towns.py -d ../db/{0} -p ../xl/mass_save/population_2020.xlsx -e ../xl/mass_save/poverty_rates.xlsx'.format( args.output_filename ) )
+    os.system( 'python mass_save_towns.py -d ../db/{0} -p ../xl/mass_save/population_2020.xlsx -e ../xl/mass_save/poverty_rates.xlsx -u ../xl/mass_save/electric_utilities.xlsx -v ../xl/mass_save/gas_utilities.xlsx'.format( args.output_filename ) )
 
 
     #
     # Analyze MassSave data
     #
+    print( '\n=======> Analyze' )
     os.system( 'python mass_save_analyze.py -d ../db/{0}'.format( args.output_filename ) )
+
+    print( '\n=======> Summarize' )
     os.system( 'python mass_save_summarize.py -s "Residential & Low-Income" -t SummaryResidential -d ../db/{0}'.format( args.output_filename ) )
     os.system( 'python mass_save_summarize.py -s "Commercial & Industrial" -t SummaryCommercial -d ../db/{0}'.format( args.output_filename ) )
     os.system( 'python mass_save_summarize.py -s "Total" -t SummaryTotal -d ../db/{0}'.format( args.output_filename ) )
