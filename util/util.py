@@ -427,15 +427,6 @@ CONSISTENT_COLUMN_NAMES = \
         'Precinct #': PRECINCT_NUMBER,
         'Voter Status': VOTER_STATUS,
     },
-    'EfficiencySurcharge': \
-    {
-        'Year': YEAR,
-        'Electric Residential': RESIDENTIAL_DOL_PER_MWH,
-        'Electric Discount': DISCOUNT_DOL_PER_MWH,
-        'Electric Commercial': COMMERCIAL_DOL_PER_MWH,
-        'Gas Residential': RESIDENTIAL_DOL_PER_THERM,
-        'Gas Commercial': COMMERCIAL_DOL_PER_THERM,
-    },
     'EjCommunities': \
     {
         'TOWN_NAME': TOWN_NAME,
