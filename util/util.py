@@ -536,6 +536,16 @@ CONSISTENT_COLUMN_NAMES = \
         'Rec Sequence Number': 'rec_sequence_number',
         'Ward Number': 'ward_number',
     },
+    'ElectricEesRates': \
+    {
+        'Year': YEAR,
+        'Electric Utility': ELECTRIC_UTILITY,
+        'R-1': RESIDENTIAL_R1_RATE,
+        'R-2': RESIDENTIAL_R2_RATE,
+        'C&I': COMMERCIAL_RATE,
+        'Notes': 'notes',
+        'URL': 'url',
+    },
     'Employees': \
     {
         'TOWN/': DEPARTMENT,
@@ -549,6 +559,16 @@ CONSISTENT_COLUMN_NAMES = \
         '*RETRO': 'retroactive_pay',
         'TOTAL GROSS': 'total_gross_pay',
     },
+    'GasEesRates': \
+    {
+        'Year': YEAR,
+        'Gas Utility': GAS_UTILITY,
+        'Residential': RESIDENTIAL_RATE,
+        'C&I': COMMERCIAL_RATE,
+        'Notes': 'notes',
+        'URL': 'url',
+        'Docket Number': 'docket_number',
+    },
     'Gender_2014': \
     {
         'Resident Id Number': RESIDENT_ID,
@@ -560,16 +580,6 @@ CONSISTENT_COLUMN_NAMES = \
         'Precinct': 'precinct',
         'Building': 'building',
         'Address': 'address',
-    },
-    'RawElectricEesRates': \
-    {
-        'Year': YEAR,
-        'Electric Utility': ELECTRIC_UTILITY,
-        'R-1': RESIDENTIAL_R1_RATE,
-        'R-2': RESIDENTIAL_R2_RATE,
-        'C&I': COMMERCIAL_RATE,
-        'Notes': 'notes',
-        'URL': 'url',
     },
     'RawElectricUsage': \
     {
@@ -589,16 +599,6 @@ CONSISTENT_COLUMN_NAMES = \
         'Nov': NOV,
         'Dec': DEC,
         'Annual': ANNUAL_ELECTRIC_USAGE,
-    },
-    'RawGasEesRates': \
-    {
-        'Year': YEAR,
-        'Gas Utility': GAS_UTILITY,
-        'Residential': RESIDENTIAL_RATE,
-        'C&I': COMMERCIAL_RATE,
-        'Notes': 'notes',
-        'URL': 'url',
-        'Docket Number': 'docket_number',
     },
     'RawGasUsage': \
     {

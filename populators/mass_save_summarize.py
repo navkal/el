@@ -51,7 +51,6 @@ if __name__ == '__main__':
 
         # Get current town
         town = df_group.iloc[0][util.TOWN_NAME]
-        print( town )
 
         # Initialize summary row for current town
         summary_row = pd.Series( dtype=object )

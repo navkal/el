@@ -103,7 +103,6 @@ def report_totals( year, town ):
 def analyze_town( town_row ):
 
     town = town_row[util.TOWN_NAME]
-    print( town )
 
     elec_utility = town_row[util.ELECTRIC_UTILITY]
     gas_utility_1 = town_row[util.GAS_UTILITY_1]
