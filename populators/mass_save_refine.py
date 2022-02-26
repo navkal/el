@@ -15,12 +15,13 @@ if __name__ == '__main__':
 
     # Retrieve and validate arguments
     parser = argparse.ArgumentParser( description='Clean up raw energy usage table from MassSave' )
-    parser.add_argument( '-d', dest='db_filename',  help='Database filename' )
-    parser.add_argument( '-i', dest='input_table',  help='Input table name' )
-    parser.add_argument( '-o', dest='output_table',  help='Output table name' )
-    parser.add_argument( '-r', dest='remove_columns',  help='Remove columns' )
-    parser.add_argument( '-n', dest='numeric_columns',  help='Numeric columns' )
-    parser.add_argument( '-z', dest='zero_value',  help='Value to replace with zero' )
+    parser.add_argument( '-d', dest='db_filename', help='Database filename' )
+    parser.add_argument( '-i', dest='input_table', help='Input table name' )
+    parser.add_argument( '-o', dest='output_table', help='Output table name' )
+    parser.add_argument( '-r', dest='remove_columns', help='Remove columns' )
+    parser.add_argument( '-n', dest='numeric_columns', help='Numeric columns' )
+    parser.add_argument( '-z', dest='zero_value', help='Value to replace with zero' )
+    parser.add_argument( '-x', dest='drop_input_table', action='store_true', help='Drop input table?' )
     args = parser.parse_args()
 
     # Open the database
@@ -66,6 +67,10 @@ if __name__ == '__main__':
 
         # Set numeric datatype
         df[col] = df[col].astype(int)
+
+    # Optionally drop input table
+    if args.drop_input_table:
+        cur.execute( 'DROP TABLE IF EXISTS ' + args.input_table )
 
     # Save result to database
     util.create_table( args.output_table, conn, cur, df=df )

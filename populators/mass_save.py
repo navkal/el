@@ -52,11 +52,11 @@ if __name__ == '__main__':
 
     print( '\n=======> Electric EES Rates' )
     numeric_columns = 'year'
-    os.system( 'python mass_save_refine.py -i RawElectricEesRates -o ElectricEesRates -n {0} -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
+    os.system( 'python mass_save_refine.py -i RawElectricEesRates -x -o ElectricEesRates -n {0} -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
 
     print( '\n=======> Gas EES Rates' )
     numeric_columns = 'year'
-    os.system( 'python mass_save_refine.py -i RawGasEesRates -o GasEesRates -n {0} -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
+    os.system( 'python mass_save_refine.py -i RawGasEesRates -x -o GasEesRates -n {0} -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
 
     #
     # Create table of towns
