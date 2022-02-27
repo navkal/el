@@ -42,8 +42,10 @@ if __name__ == '__main__':
         column_name_map[year + '%'] = prefix + 'incentives_as_%_of_ees'
         column_name_map[year + 'mu'] = prefix + 'mwh_used_avg'
         column_name_map[year + 'ms'] = prefix + 'mwh_saved_avg'
+        column_name_map[year + 'm%'] = prefix + 'mwh_saved_as_%_of_used'
         column_name_map[year + 'tu'] = prefix + 'therms_used_avg'
         column_name_map[year + 'ts'] = prefix + 'therms_saved_avg'
+        column_name_map[year + 't%'] = prefix + 'therms_saved_as_%_of_used'
 
     # Create empty summary dataframe
     df_summary = pd.DataFrame( columns=column_name_map.keys() )
@@ -74,8 +76,10 @@ if __name__ == '__main__':
             pct = int( 100 * df_range[util.COMBINED_INCENTIVES_OUT].sum() / df_range[util.COMBINED_EES_IN].sum() )
             mwhu = int( df_range[util.ANNUAL_ELECTRIC_USAGE].mean() )
             mwhs = int( df_range[util.ANNUAL_ELECTRIC_SAVINGS].mean() )
+            mwhp = round( 100 * mwhs / mwhu, 4 ) if mwhu else 0
             thmu = int( df_range[util.ANNUAL_GAS_USAGE].mean() )
             thms = int( df_range[util.ANNUAL_GAS_SAVINGS].mean() )
+            thmp = round( 100 * thms / thmu, 4 ) if thmu else 0
 
             # Save statistics in summary row
             range_start = df_range.at[0, util.YEAR]
@@ -83,8 +87,10 @@ if __name__ == '__main__':
             summary_row[range_start + '%'] = pct
             summary_row[range_start + 'mu'] = mwhu
             summary_row[range_start + 'ms'] = mwhs
+            summary_row[range_start + 'm%'] = mwhp
             summary_row[range_start + 'tu'] = thmu
             summary_row[range_start + 'ts'] = thms
+            summary_row[range_start + 't%'] = thmp
 
         # Save summary row in dataframe
         df_summary = df_summary.append( summary_row, ignore_index=True )
