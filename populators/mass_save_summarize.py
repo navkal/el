@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     # Read Analysis table from database
     df_analysis = pd.read_sql_table( 'Analysis', engine, index_col=util.ID )
-    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE, util.COMBINED_EES_IN, util.COMBINED_INCENTIVES_OUT, util.COMBINED_EES_MINUS_INCENTIVES] ]
+    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_ELECTRIC_SAVINGS, util.ANNUAL_GAS_USAGE, util.ANNUAL_GAS_SAVINGS, util.COMBINED_EES_IN, util.COMBINED_INCENTIVES_OUT, util.COMBINED_EES_MINUS_INCENTIVES] ]
 
     # Determine column names
     column_name_map = { util.TOWN_NAME: util.TOWN_NAME, util.POPULATION: util.POPULATION }
@@ -40,8 +40,10 @@ if __name__ == '__main__':
         prefix = str( last_year - int( year ) + 1 ) + '_yr_'
         column_name_map[year + '$'] = prefix + 'ees_minus_incentives_$'
         column_name_map[year + '%'] = prefix + 'incentives_as_%_of_ees'
-        column_name_map[year + 'm'] = prefix + 'mwh_avg'
-        column_name_map[year + 't'] = prefix + 'therms_avg'
+        column_name_map[year + 'mu'] = prefix + 'mwh_used_avg'
+        column_name_map[year + 'ms'] = prefix + 'mwh_saved_avg'
+        column_name_map[year + 'tu'] = prefix + 'therms_used_avg'
+        column_name_map[year + 'ts'] = prefix + 'therms_saved_avg'
 
     # Create empty summary dataframe
     df_summary = pd.DataFrame( columns=column_name_map.keys() )
@@ -70,15 +72,19 @@ if __name__ == '__main__':
             # Calculate summary statistics for this time range
             dol = int( df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() )
             pct = int( 100 * df_range[util.COMBINED_INCENTIVES_OUT].sum() / df_range[util.COMBINED_EES_IN].sum() )
-            mwh = int( df_range[util.ANNUAL_ELECTRIC_USAGE].sum() / len( df_range ) )
-            thm = int( df_range[util.ANNUAL_GAS_USAGE].sum() / len( df_range ) )
+            mwhu = int( df_range[util.ANNUAL_ELECTRIC_USAGE].mean() )
+            mwhs = int( df_range[util.ANNUAL_ELECTRIC_SAVINGS].mean() )
+            thmu = int( df_range[util.ANNUAL_GAS_USAGE].mean() )
+            thms = int( df_range[util.ANNUAL_GAS_SAVINGS].mean() )
 
             # Save statistics in summary row
             range_start = df_range.at[0, util.YEAR]
             summary_row[range_start + '$'] = dol
             summary_row[range_start + '%'] = pct
-            summary_row[range_start + 'm'] = mwh
-            summary_row[range_start + 't'] = thm
+            summary_row[range_start + 'mu'] = mwhu
+            summary_row[range_start + 'ms'] = mwhs
+            summary_row[range_start + 'tu'] = thmu
+            summary_row[range_start + 'ts'] = thms
 
         # Save summary row in dataframe
         df_summary = df_summary.append( summary_row, ignore_index=True )
