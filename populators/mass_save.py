@@ -75,6 +75,12 @@ if __name__ == '__main__':
     os.system( 'python mass_save_summarize.py -s "Total" -t SummaryTotal -d ../db/{0}'.format( args.output_filename ) )
 
     #
+    # Calculate statistics
+    #
+    print( '\n=======> Cost per Saved Therm' )
+    os.system( 'python mass_save_cost_per_saved_therm.py -t CostPerSavedTherm -d ../db/{0}'.format( args.output_filename ) )
+
+    #
     # Publish database
     #
     print( '\n=======> Publish' )
