@@ -24,15 +24,27 @@ if __name__ == '__main__':
 
     # Read Analysis table from database
     df_analysis = pd.read_sql_table( 'Analysis', engine, index_col=util.ID )
-    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.INCENTIVES_PER_SAVED_THERM] ]
+    df_analysis = df_analysis[ [util.YEAR, util.TOWN_NAME, util.SECTOR, util.ANNUAL_GAS_USAGE, util.ANNUAL_GAS_SAVINGS, util.INCENTIVES_PER_SAVED_THERM] ]
 
     # Initialize empty dataframe
-    df_cost = pd.DataFrame( columns=[util.YEAR, util.SECTOR, util.MEDIAN_INCENTIVES_PER_SAVED_THERM, util.AVG_INCENTIVES_PER_SAVED_THERM, util.STD_INCENTIVES_PER_SAVED_THERM] )
+    cost_columns = \
+    [
+        util.YEAR,
+        util.SECTOR,
+        util.TOTAL_ANNUAL_GAS_USAGE,
+        util.TOTAL_ANNUAL_GAS_SAVINGS,
+        util.MEDIAN_INCENTIVES_PER_SAVED_THERM,
+        util.AVG_INCENTIVES_PER_SAVED_THERM,
+        util.STD_INCENTIVES_PER_SAVED_THERM
+    ]
+    df_cost = pd.DataFrame( columns=cost_columns )
 
     # Iterate over analysis dataframe
     for idx, df_group in df_analysis.groupby( by=[util.YEAR, util.SECTOR] ):
 
         # Calculate statistics for current year and sector
+        used = df_group[util.ANNUAL_GAS_USAGE].sum()
+        saved = df_group[util.ANNUAL_GAS_SAVINGS].sum()
         med = df_group[util.INCENTIVES_PER_SAVED_THERM].median()
         avg = df_group[util.INCENTIVES_PER_SAVED_THERM].mean()
         std = df_group[util.INCENTIVES_PER_SAVED_THERM].std()
@@ -42,12 +54,14 @@ if __name__ == '__main__':
         {
             util.YEAR: df_group.iloc[0][util.YEAR],
             util.SECTOR: df_group.iloc[0][util.SECTOR],
+            util.TOTAL_ANNUAL_GAS_USAGE: used,
+            util.TOTAL_ANNUAL_GAS_SAVINGS: saved,
             util.MEDIAN_INCENTIVES_PER_SAVED_THERM: med,
             util.AVG_INCENTIVES_PER_SAVED_THERM: avg,
             util.STD_INCENTIVES_PER_SAVED_THERM: std,
         }
 
-        # Add row to final dataframe
+        # Add row to result dataframe
         df_row = pd.DataFrame( [dc_row] )
         df_cost = pd.concat( [df_cost, df_row] )
 
