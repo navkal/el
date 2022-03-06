@@ -567,7 +567,7 @@ CONSISTENT_COLUMN_NAMES = \
         'C&I': COMMERCIAL_RATE,
         'Notes': 'notes',
         'URL': 'url',
-        'Docket Number': 'docket_number',
+        'Docket': 'docket',
     },
     'Gender_2014': \
     {
