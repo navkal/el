@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument( '-o', dest='output_table', help='Output table name' )
     parser.add_argument( '-r', dest='remove_columns', help='Remove columns' )
     parser.add_argument( '-n', dest='numeric_columns', help='Numeric columns' )
-    parser.add_argument( '-z', dest='zero_value', help='Value to replace with zero' )
+    parser.add_argument( '-z', dest='zero_values', help='Values to replace with zero' )
     parser.add_argument( '-x', dest='drop_input_table', action='store_true', help='Drop input table?' )
     args = parser.parse_args()
 
@@ -45,28 +45,31 @@ if __name__ == '__main__':
         df = df[ df[util.TOWN_NAME] != 'All Towns' ]
 
     # Replace text with 0
-    if args.zero_value:
-        df = df.replace( args.zero_value, '0' )
+    if args.zero_values:
+        zero_values = args.zero_values.split( ',' )
+        for zero_value in zero_values:
+            df = df.replace( zero_value, '0' )
 
     # Clean up numeric columns
-    col_names = args.numeric_columns.split( ',' )
+    if args.numeric_columns:
+        col_names = args.numeric_columns.split( ',' )
 
-    for col in col_names:
+        for col in col_names:
 
-        # Remove dollar signs
-        df[col] = df[col].replace( '\$', '', regex=True )
+            # Remove dollar signs
+            df[col] = df[col].replace( '\$', '', regex=True )
 
-        # Remove commas
-        df[col] = df[col].replace( ',', '', regex=True )
+            # Remove commas
+            df[col] = df[col].replace( ',', '', regex=True )
 
-        # Strip spaces
-        df[col] = df[col].str.strip()
+            # Strip spaces
+            df[col] = df[col].str.strip()
 
-        # Drop rows with non-numeric values
-        df = df.drop( axis='rows', index=df[ ~df[col].str.isdigit() ].index )
+            # Drop rows with non-numeric values
+            df = df.drop( axis='rows', index=df[ ~df[col].str.isdigit() ].index )
 
-        # Set numeric datatype
-        df[col] = df[col].astype(int)
+            # Set numeric datatype
+            df[col] = df[col].astype(int)
 
     # Optionally drop input table
     if args.drop_input_table:

@@ -35,7 +35,7 @@ def get_usage_values( df_group, sector ):
     return ( usage_mwh, usage_therms )
 
 
-def report_findings( year, town, sector, electric_ees, gas_ees ):
+def report_findings( year, town, sector, electric_ees, gas_ees, usage_mwh, usage_therms ):
 
     # Retrieve values
     row = df_analysis[ ( df_analysis[util.YEAR] == year ) & ( df_analysis[util.TOWN_NAME] == town ) & ( df_analysis[util.SECTOR] == sector ) ]
@@ -52,6 +52,8 @@ def report_findings( year, town, sector, electric_ees, gas_ees ):
     combined_ees_in = electric_ees + gas_ees
     combined_incentives_out = electric_incentives + gas_incentives
     combined_ees_minus_incentives = electric_ees_minus_incentives + gas_ees_minus_incentives
+    mwh_saved_as_pct_of_used = ( 100 * ( mwh_saved / usage_mwh ) ) if usage_mwh else 0
+    therms_saved_as_pct_of_used = ( 100 * ( therms_saved / usage_therms ) ) if usage_therms else 0
 
     # Report findings in analysis dataframe
     index = row.index.values[0]
@@ -64,6 +66,8 @@ def report_findings( year, town, sector, electric_ees, gas_ees ):
     df_analysis.at[index, util.COMBINED_EES_IN] = combined_ees_in
     df_analysis.at[index, util.COMBINED_INCENTIVES_OUT] = combined_incentives_out
     df_analysis.at[index, util.COMBINED_EES_MINUS_INCENTIVES] = combined_ees_minus_incentives
+    df_analysis.at[index, util.MWH_SAVED_AS_PCT_OF_USED] = mwh_saved_as_pct_of_used
+    df_analysis.at[index, util.THERMS_SAVED_AS_PCT_OF_USED] = therms_saved_as_pct_of_used
 
 
 def report_totals( year, town ):
@@ -138,8 +142,8 @@ def analyze_town( town_row ):
         if usage_mwh is not None and usage_therms is not None:
 
             # Extract EES rates
-            elec_r1_rate = elec_ees_row[util.RESIDENTIAL_R1_RATE].values[0] * 1000
-            elec_r2_rate = elec_ees_row[util.RESIDENTIAL_R2_RATE].values[0] * 1000
+            elec_r1_rate = ( elec_ees_row[util.RESIDENTIAL_R1_RATE].values[0] * 1000 ) if len(elec_ees_row) else 0
+            elec_r2_rate = ( elec_ees_row[util.RESIDENTIAL_R2_RATE].values[0] * 1000 ) if len(elec_ees_row) else 0
             gas_res_rate = ( ( gas_ees_row_1[util.RESIDENTIAL_RATE].values[0] + gas_ees_row_2[util.RESIDENTIAL_RATE].values[0] ) / 2 ) if len(gas_ees_row_1) else 0
 
             # Calculate EES
@@ -149,7 +153,7 @@ def analyze_town( town_row ):
             gas_ees = int( usage_therms * gas_res_rate )
 
             # Report findings
-            report_findings( year, town, sector, electric_ees, gas_ees )
+            report_findings( year, town, sector, electric_ees, gas_ees, usage_mwh, usage_therms )
 
         # Commercial
         sector = util.SECTOR_COM_AND_IND
@@ -158,7 +162,7 @@ def analyze_town( town_row ):
         if usage_mwh is not None and usage_therms is not None:
 
             # Extract EES rates
-            elec_com_rate = elec_ees_row[util.COMMERCIAL_RATE].values[0] * 1000
+            elec_com_rate = ( elec_ees_row[util.COMMERCIAL_RATE].values[0] * 1000 ) if len(elec_ees_row) else 0
             gas_com_rate = ( ( gas_ees_row_1[util.COMMERCIAL_RATE].values[0] + gas_ees_row_2[util.COMMERCIAL_RATE].values[0] ) / 2 ) if len(gas_ees_row_1) else 0
 
             # Calculate EES
@@ -166,7 +170,7 @@ def analyze_town( town_row ):
             gas_ees = int( usage_therms * gas_com_rate )
 
             # Report findings
-            report_findings( year, town, sector, electric_ees, gas_ees )
+            report_findings( year, town, sector, electric_ees, gas_ees, usage_mwh, usage_therms )
 
         # Calculate totals of Residential and Commercial values
         report_totals( year, town )
@@ -199,6 +203,8 @@ if __name__ == '__main__':
     df_analysis[util.COMBINED_EES_IN] = 0
     df_analysis[util.COMBINED_INCENTIVES_OUT] = 0
     df_analysis[util.COMBINED_EES_MINUS_INCENTIVES] = 0
+    df_analysis[util.MWH_SAVED_AS_PCT_OF_USED] = 0.0
+    df_analysis[util.THERMS_SAVED_AS_PCT_OF_USED] = 0.0
 
     # Create dataframe for 'Total' rows that were missing from original data
     df_analysis_totals = pd.DataFrame( columns=df_analysis.columns )
@@ -219,6 +225,8 @@ if __name__ == '__main__':
     {
         util.INCENTIVES_PER_SAVED_MWH: 2,
         util.INCENTIVES_PER_SAVED_THERM: 2,
+        util.MWH_SAVED_AS_PCT_OF_USED: 2,
+        util.THERMS_SAVED_AS_PCT_OF_USED: 2,
     }
 
     for column in df_analysis.columns[FIRST_NUMERIC_COLUMN:]:

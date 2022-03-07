@@ -234,6 +234,8 @@ SECTOR_TOTAL = 'Total'
 COMBINED_EES_IN = 'combined_ees_in_$'
 COMBINED_INCENTIVES_OUT = 'combined_incentives_out_$'
 COMBINED_EES_MINUS_INCENTIVES = 'combined_ees_minus_incentives_$'
+MWH_SAVED_AS_PCT_OF_USED = 'mwh_saved_as_%_of_used'
+THERMS_SAVED_AS_PCT_OF_USED = 'therms_saved_as_%_of_used'
 
 JAN = 'jan'
 FEB = 'feb'
