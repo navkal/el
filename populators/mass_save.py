@@ -80,6 +80,9 @@ if __name__ == '__main__':
     print( '\n=======> Cost per Saved Therm' )
     os.system( 'python mass_save_cost_per_saved_therm.py -t CostPerSavedTherm -d ../db/{0}'.format( args.output_filename ) )
 
+    print( '\n=======> Cost per Saved MWh' )
+    os.system( 'python mass_save_cost_per_saved_mwh.py -t CostPerSavedMwh -d ../db/{0}'.format( args.output_filename ) )
+
     #
     # Publish database
     #
