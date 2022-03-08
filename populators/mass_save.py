@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     print( '\n=======> Geographic Report' )
     numeric_columns = 'annual_electric_usage_mwh,annual_electric_savings_mwh,electric_incentives_$,annual_gas_usage_therms,annual_gas_savings_therms,gas_incentives_$'
-    os.system( 'python mass_save_refine.py -i RawGeographicReport -o GeographicReport -r zip_code -n {0} -z "No gas,Municipal" -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
+    os.system( 'python mass_save_refine.py -i RawGeographicReport -o GeographicReport -r zip_code -n {0} -z "No gas,Municipal" -p "Protected" -c GeographicReportDropped -d ../db/{1}'.format( numeric_columns, args.output_filename ) )
 
     #
     # Create table of towns
