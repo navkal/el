@@ -9,6 +9,7 @@ import sys
 sys.path.append( '../util' )
 import util
 
+
 #------------------------------------------------------
 
 
@@ -75,11 +76,11 @@ if __name__ == '__main__':
             dol = int( df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() )
             ees = df_range[util.COMBINED_EES_IN].sum()
             pct = int( 100 * df_range[util.COMBINED_INCENTIVES_OUT].sum() / ees ) if ees else 0
-            mwhu = int( df_range[util.ANNUAL_ELECTRIC_USAGE].mean() )
-            mwhs = int( df_range[util.ANNUAL_ELECTRIC_SAVINGS].mean() )
+            mwhu = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_USAGE ).mean() )
+            mwhs = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_SAVINGS ).mean() )
             mwhp = round( 100 * mwhs / mwhu, 4 ) if mwhu else 0
-            thmu = int( df_range[util.ANNUAL_GAS_USAGE].mean() )
-            thms = int( df_range[util.ANNUAL_GAS_SAVINGS].mean() )
+            thmu = int( util.nonzero( df_range, util.ANNUAL_GAS_USAGE ).mean() )
+            thms = int( util.nonzero( df_range, util.ANNUAL_GAS_SAVINGS ).mean() )
             thmp = round( 100 * thms / thmu, 4 ) if thmu else 0
 
             # Save statistics in summary row

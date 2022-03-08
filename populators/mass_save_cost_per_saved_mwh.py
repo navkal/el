@@ -46,9 +46,10 @@ if __name__ == '__main__':
         # Calculate statistics for current year and sector
         used = df_group[util.ANNUAL_ELECTRIC_USAGE].sum()
         saved = df_group[util.ANNUAL_ELECTRIC_SAVINGS].sum()
-        med = df_group[util.INCENTIVES_PER_SAVED_MWH].median()
-        avg = df_group[util.INCENTIVES_PER_SAVED_MWH].mean()
-        std = df_group[util.INCENTIVES_PER_SAVED_MWH].std()
+        nz_column = util.nonzero( df_group, util.INCENTIVES_PER_SAVED_MWH )
+        med = nz_column.median()
+        avg = nz_column.mean()
+        std = nz_column.std()
         pct = ( 100 * saved / used ) if used else 0
 
         # Create row with new values

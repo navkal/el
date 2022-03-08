@@ -997,6 +997,19 @@ PUBLISH_INFO = \
 }
 
 
+# Return column with no zero values, or all zero values
+def nonzero( df, column ):
+
+    # Drop zeroes from the column
+    df_drop = df[ df[column]!=0 ]
+
+    # If result is empty, use original dataframe
+    if len( df_drop ) == 0:
+        df_drop = df
+
+    # Return the column
+    return df_drop[column]
+
 
 # Convert likely_dem_score to party_preference_score
 def likely_dem_to_party_preference_score( dem_score ):
