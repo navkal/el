@@ -532,7 +532,7 @@ if __name__ == '__main__':
     #
 
     # Set up columns for merge
-    df_census[util.RADDR_STREET_NUMBER] = df_census[util.RADDR_STREET_NUMBER].fillna('').astype(str)
+    df_census[util.RADDR_STREET_NUMBER] = df_census[util.RADDR_STREET_NUMBER].fillna(0).astype(int).astype(str)
     df_census[util.RADDR_STREET_NAME] = df_census[util.RADDR_STREET_NAME].fillna('').astype(str)
     df_census[ADDR] = df_census[util.RADDR_STREET_NUMBER] + ' ' + df_census[util.RADDR_STREET_NAME]
     df_census[ADDR] = df_census.apply( lambda row: normalize.normalize_address( row, ADDR ), axis=1 )
@@ -547,7 +547,7 @@ if __name__ == '__main__':
     #
 
     # Set up columns for merge
-    df_assessment[util.LADDR_STREET_NUMBER] = df_assessment[util.LADDR_STREET_NUMBER].fillna('').astype(str)
+    df_assessment[util.LADDR_STREET_NUMBER] = df_assessment[util.LADDR_STREET_NUMBER].fillna(0).astype(int).astype(str)
     df_assessment[util.LADDR_STREET_NAME] = df_assessment[util.LADDR_STREET_NAME].fillna('').astype(str)
     df_assessment[ADDR] = df_assessment[util.LADDR_STREET_NUMBER] + ' ' + df_assessment[util.LADDR_STREET_NAME]
     df_assessment[ADDR] = df_assessment.apply( lambda row: normalize.normalize_address( row, ADDR ), axis=1 )

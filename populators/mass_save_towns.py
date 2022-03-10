@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     # Isolate 2019 residential usage statistics
     df_usage = df_gr.copy()
-    df_usage = df_usage[ ( df_usage[util.SECTOR]==util.SECTOR_RES_AND_LOW ) & ( df_usage[util.YEAR]==DATA_YEAR ) ]
+    df_usage = df_usage[ ( df_usage[util.SECTOR]==util.SECTOR_RES_AND_LOW ) & ( df_usage[util.YEAR]==int(DATA_YEAR) ) ]
     df_usage = df_usage[ [util.TOWN_NAME, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE] ]
 
     # Calculate per-capita energy usage

@@ -20,15 +20,15 @@ def zero_protected_groups( df, col_names ):
 
         # First group - electric data
         if ( row[c[0]] == p ) or ( row[c[1]] == p ) or ( row[c[2]] == p ) :
-            row[c[0]] = '0'
-            row[c[1]] = '0'
-            row[c[2]] = '0'
+            df.at[index, c[0]] = '0'
+            df.at[index, c[1]] = '0'
+            df.at[index, c[2]] = '0'
 
         # Second group - gas data
         if ( row[c[3]] == p ) or ( row[c[4]] == p ) or ( row[c[5]] == p ) :
-            row[c[3]] = '0'
-            row[c[4]] = '0'
-            row[c[5]] = '0'
+            df.at[index, c[3]] = '0'
+            df.at[index, c[4]] = '0'
+            df.at[index, c[5]] = '0'
 
     # If all cells in both electric and gas data are 0, drop the row
     drop_index = df[ (df[c[0]]=='0') & (df[c[1]]=='0') & (df[c[2]]=='0') & (df[c[3]]=='0') & (df[c[4]]=='0') & (df[c[5]]=='0') ].index

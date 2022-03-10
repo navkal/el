@@ -90,6 +90,9 @@ if __name__ == '__main__':
     df_water = df_water.drop( columns=[util.ID, util.ACCOUNT_NUMBER, util.SERVICE, util.TRANSACTION_DATE, util.TRANSACTION_TYPE, util.UNITS] )
     df_water = df_water.dropna( subset=[ util.CURRENT_DATE, util.PRIOR_DATE ], how='any' )
 
+    # Replace null meter numbers
+    df_water[util.METER_NUMBER] = df_water[util.METER_NUMBER].fillna('')
+
     # Sort
     df_water = df_water.sort_values( by=[util.SERVICE_ID, util.CURRENT_DATE] )
 

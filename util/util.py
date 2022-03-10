@@ -1255,11 +1255,8 @@ def prepare_for_database( df, table_name ):
     # Correct misspelled and inconsistent column names
     df = rename_columns( df, table_name )
 
-    # Fix zip codes
-    df = fix_zip_codes( df )
-
-    # Fix integer columns
-    df = fix_int_columns( df )
+    # Fix numeric columns
+    df = fix_numeric_columns( df )
 
     # Fix date columns
     df = fix_date_columns( df )
@@ -1308,7 +1305,7 @@ def strip_apostrophes( df ):
                 if b_has_apostrophe:
 
                     # Strip apostrophes from the column
-                    df[column_name] = df[column_name].str.replace( r"['`]", '' )
+                    df[column_name] = df[column_name].str.replace( r"['`]", '', regex=True )
 
     return df
 
@@ -1338,24 +1335,16 @@ def strip_ends( df ):
     return df
 
 
-# Fix all zip codes in specified dataframe
-def fix_zip_codes( df ):
+# Fix numeric columns in specified dataframe
+def fix_numeric_columns( df ):
 
     for column_name in df.columns:
 
         if column_name.lower().find( 'zip' ) != -1:
             df[column_name] = fix_zip_code( df[column_name] )
 
-    return df
-
-
-# Fix integer columns in specified dataframe
-def fix_int_columns( df ):
-
-    for column_name in df.columns:
-
-        if ( column_name.lower().find( 'year' ) != -1 ) or ( column_name.lower().find( 'number' ) != -1 ) or ( column_name.lower().find( 'reading' ) != -1 ) or ( column_name.lower().find( 'phone' ) != -1 ):
-            df[column_name] = df[column_name].fillna( '' )
+        elif df[column_name].dtype == object:
+            df[column_name] = pd.to_numeric( df[column_name], errors='ignore' )
 
     return df
 

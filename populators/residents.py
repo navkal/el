@@ -360,8 +360,8 @@ if __name__ == '__main__':
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
-    # Read census tables from database
-    df_census = pd.read_sql_table( 'Census', engine, index_col=util.ID, columns=[util.ID, util.RESIDENT_ID, util.LAST_NAME, util.FIRST_NAME, util.DATE_OF_BIRTH, util.PARTY_AFFILIATION, util.OCCUPATION, util.RADDR_STREET_NUMBER_SUFFIX, util.RADDR_APARTMENT_NUMBER, util.PRECINCT_NUMBER] )
+    # Read census table from database
+    df_census = pd.read_sql_table( 'Census', engine, columns=[util.RESIDENT_ID, util.LAST_NAME, util.FIRST_NAME, util.DATE_OF_BIRTH, util.PARTY_AFFILIATION, util.OCCUPATION, util.RADDR_STREET_NUMBER_SUFFIX, util.RADDR_APARTMENT_NUMBER, util.PRECINCT_NUMBER] )
     df_census[util.FIRST_NAME] = df_census[util.FIRST_NAME].fillna( '' )
     df_census[util.PARTY_AFFILIATION] = df_census[util.PARTY_AFFILIATION].str.strip()
     df_gender = pd.read_sql_table( 'Gender_2014', engine, columns=[util.RESIDENT_ID,util.GENDER] )

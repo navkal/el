@@ -38,9 +38,9 @@ def calculate_mean_engagement_score( row, partition_column, voter_affiliation=No
 
 def calculate_mean_assessed_value( row, partition_column ):
     df_res = df_residents[ df_residents[partition_column] == row[partition_column] ]
-    df_res = df_res.dropna( subset=[util.TOTAL_ASSESSED_VALUE] )
+    df_res = df_res[ df_res[util.TOTAL_ASSESSED_VALUE] > 0 ]
     df_res = df_res.drop_duplicates( subset=[util.NORMALIZED_STREET_NUMBER, util.NORMALIZED_STREET_NAME] )
-    mean = df_res[util.TOTAL_ASSESSED_VALUE].mean() if ( len( df_res ) > 0 ) else 0
+    mean = int( df_res[util.TOTAL_ASSESSED_VALUE].mean() ) if ( len( df_res ) > 0 ) else 0
     return mean
 
 #------------------------------------------------------
@@ -64,6 +64,7 @@ if __name__ == '__main__':
 
     # Read Residents table and isolate voters
     df_residents = pd.read_sql_table( 'Residents', engine, parse_dates=True )
+    df_residents[util.TOTAL_ASSESSED_VALUE] = df_residents[util.TOTAL_ASSESSED_VALUE].astype(float).fillna(0).astype(int)
     df_voters = df_residents[ df_residents[util.VOTED] == util.YES ]
     df_local_voters = df_voters[ df_voters[util.LOCAL_ELECTIONS_VOTED] > 0 ]
     df_local_voters = df_local_voters[ [args.partition_column, util.LOCAL_ELECTIONS_VOTED, util.PARTY_AFFILIATION] ]
@@ -117,7 +118,7 @@ if __name__ == '__main__':
     df_partitions[util.MEAN_VOTER_ENGAGEMENT_SCORE] = df_partitions.apply( lambda row: calculate_mean_engagement_score( row, args.partition_column ), axis=1 )
     df_partitions[util.MEAN_LIKELY_DEM_VOTER_ENGAGEMENT_SCORE] = df_partitions.apply( lambda row: calculate_mean_engagement_score( row, args.partition_column, util.D ), axis=1 )
     df_partitions[util.MEAN_LIKELY_REPUB_VOTER_ENGAGEMENT_SCORE] = df_partitions.apply( lambda row: calculate_mean_engagement_score( row, args.partition_column, util.R ), axis=1 )
-    df_partitions[util.MEAN_TOTAL_ASSESSED_VALUE] = df_partitions.apply( lambda row: calculate_mean_assessed_value( row, args.partition_column ), axis=1 ).astype(int)
+    df_partitions[util.MEAN_TOTAL_ASSESSED_VALUE] = df_partitions.apply( lambda row: calculate_mean_assessed_value( row, args.partition_column ), axis=1 )
 
     # Sort on partition
     df_partitions[args.partition_column] = df_partitions[args.partition_column].astype(str)

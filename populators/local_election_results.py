@@ -43,7 +43,7 @@ if __name__ == '__main__':
         else:
             df.at[index, util.OFFICE] = office
             df.at[index, util.CANDIDATE] = row[util.OFFICE_OR_CANDIDATE]
-            df.at[index, util.TOTAL] = row[util.PRECINCT_1:util.PRECINCT_9].sum()
+            df.at[index, util.TOTAL] = row[util.PRECINCT_1:util.PRECINCT_9].astype(int).sum()
 
     df = df.drop( columns=[util.OFFICE_OR_CANDIDATE] )
     df = df.dropna( subset=[util.PRECINCT_1] )

@@ -189,8 +189,15 @@ if __name__ == '__main__':
     # Read tables from database
     df_gr = pd.read_sql_table( 'GeographicReport', engine, index_col=util.ID )
     df_towns = pd.read_sql_table( 'Towns', engine, index_col=util.ID )
+
     df_elec_ees = pd.read_sql_table( 'ElectricEesRates', engine, index_col=util.ID )
+    df_elec_ees[util.RESIDENTIAL_R1_RATE] = df_elec_ees[util.RESIDENTIAL_R1_RATE].astype(float)
+    df_elec_ees[util.RESIDENTIAL_R2_RATE] = df_elec_ees[util.RESIDENTIAL_R2_RATE].astype(float)
+    df_elec_ees[util.COMMERCIAL_RATE] = df_elec_ees[util.COMMERCIAL_RATE].astype(float)
+
     df_gas_ees = pd.read_sql_table( 'GasEesRates', engine, index_col=util.ID )
+    df_gas_ees[util.RESIDENTIAL_RATE] = df_gas_ees[util.RESIDENTIAL_RATE].astype(float)
+    df_gas_ees[util.COMMERCIAL_RATE] = df_gas_ees[util.COMMERCIAL_RATE].astype(float)
 
     # Initialize dataframe of analysis results
     df_analysis = df_gr.copy( deep=True )
