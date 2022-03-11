@@ -7,6 +7,7 @@ import numpy as np
 import sqlite3
 import sqlalchemy
 
+
 ######################
 #
 # Sample parameter sequences
@@ -19,9 +20,11 @@ import sqlalchemy
 #
 ######################
 
+
 TABLE_NAME = 'table_name'
 TAB_NAME = 'tab_name'
 WORKBOOK_STRUCTURE = 'Workbook Structure'
+
 
 # Open the SQLite database
 def open_database():
@@ -47,7 +50,7 @@ def read_database():
     conn, cur, engine = open_database()
 
     # Fetch names of all tables
-    cur.execute( 'SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "sqlite_%";' )
+    cur.execute( 'SELECT name FROM sqlite_master WHERE type="table" OR type="view" AND name NOT LIKE "sqlite_%";' )
     rows = cur.fetchall()
 
     # Built pandas representation of input database
