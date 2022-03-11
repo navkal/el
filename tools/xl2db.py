@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import sqlite3
 
+
 ######################
 #
 # Sample parameter sequences
@@ -16,6 +17,7 @@ import sqlite3
 # -i xl2db_int.xlsx -o xl2db_int.sqlite -t Example -n
 #
 ######################
+
 
 # Main program
 if __name__ == '__main__':

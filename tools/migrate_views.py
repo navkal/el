@@ -6,6 +6,19 @@ import sqlalchemy
 from shutil import copyfile
 
 
+######################
+#
+# Sample parameter sequence
+#
+# -i db_1.sqlite -v db_2.sqlite -o result.sqlite
+#
+# Combines db_1 and db_2 as follows:
+# - Copies db_1 to result
+# - Adds views from db_2 to result
+#
+######################
+
+
 # Open the SQLite database
 def open_database( filename ):
 
