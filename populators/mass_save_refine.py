@@ -10,8 +10,8 @@ sys.path.append( '../util' )
 import util
 
 
-# Drop rows that are useless due to unavailable data
-def drop_hidden_data( df, col_names ):
+# Redact protected cells and drop rows that contain insufficient data
+def redact_and_drop( df, col_names ):
 
     import time
     START_TIME = time.time()
@@ -20,12 +20,13 @@ def drop_hidden_data( df, col_names ):
     redact_protected( df, col_names[:3] )
     redact_protected( df, col_names[3:] )
 
-    # If all cells in both electric and gas data are 0, drop the row
-    c = col_names
-    drop_index = df[ (df[c[0]]=='0') & (df[c[1]]=='0') & (df[c[2]]=='0') & (df[c[3]]=='0') & (df[c[4]]=='0') & (df[c[5]]=='0') ].index
+    # Drop fully redacted rows
+    df_is_zero = ( df[col_names] == '0' )
+    sr_all_zero = df_is_zero.all( axis=1 )
+    drop_index = sr_all_zero.index[sr_all_zero]
     df = df.drop( drop_index )
 
-    print( '\nTime to drop rows with insufficient data: {0} seconds'.format( round( ( time.time() - START_TIME ) * 1000000 ) / 1000000 ) )
+    print( '\nTime to redact and drop: {0} seconds'.format( round( ( time.time() - START_TIME ), 5 ) ) )
 
     return df
 
@@ -96,9 +97,9 @@ if __name__ == '__main__':
     if args.numeric_columns:
         col_names = args.numeric_columns.split( ',' )
 
-        # Handle cell groups and rows containing insufficient data
+        # Redact protected cells and drop rows that contain insufficient data
         if args.protection_text:
-            df = drop_hidden_data( df, col_names )
+            df = redact_and_drop( df, col_names )
 
         for col in col_names:
 

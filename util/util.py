@@ -1491,7 +1491,6 @@ def publish_database( input_db, output_filename, publish_info ):
         df.to_sql( table_name, conn, index=False )
 
 
-
 def report_elapsed_time( prefix='\n', start_time=START_TIME ):
     elapsed_time = round( ( time.time() - start_time ) * 1000 ) / 1000
     minutes, seconds = divmod( elapsed_time, 60 )
