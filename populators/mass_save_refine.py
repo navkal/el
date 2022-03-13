@@ -10,31 +10,40 @@ sys.path.append( '../util' )
 import util
 
 
-# When any cell in a group is protected, set all cells in the group to 0
-def zero_protected_groups( df, col_names ):
+# Drop rows that are useless due to unavailable data
+def drop_hidden_data( df, col_names ):
 
-    p = args.protection_text
-    c = col_names
+    import time
+    START_TIME = time.time()
 
-    for index, row in df.iterrows():
-
-        # First group - electric data
-        if ( row[c[0]] == p ) or ( row[c[1]] == p ) or ( row[c[2]] == p ) :
-            df.at[index, c[0]] = '0'
-            df.at[index, c[1]] = '0'
-            df.at[index, c[2]] = '0'
-
-        # Second group - gas data
-        if ( row[c[3]] == p ) or ( row[c[4]] == p ) or ( row[c[5]] == p ) :
-            df.at[index, c[3]] = '0'
-            df.at[index, c[4]] = '0'
-            df.at[index, c[5]] = '0'
+    # Redact cell groups that contain protected data
+    redact_protected( df, col_names[:3] )
+    redact_protected( df, col_names[3:] )
 
     # If all cells in both electric and gas data are 0, drop the row
+    c = col_names
     drop_index = df[ (df[c[0]]=='0') & (df[c[1]]=='0') & (df[c[2]]=='0') & (df[c[3]]=='0') & (df[c[4]]=='0') & (df[c[5]]=='0') ].index
     df = df.drop( drop_index )
 
+    print( '\nTime to drop rows with insufficient data: {0} seconds'.format( round( ( time.time() - START_TIME ) * 1000000 ) / 1000000 ) )
+
     return df
+
+
+# In supplied group of related columns, redact rows containing protected cells
+def redact_protected( df, related_columns ):
+
+    # Isolate related columns
+    df_related = df[related_columns]
+
+    # Identify cells that are protected
+    df_is_protected = ( df_related == args.protection_text )
+
+    # Identify rows that have protected cells
+    any_protected = df_is_protected.any( axis=1 )
+
+    # Set to zero all cells in identified rows
+    df.loc[any_protected, related_columns] = '0'
 
 
 #------------------------------------------------------
@@ -87,9 +96,9 @@ if __name__ == '__main__':
     if args.numeric_columns:
         col_names = args.numeric_columns.split( ',' )
 
-        # Handle cell groups containing protected values
+        # Handle cell groups and rows containing insufficient data
         if args.protection_text:
-            df = zero_protected_groups( df, col_names )
+            df = drop_hidden_data( df, col_names )
 
         for col in col_names:
 

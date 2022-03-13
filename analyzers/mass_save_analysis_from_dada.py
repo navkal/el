@@ -11,7 +11,7 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.width', 1000)
 
 
-db_path = '../db/mass_save_for_viraj.sqlite'
+db_path = '../db/mass_save.sqlite'
 list_tables_query = """
 SELECT name FROM sqlite_master
 WHERE type='table';
