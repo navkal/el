@@ -2,7 +2,6 @@
 
 import argparse
 import pandas as pd
-import numpy as np
 import sqlite3
 
 
@@ -16,6 +15,9 @@ import sqlite3
 # Convert floating point columns to int:
 # -i xl2db_int.xlsx -o xl2db_int.sqlite -t Example -n
 #
+# Skip leading rows of input file:
+# -i xl2db_int.xlsx -o xl2db_int.sqlite -t Example -r <number_of_rows>
+#
 ######################
 
 
@@ -28,10 +30,13 @@ if __name__ == '__main__':
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     parser.add_argument( '-t', dest='output_table_name',  help='Output table name - Name of target table in SQLite database file', required=True )
     parser.add_argument( '-n', dest='float_to_int',  help='Convert float to int?', action='store_true' )
+    parser.add_argument( '-r', dest='skip_rows', type=int, help='Number of leading rows to skip' )
     args = parser.parse_args()
 
+    skiprows = range( args.skip_rows ) if ( args.skip_rows != None ) else None
+
     # Read the spreadsheet and clean up column labels
-    df = pd.read_excel( args.input_filename )
+    df = pd.read_excel( args.input_filename, skiprows=skiprows )
     df.columns = df.columns.astype( str )
     df.columns = df.columns.str.replace( ' ', '' )
 
