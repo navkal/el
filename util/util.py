@@ -161,6 +161,7 @@ PHONE = 'phone'
 METER_NUMBER = 'meter_number'
 SERVICE_ID = 'service_id'
 DESCRIPTION = 'description'
+_DESC = '_' + DESCRIPTION
 CURRENT_DATE = 'current_date'
 CURRENT_READING = 'current_reading'
 PRIOR_DATE = 'prior_date'
@@ -298,6 +299,32 @@ RESIDENTIAL_R1_RATE = 'residential_r1_rate'
 RESIDENTIAL_R2_RATE = 'residential_r2_rate'
 COMMERCIAL_RATE = 'commercial_rate'
 
+GIS_ID = 'gis_id'
+OWNERS_NAME = 'owners_name'
+LOCATION = 'location'
+YEAR_BUILT = 'year_built'
+EFFECTIVE_YEAR_BUILT = 'effective_year_built'
+YEAR_REMODELED = 'year_remodeled'
+BASEMENT = 'basement'
+BATHROOM_STYLE = 'bathroom_style'
+FIREPLACES = 'number_of_fireplaces'
+HEATING_TYPE = 'heating_type'
+KITCHEN_STYLE = 'kitchen_style'
+FULL_BATHS = 'number_of_full_baths'
+HALF_BATHS = 'number_of_half_baths'
+BEDROOOMS = 'number_of_bedrooms'
+ROOMS = 'number_of_rooms'
+ROOF_TYPE = 'roof_type'
+ROOF_COVER = 'roof_cover'
+ROOF_STRUCTURE = 'roof_structure'
+HEATING_FUEL = 'heating_fuel'
+LAND_USE_CODE = 'primary_land_use_code'
+SALE_PRICE = 'sale_price'
+STORY_HEIGHT = 'story_height'
+AC_TYPE = 'ac_type'
+_CODE = '_code'
+
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \
@@ -327,9 +354,9 @@ CONSISTENT_COLUMN_NAMES = \
         'Utility2': 'utility_code_2',
         'Utility3': 'utility_code_3',
         'Traffic': 'traffic_code',
-        'LUC': 'primary_land_use_code',
-        'YearBuilt': 'year_built',
-        'EffYr': 'effective_year_built',
+        'LUC': LAND_USE_CODE,
+        'YearBuilt': YEAR_BUILT,
+        'EffYr': EFFECTIVE_YEAR_BUILT,
         'TotalAcres': 'total_acres',
         'GrossBldArea': 'gross_building_area',
         'BuildType': 'building_type_1',
@@ -337,27 +364,27 @@ CONSISTENT_COLUMN_NAMES = \
         'BuildType3': 'building_type_3',
         'FinArea': 'finished_building_area',
         'NumofBuilding': 'number_of_buildings',
-        'StoryHeight': 'story_height',
+        'StoryHeight': STORY_HEIGHT,
         'RentalLivUnits': 'rental_living_units',
-        'Rooms': 'number_of_rooms',
-        'Bedrooms': 'number_of_bedrooms',
-        'Fullbaths': 'number_of_full_baths',
-        'HalfBaths': 'number_of_half_baths',
+        'Rooms': ROOMS,
+        'Bedrooms': BEDROOOMS,
+        'Fullbaths': FULL_BATHS,
+        'HalfBaths': HALF_BATHS,
         'OtherFixtures': 'number_of_other_fixtures',
         'BathRating': 'bathroom_rating',
         'Kitchens': 'number_of_kitchens',
         'KitchenRating': 'kitchen_rating',
-        'FirePlaces': 'number_of_fireplaces',
+        'FirePlaces': FIREPLACES,
         'WSFlues': 'number_of_wood_stove_flues',
         'SolarHotWater': 'solar_hot_water',
         'CentralVac': 'central_vacuum',
-        'HeatType': 'heating_type',
-        'HeatFuel': 'heating_fuel',
+        'HeatType': HEATING_TYPE,
+        'HeatFuel': HEATING_FUEL,
         'PercentAC': 'percent_air_conditioned',
         'BasementArea': 'basement_area',
         'FinBasementArea': 'finished_basement_area',
-        'RoofType': 'roof_type',
-        'RoofCover': 'roof_cover',
+        'RoofType': ROOF_TYPE,
+        'RoofCover': ROOF_COVER,
         'ExtWall': 'exterior_wall_type',
         'IntWall': 'interior_wall_type',
         'AttachedGarage': 'attached_garage_area',
@@ -371,7 +398,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Cond': 'building_condition',
         'LegalReference': 'legal_reference_number',
         'LegalRefDate': LEGAL_REFERENCE_SALE_DATE,
-        'SalePrice': 'sale_price',
+        'SalePrice': SALE_PRICE,
         'NAL': NAL_DESCRIPTION,
         'Grantor': GRANTOR,
         'PrevLegalReference': 'previous_legal_reference_number',
@@ -659,6 +686,107 @@ CONSISTENT_COLUMN_NAMES = \
         'P-9': PRECINCT_9,
         'election_date': ELECTION_DATE,
         'PRECINCTS:': OFFICE_OR_CANDIDATE,
+    },
+    'Residences_1': \
+    {
+        'REM_ACCT_NUM': ACCOUNT_NUMBER,
+        'REM_GIS_ID': GIS_ID,
+        'REM_OWN_NAME': OWNERS_NAME,
+        'REM_PRCL_LOCN': LOCATION,
+        'PRC_TTL_ASSESS': TOTAL_ASSESSED_VALUE,
+        'REM_USE_CODE': LAND_USE_CODE,
+        'OWN_NAME1': OWNER_1_NAME,
+        'OWN_NAME2': OWNER_2_NAME,
+        'MAD_MAIL_ADDR1': MADDR_LINE.format( 1 ),
+        'MAD_MAIL_ADDR2': MADDR_LINE.format( 2 ),
+        'MAD_MAIL_CITY': MADDR_CITY,
+        'MAD_MAIL_STATE': MADDR_STATE,
+        'MAD_MAIL_ZIP': MADDR_ZIP_CODE,
+        'SLH_SALE_DATE': LEGAL_REFERENCE_SALE_DATE,
+        'SLH_BOOK': 'book',
+        'SLH_PAGE': 'page',
+        'SLH_PRICE': SALE_PRICE,
+        'CNS_STORIES': STORY_HEIGHT,
+        'CNS_STORIES_DESC': STORY_HEIGHT + _DESC,
+        'CNS_ROOF_COVER': ROOF_COVER,
+        'CNS_ROOF_COVER_DESC': ROOF_COVER + _DESC,
+        'CNS_ROOF_STRUCT': ROOF_STRUCTURE,
+        'CNS_ROOF_STRUCT_DESC': ROOF_STRUCTURE + _DESC,
+        'CNS_USRFLD_82': HEATING_FUEL + _CODE,
+        'CNS_USRFLD_82_DESC': HEATING_FUEL,
+        'CNS_HEAT_TYPE': HEATING_TYPE,
+        'CNS_HEAT_TYPE_DESC': HEATING_TYPE + _DESC,
+        'CNS_AC_TYPE': AC_TYPE,
+        'CNS_AC_TYPE_DESC': AC_TYPE + _CODE,
+        'CNS_NUM_BEDRM': BEDROOOMS,
+        'CNS_NUM_BEDRM_DESC': BEDROOOMS + _DESC,
+        'CNS_NUM_BATHRM': FULL_BATHS,
+        'CNS_NUM_BATHRM_DESC': FULL_BATHS + _DESC,
+        'CNS_NUM_HALF_BATHS': HALF_BATHS,
+        'CNS_NUM_RMS': ROOMS,
+        'CNS_NUM_RMS_DESC': ROOMS + _DESC,
+        'CNS_KITCHEN_STYLE': KITCHEN_STYLE,
+        'CNS_KITCHEN_STYLE_DESC': KITCHEN_STYLE + _DESC,
+    },
+    'Residences_2': \
+    {
+        'REM_ACCT_NUM': ACCOUNT_NUMBER,
+        'REM_GIS_ID': GIS_ID,
+        'REM_OWN_NAME': OWNERS_NAME,
+        'REM_PRCL_LOCN': LOCATION,
+        'CNS_AYB': YEAR_BUILT,
+        'CNS_EYB': EFFECTIVE_YEAR_BUILT,
+        'CNS_STATUS': 'status',
+        'CNS_YEAR_REMODEL': YEAR_REMODELED,
+        'CNS_BASEMENT': BASEMENT,
+        'CNS_BASEMENT_DESC': BASEMENT + _DESC,
+        'CNS_BATHRM_STYLE': BATHROOM_STYLE,
+        'CNS_BATHRM_STYLE_DESC': BATHROOM_STYLE + _DESC,
+        'CNS_BATHRM_STYLE2': BATHROOM_STYLE + '_2',
+        'CNS_BATHRM_STYLE2_DESC': BATHROOM_STYLE + '_2' + _DESC,
+        'CNS_FIREPLACES': FIREPLACES,
+        'CNS_HEAT_TYPE': HEATING_TYPE,
+        'CNS_HEAT_TYPE_DESC': HEATING_TYPE + _DESC,
+        'CNS_USRFLD_82': HEATING_FUEL + _CODE,
+        'CNS_USRFLD_82_DESC': HEATING_FUEL,
+        'CNS_KITCHEN_STYLE': KITCHEN_STYLE,
+        'CNS_KITCHEN_STYLE_DESC': KITCHEN_STYLE + _DESC,
+        'CNS_KITCHEN_STYLE2': KITCHEN_STYLE + '_2',
+        'CNS_KITCHEN_STYLE2_DESC': KITCHEN_STYLE + '_2' + _DESC,
+        'CNS_KITCHEN_STYLE3': KITCHEN_STYLE + '_3',
+        'CNS_NUM_BATHRM': FULL_BATHS,
+        'CNS_NUM_BEDRM': BEDROOOMS,
+        'CNS_NUM_HALF_BATHS': HALF_BATHS,
+        'CNS_ROOF_COVER': ROOF_COVER,
+        'CNS_ROOF_COVER_DESC': ROOF_COVER + _DESC,
+        'CNS_ROOF_STRUCT': ROOF_STRUCTURE,
+        'CNS_ROOF_STRUCT_DESC': ROOF_STRUCTURE + _DESC,
+    },
+    'Residences_3': \
+    {
+        'Account Number': ACCOUNT_NUMBER,
+        'Gis ID': GIS_ID,
+        'Owners Name': OWNERS_NAME,
+        'Location': LOCATION,
+        'Year Built': YEAR_BUILT,
+        'Effective Year Built': EFFECTIVE_YEAR_BUILT,
+        'Condition': 'condition',
+        'Year Remodeled': YEAR_REMODELED,
+        'Basement': BASEMENT,
+        'Bath Style:': BATHROOM_STYLE,
+        'Fireplaces': FIREPLACES,
+        'Heat Type:': HEATING_TYPE,
+        'Kitchen Style:': KITCHEN_STYLE,
+        'Kitchen Style Desc': KITCHEN_STYLE + _DESC,
+        'Total Bthrms:': FULL_BATHS,
+        'Total Bedrooms:': BEDROOOMS,
+        'Total Half Baths:': HALF_BATHS,
+        'Total Rooms:': ROOMS,
+        'Roof Cover': ROOF_COVER,
+        'Roof Cover Desc': ROOF_COVER + _DESC,
+        'Roof Structure:': ROOF_STRUCTURE,
+        'Roof Struct Desc': ROOF_STRUCTURE + _DESC,
+        'Style:': 'style',
     },
     'Solar': \
     {
