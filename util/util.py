@@ -300,7 +300,7 @@ RESIDENTIAL_R2_RATE = 'residential_r2_rate'
 COMMERCIAL_RATE = 'commercial_rate'
 
 GIS_ID = 'gis_id'
-OWNERS_NAME = 'owners_name'
+OWNER_NAME = 'owner_name'
 LOCATION = 'location'
 YEAR_BUILT = 'year_built'
 EFFECTIVE_YEAR_BUILT = 'effective_year_built'
@@ -323,6 +323,11 @@ SALE_PRICE = 'sale_price'
 STORY_HEIGHT = 'story_height'
 AC_TYPE = 'ac_type'
 _CODE = '_code'
+BOOK = 'book'
+PAGE = 'page'
+STATUS = 'status'
+BUILDING_CONDITION = 'building_condition'
+STYLE = 'style'
 
 
 CONSISTENT_COLUMN_NAMES = \
@@ -395,7 +400,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Floor': 'floor_type',
         'BaseYear': 'base_depreciation_year',
         'Grade': 'building_grade',
-        'Cond': 'building_condition',
+        'Cond': BUILDING_CONDITION,
         'LegalReference': 'legal_reference_number',
         'LegalRefDate': LEGAL_REFERENCE_SALE_DATE,
         'SalePrice': SALE_PRICE,
@@ -691,7 +696,7 @@ CONSISTENT_COLUMN_NAMES = \
     {
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
         'REM_GIS_ID': GIS_ID,
-        'REM_OWN_NAME': OWNERS_NAME,
+        'REM_OWN_NAME': OWNER_NAME,
         'REM_PRCL_LOCN': LOCATION,
         'PRC_TTL_ASSESS': TOTAL_ASSESSED_VALUE,
         'REM_USE_CODE': LAND_USE_CODE,
@@ -703,8 +708,8 @@ CONSISTENT_COLUMN_NAMES = \
         'MAD_MAIL_STATE': MADDR_STATE,
         'MAD_MAIL_ZIP': MADDR_ZIP_CODE,
         'SLH_SALE_DATE': LEGAL_REFERENCE_SALE_DATE,
-        'SLH_BOOK': 'book',
-        'SLH_PAGE': 'page',
+        'SLH_BOOK': BOOK,
+        'SLH_PAGE': PAGE,
         'SLH_PRICE': SALE_PRICE,
         'CNS_STORIES': STORY_HEIGHT,
         'CNS_STORIES_DESC': STORY_HEIGHT + _DESC,
@@ -732,11 +737,11 @@ CONSISTENT_COLUMN_NAMES = \
     {
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
         'REM_GIS_ID': GIS_ID,
-        'REM_OWN_NAME': OWNERS_NAME,
+        'REM_OWN_NAME': OWNER_NAME,
         'REM_PRCL_LOCN': LOCATION,
         'CNS_AYB': YEAR_BUILT,
         'CNS_EYB': EFFECTIVE_YEAR_BUILT,
-        'CNS_STATUS': 'status',
+        'CNS_STATUS': STATUS,
         'CNS_YEAR_REMODEL': YEAR_REMODELED,
         'CNS_BASEMENT': BASEMENT,
         'CNS_BASEMENT_DESC': BASEMENT + _DESC,
@@ -766,11 +771,11 @@ CONSISTENT_COLUMN_NAMES = \
     {
         'Account Number': ACCOUNT_NUMBER,
         'Gis ID': GIS_ID,
-        'Owners Name': OWNERS_NAME,
+        'Owners Name': OWNER_NAME,
         'Location': LOCATION,
         'Year Built': YEAR_BUILT,
         'Effective Year Built': EFFECTIVE_YEAR_BUILT,
-        'Condition': 'condition',
+        'Condition': BUILDING_CONDITION,
         'Year Remodeled': YEAR_REMODELED,
         'Basement': BASEMENT,
         'Bath Style:': BATHROOM_STYLE,
@@ -786,7 +791,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Roof Cover Desc': ROOF_COVER + _DESC,
         'Roof Structure:': ROOF_STRUCTURE,
         'Roof Struct Desc': ROOF_STRUCTURE + _DESC,
-        'Style:': 'style',
+        'Style:': STYLE,
     },
     'Solar': \
     {
@@ -981,6 +986,53 @@ COLUMN_ORDER = \
     [
         ELECTION_DATE,
         OFFICE_OR_CANDIDATE,
+    ],
+    'Residences':
+    [
+        ACCOUNT_NUMBER,
+        OWNER_NAME,
+        LOCATION,
+        TOTAL_ASSESSED_VALUE,
+        OWNER_1_NAME,
+        OWNER_2_NAME,
+        MADDR_LINE.format( 1 ),
+        MADDR_LINE.format( 2 ),
+        MADDR_CITY,
+        MADDR_STATE,
+        MADDR_ZIP_CODE,
+        SALE_PRICE,
+        LEGAL_REFERENCE_SALE_DATE,
+        BOOK,
+        PAGE,
+        STORY_HEIGHT,
+        STORY_HEIGHT + _DESC,
+        YEAR_BUILT,
+        EFFECTIVE_YEAR_BUILT,
+        BUILDING_CONDITION,
+        STATUS,
+        STYLE,
+        ROOF_COVER,
+        ROOF_COVER + _DESC,
+        ROOF_STRUCTURE,
+        ROOF_STRUCTURE + _DESC,
+        HEATING_FUEL + _CODE,
+        HEATING_FUEL,
+        HEATING_TYPE,
+        HEATING_TYPE + _DESC,
+        AC_TYPE,
+        AC_TYPE + _CODE,
+        ROOMS,
+        ROOMS + _DESC,
+        FULL_BATHS,
+        HALF_BATHS,
+        BATHROOM_STYLE,
+        BATHROOM_STYLE + _DESC,
+        BEDROOOMS,
+        BEDROOOMS + _DESC,
+        KITCHEN_STYLE,
+        KITCHEN_STYLE + _DESC,
+        LAND_USE_CODE,
+        GIS_ID,
     ],
     'Residents':
     [
