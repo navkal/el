@@ -1067,6 +1067,9 @@ COLUMN_ORDER = \
     ],
 }
 
+CONSISTENT_COLUMN_NAMES['LawrenceCensus'] = CONSISTENT_COLUMN_NAMES['Census']
+COLUMN_ORDER['LawrenceCensus'] = COLUMN_ORDER['Census']
+
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 
@@ -1627,6 +1630,11 @@ def transform( text, direction ):
             trans += TRANSFORM_SEQUENCE[ ( offset + ( TRANSFORM_SHIFT * direction ) ) % TRANSFORM_SEQUENCE_LENGTH ]
 
     return trans
+
+
+def create_about_table( about_what, df_about, output_filename ):
+    conn, cur, engine = open_database( output_filename, False )
+    create_table( '_About' + about_what + 'Database', conn, cur, df=df_about )
 
 
 def publish_database( input_db, output_filename, publish_info ):
