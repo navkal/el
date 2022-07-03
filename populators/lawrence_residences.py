@@ -47,6 +47,11 @@ if __name__ == '__main__':
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
+    # Read data sources
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_1.xlsx -t Residences_1 -r 1 -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_2.xlsx -t Residences_2 -r 1 -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_3.xlsx -t Residences_3 -r 1 -o {0}'.format( args.master_filename ) )
+
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 

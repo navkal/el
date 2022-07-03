@@ -16,16 +16,8 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
-    # Read data sources
-    print( '\n=======> Residences 1' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_1.xlsx -t Residences_1 -r 1 -o {0} -c'.format( args.master_filename ) )
-    print( '\n=======> Residences 2' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_2.xlsx -t Residences_2 -r 1 -o {0}'.format( args.master_filename ) )
-    print( '\n=======> Residences 3' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_3.xlsx -t Residences_3 -r 1 -o {0}'.format( args.master_filename ) )
-
     # Generate Residences table
-    print( '\n=======> Residences merge' )
+    print( '\n=======> Residences' )
     os.system( 'python lawrence_residences.py -m {0}'.format( args.master_filename ) )
 
     # Publish research copy of database
