@@ -9,7 +9,7 @@ import usaddress
 import copy
 import collections
 
-
+import util
 
 # Based on USPS guidelines: https://pe.usps.com/text/pub28/28apc_002.htm
 STREET_TYPES = \
@@ -65,6 +65,7 @@ STREET_TYPES = \
     'TERRACE': 'TER',
     'TERR': 'TER',
     'TR': 'TER',
+    'VIEW': 'VW',
     'WAY': 'WAY',
     'WAYSIDE': 'WAYSIDE',
     'WY': 'WAY',
@@ -82,6 +83,7 @@ DIRS = \
 {
     'NORTH': 'N',
     '(NORTH)': 'N',
+    'SO': 'S',
     'SOUTH': 'S',
     '(SOUTH)': 'S',
     'EAST': 'E',
@@ -117,7 +119,7 @@ EXPECTED_KEYS = \
 }
 
 # Normalize street address
-def normalize_address( row, col_name, city=' ANDOVER', verbose=False ):
+def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbose=False ):
 
     # Create original copy of the address
     original = row[col_name]
@@ -138,7 +140,7 @@ def normalize_address( row, col_name, city=' ANDOVER', verbose=False ):
     if address != '':
 
         try:
-            trailing_address_parts = city + ' XX 00000'
+            trailing_address_parts = ' ' + city + ' XX 00000'
             norm = usaddress.tag( address + trailing_address_parts )
 
             if len( norm ) and isinstance( norm[0], dict ):
@@ -189,6 +191,9 @@ def normalize_address( row, col_name, city=' ANDOVER', verbose=False ):
                         parts['StreetNamePreDirectional'] = pre_dir
                     elif pre_dir in DIRS:
                         parts['StreetNamePreDirectional'] = DIRS[pre_dir]
+                    elif re.match( r'^\d+[a-zA-Z]$', pre_dir ):
+                        parts['AddressNumber'] += '-' + pre_dir
+                        parts['StreetNamePreDirectional'] = ''
                     else:
                         print( address )
                         print( parts )
@@ -236,4 +241,48 @@ def normalize_address( row, col_name, city=' ANDOVER', verbose=False ):
         if address != original:
             print( 'Address mapped from "{0}" to "{1}"'.format( original, address ) )
 
-    return address
+    if return_parts:
+
+        if 'StreetName' in parts and re.match( r'^\d+[a-zA-Z]? ', parts['StreetName'] ) :
+            # Fix two-number address, where second number is attached to street name instead of number
+            street_split = parts['StreetName'].split()
+
+            # Append second number where it belongs
+            if not 'AddressNumber' in parts:
+                parts['AddressNumber'] = street_split[0]
+            else:
+                parts['AddressNumber'] += ' ' + street_split[0]
+
+            # Remove second number from where it doesn't belong
+            parts['StreetName'] = ' '.join( street_split[1:] )
+
+        number = parts['AddressNumber'] if 'AddressNumber' in parts else ''
+
+        street_parts = []
+        if 'StreetNamePreDirectional' in parts:
+            street_parts.append( parts['StreetNamePreDirectional'] )
+        if 'StreetName' in parts:
+            street_parts.append( parts['StreetName'] )
+        if 'StreetNamePostType' in parts:
+            street_parts.append( parts['StreetNamePostType'] )
+        street = ' '.join( street_parts )
+
+        occupancy_parts = []
+        if 'OccupancyType' in parts:
+            occupancy_parts.append( parts['OccupancyType'] )
+        if 'OccupancyIdentifier' in parts:
+            occupancy_parts.append( parts['OccupancyIdentifier'] )
+        occupancy = ' '.join( occupancy_parts )
+
+        return_value = \
+        {
+            util.NORMALIZED_ADDRESS: address,
+            util.NORMALIZED_STREET_NUMBER: number,
+            util.NORMALIZED_STREET_NAME: street,
+            util.NORMALIZED_OCCUPANCY: occupancy
+        }
+
+    else:
+        return_value = address
+
+    return return_value

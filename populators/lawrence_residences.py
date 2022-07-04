@@ -9,6 +9,12 @@ pd.set_option( 'display.width', 1000 )
 import sys
 sys.path.append( '../util' )
 import util
+import normalize
+
+ADDR = util.NORMALIZED_ADDRESS
+STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
+STREET_NAME = util.NORMALIZED_STREET_NAME
+OCCUPANCY = util.NORMALIZED_OCCUPANCY
 
 
 # Create database table documenting column name mappings
@@ -70,6 +76,10 @@ if __name__ == '__main__':
 
     # Drop empty columns
     df_merge = df_merge.dropna( how='all', axis=1 )
+
+    # Normalize addresses
+    df_merge[ADDR] = df_merge[util.LOCATION].str.replace( r"\(.*\)?", "", regex=True ).str.strip()
+    df_merge[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df_merge.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Document column names in database
     document_column_names()
