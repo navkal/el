@@ -20,16 +20,16 @@ if __name__ == '__main__':
     # Read data sources
     print( '\n=======> Census' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/census.xlsx -t LawrenceCensus -o {0} -c'.format( args.master_filename ) )
-    print( '\n=======> Residences 1' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_1.xlsx -t Residences_1 -r 1 -o {0}'.format( args.master_filename ) )
-    print( '\n=======> Residences 2' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_2.xlsx -t Residences_2 -r 1 -o {0}'.format( args.master_filename ) )
-    print( '\n=======> Residences 3' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/residences/residences_3.xlsx -t Residences_3 -r 1 -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Housing input 1' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_1.xlsx -t Housing_1 -r 1 -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Housing input 2' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_2.xlsx -t Housing_2 -r 1 -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Housing input 3' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_3.xlsx -t Housing_3 -r 1 -o {0}'.format( args.master_filename ) )
 
-    # Generate Residences table
-    print( '\n=======> Residences' )
-    os.system( 'python lawrence_residences.py -m {0}'.format( args.master_filename ) )
+    # Generate table of housing assessments
+    print( '\n=======> Housing merge' )
+    os.system( 'python lawrence_housing.py -m {0}'.format( args.master_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )

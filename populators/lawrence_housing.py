@@ -21,9 +21,9 @@ OCCUPANCY = util.NORMALIZED_OCCUPANCY
 def document_column_names():
 
     # Invert column name mappings
-    map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Residences_1'].items() }
-    map_2 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Residences_2'].items() }
-    map_3 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Residences_3'].items() }
+    map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Housing_1'].items() }
+    map_2 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Housing_2'].items() }
+    map_3 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Housing_3'].items() }
 
     # Build matrix mapping each database column name to its origins
     names = []
@@ -41,14 +41,14 @@ def document_column_names():
     df_names = pd.DataFrame( columns = ['database', 'drop_7', 'drop_6', 'drop_2'], data=names )
 
     # Save in database
-    util.create_table( 'Residences_ColumnNames', conn, cur, df=df_names )
+    util.create_table( 'Housing_ColumnNames', conn, cur, df=df_names )
 
 
 # Main program
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Correlate data in Residences tables' )
+    parser = argparse.ArgumentParser( description='Correlate data in housing tables' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
@@ -56,9 +56,9 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Retrieve tables from database
-    df_1 = pd.read_sql_table( 'Residences_1', engine, index_col=util.ID, parse_dates=True )
-    df_2 = pd.read_sql_table( 'Residences_2', engine, index_col=util.ID, parse_dates=True )
-    df_3 = pd.read_sql_table( 'Residences_3', engine, index_col=util.ID, parse_dates=True )
+    df_1 = pd.read_sql_table( 'Housing_1', engine, index_col=util.ID, parse_dates=True )
+    df_2 = pd.read_sql_table( 'Housing_2', engine, index_col=util.ID, parse_dates=True )
+    df_3 = pd.read_sql_table( 'Housing_3', engine, index_col=util.ID, parse_dates=True )
 
     # For duplicated account numbers, retain only last entry
     df_1 = df_1.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
@@ -77,14 +77,16 @@ if __name__ == '__main__':
     # Drop empty columns
     df_merge = df_merge.dropna( how='all', axis=1 )
 
-    # Normalize addresses
+    # Remove parenthesized text from addresses
     df_merge[ADDR] = df_merge[util.LOCATION].str.replace( r"\(.*\)?", "", regex=True ).str.strip()
+
+    # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_merge[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df_merge.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Document column names in database
     document_column_names()
 
-    # Save final table of residences
-    util.create_table( 'Residences', conn, cur, df=df_merge )
+    # Save final table of housing assessments
+    util.create_table( 'Assessment_Housing', conn, cur, df=df_merge )
 
     util.report_elapsed_time()

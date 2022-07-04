@@ -694,7 +694,7 @@ CONSISTENT_COLUMN_NAMES = \
         'election_date': ELECTION_DATE,
         'PRECINCTS:': OFFICE_OR_CANDIDATE,
     },
-    'Residences_1': \
+    'Housing_1': \
     {
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
         'REM_GIS_ID': GIS_ID,
@@ -735,7 +735,7 @@ CONSISTENT_COLUMN_NAMES = \
         'CNS_KITCHEN_STYLE': KITCHEN_STYLE,
         'CNS_KITCHEN_STYLE_DESC': KITCHEN_STYLE + _DESC,
     },
-    'Residences_2': \
+    'Housing_2': \
     {
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
         'REM_GIS_ID': GIS_ID,
@@ -769,7 +769,7 @@ CONSISTENT_COLUMN_NAMES = \
         'CNS_ROOF_STRUCT': ROOF_STRUCTURE,
         'CNS_ROOF_STRUCT_DESC': ROOF_STRUCTURE + _DESC,
     },
-    'Residences_3': \
+    'Housing_3': \
     {
         'Account Number': ACCOUNT_NUMBER,
         'Gis ID': GIS_ID,
@@ -989,7 +989,7 @@ COLUMN_ORDER = \
         ELECTION_DATE,
         OFFICE_OR_CANDIDATE,
     ],
-    'Residences':
+    'Assessment_Housing':
     [
         ACCOUNT_NUMBER,
         OWNER_NAME,
