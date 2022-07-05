@@ -17,15 +17,21 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
-    # Read data sources
-    print( '\n=======> Census' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/census.xlsx -t LawrenceCensus -o {0} -c'.format( args.master_filename ) )
+    # Read census data source
+    print( '\n=======> Census input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/census.xlsx -n "Res. ID" -s "Res. ID" -t RawCensus -o {0} -c'.format( args.master_filename ) )
+
+    # Generate Census table
+    print( '\n=======> Census table' )
+    os.system( 'python lawrence_census.py -m {0}'.format( args.master_filename ) )
+
+    # Read housing assessment source
     print( '\n=======> Housing input 1' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_1.xlsx -t Housing_1 -r 1 -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_1.xlsx -t RawHousing_1 -r 1 -o {0}'.format( args.master_filename ) )
     print( '\n=======> Housing input 2' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_2.xlsx -t Housing_2 -r 1 -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_2.xlsx -t RawHousing_2 -r 1 -o {0}'.format( args.master_filename ) )
     print( '\n=======> Housing input 3' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_3.xlsx -t Housing_3 -r 1 -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_3.xlsx -t RawHousing_3 -r 1 -o {0}'.format( args.master_filename ) )
 
     # Generate table of housing assessments
     print( '\n=======> Housing merge' )

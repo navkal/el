@@ -136,6 +136,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
         print( '' )
         print( 'Normalizing address in column "{0}": "{1}"'.format( col_name, address ) )
 
+    parts = {}
 
     if address != '':
 

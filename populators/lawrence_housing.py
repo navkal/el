@@ -21,9 +21,9 @@ OCCUPANCY = util.NORMALIZED_OCCUPANCY
 def document_column_names():
 
     # Invert column name mappings
-    map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Housing_1'].items() }
-    map_2 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Housing_2'].items() }
-    map_3 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['Housing_3'].items() }
+    map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawHousing_1'].items() }
+    map_2 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawHousing_2'].items() }
+    map_3 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawHousing_3'].items() }
 
     # Build matrix mapping each database column name to its origins
     names = []
@@ -56,9 +56,9 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Retrieve tables from database
-    df_1 = pd.read_sql_table( 'Housing_1', engine, index_col=util.ID, parse_dates=True )
-    df_2 = pd.read_sql_table( 'Housing_2', engine, index_col=util.ID, parse_dates=True )
-    df_3 = pd.read_sql_table( 'Housing_3', engine, index_col=util.ID, parse_dates=True )
+    df_1 = pd.read_sql_table( 'RawHousing_1', engine, index_col=util.ID, parse_dates=True )
+    df_2 = pd.read_sql_table( 'RawHousing_2', engine, index_col=util.ID, parse_dates=True )
+    df_3 = pd.read_sql_table( 'RawHousing_3', engine, index_col=util.ID, parse_dates=True )
 
     # For duplicated account numbers, retain only last entry
     df_1 = df_1.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
