@@ -31,14 +31,17 @@ if __name__ == '__main__':
     # Retrieve table from database
     df = pd.read_sql_table( 'RawCensus', engine, index_col=util.ID, parse_dates=True )
 
-    # Format addresses to be normalized
+    # Prepare address fragments for normalization
     df[util.RADDR_STREET_NUMBER] = df[util.RADDR_STREET_NUMBER].fillna(0).astype(int).astype(str)
     df[util.RADDR_STREET_NUMBER_SUFFIX] = df[util.RADDR_STREET_NUMBER_SUFFIX].fillna('').astype(str)
     df[util.RADDR_STREET_NAME] = df[util.RADDR_STREET_NAME].fillna('').astype(str)
     df[util.RADDR_APARTMENT_NUMBER] = df[util.RADDR_APARTMENT_NUMBER].fillna('').astype(str)
-    df[ADDR] = df[util.RADDR_STREET_NUMBER] + df[util.RADDR_STREET_NUMBER_SUFFIX] + ' ' + df[util.RADDR_STREET_NAME] + ' ' + df[util.RADDR_APARTMENT_NUMBER]
+
+    # Clean up apartment numbers that (inexplicably) contain date or time values
+    df.loc[ df[util.RADDR_APARTMENT_NUMBER].str.contains( ':' ), util.RADDR_APARTMENT_NUMBER ] = ''
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
+    df[ADDR] = df[util.RADDR_STREET_NUMBER] + df[util.RADDR_STREET_NUMBER_SUFFIX] + ' ' + df[util.RADDR_STREET_NAME] + ' ' + df[util.RADDR_APARTMENT_NUMBER]
     df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Overwrite table in database
