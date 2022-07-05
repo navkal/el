@@ -37,7 +37,13 @@ if __name__ == '__main__':
     df[util.RADDR_STREET_NAME] = df[util.RADDR_STREET_NAME].fillna('').astype(str)
     df[util.RADDR_APARTMENT_NUMBER] = df[util.RADDR_APARTMENT_NUMBER].fillna('').astype(str)
 
-    # Clean up apartment numbers that (inexplicably) contain date or time values
+    # Complain about timestamps in address fragments
+    # df_complain = df[ df[util.RADDR_STREET_NUMBER_SUFFIX].str.contains( ':' ) | df[util.RADDR_APARTMENT_NUMBER].str.contains( ':' )]
+    # df_complain.to_excel( '../test/census_address_defects.xlsx', index=False )
+    # exit()
+
+    # Clean up address fragments that (inexplicably) contain date or time values
+    df.loc[ df[util.RADDR_STREET_NUMBER_SUFFIX].str.contains( ':' ), util.RADDR_STREET_NUMBER_SUFFIX ] = ''
     df.loc[ df[util.RADDR_APARTMENT_NUMBER].str.contains( ':' ), util.RADDR_APARTMENT_NUMBER ] = ''
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!

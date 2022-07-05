@@ -49,7 +49,11 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
-        ],
+            'RawCensus',
+            'RawHousing_1',
+            'RawHousing_2',
+            'RawHousing_3',
+         ],
         'encipher_column_names':
         [
         ],
