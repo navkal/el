@@ -51,6 +51,6 @@ if __name__ == '__main__':
     df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Overwrite table in database
-    util.create_table( 'LawrenceCensus', conn, cur, df=df )
+    util.create_table( 'Census_L', conn, cur, df=df )
 
     util.report_elapsed_time()

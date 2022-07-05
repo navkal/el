@@ -886,7 +886,7 @@ COLUMN_ORDER = \
     [
         PARCEL_ID,
     ],
-    'Assessment_Housing':
+    'Assessment_L_Housing':
     [
         ACCOUNT_NUMBER,
         OWNER_NAME,
@@ -962,7 +962,7 @@ COLUMN_ORDER = \
     'Gender_2014':
     [
     ],
-    'LawrenceCensus':
+    'Census_L':
     [
         RESIDENT_ID,
         LAST_NAME,

@@ -87,6 +87,6 @@ if __name__ == '__main__':
     document_column_names()
 
     # Save final table of housing assessments
-    util.create_table( 'Assessment_Housing', conn, cur, df=df_merge )
+    util.create_table( 'Assessment_L_Housing', conn, cur, df=df_merge )
 
     util.report_elapsed_time()
