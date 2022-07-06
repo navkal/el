@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
-    # Read census data source
+    # Read census data
     print( '\n=======> Census input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/census.xlsx -n "Res. ID" -s "Res. ID" -t RawCensus -o {0} -c'.format( args.master_filename ) )
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     print( '\n=======> Census table' )
     os.system( 'python lawrence_census.py -m {0}'.format( args.master_filename ) )
 
-    # Read housing assessment source
+    # Read housing assessment data
     print( '\n=======> Housing input 1' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_1.xlsx -t RawHousing_1 -r 1 -o {0}'.format( args.master_filename ) )
     print( '\n=======> Housing input 2' )
@@ -42,9 +42,13 @@ if __name__ == '__main__':
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
     util.create_about_table( 'Lawrence', df_about, args.master_filename )
 
-    # Read building permit data source
-    print( '\n=======> Building Permit input' )
+    # Read Lawrence building permit data
+    print( '\n=======> City Building Permit input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits.xlsx -n "Permit#" -s "Permit#" -t BuildingPermits_L -o {0}'.format( args.master_filename ) )
+
+    # Read Columbia Gas building permit data
+    print( '\n=======> Columbia Gas Building Permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_columbia_gas.xls -n "Permit #" -u "City/Town,Address Num,Street" -s "Date,Permit #,Address Num,Street" -t BuildingPermits_L_Cga -o {0}'.format( args.master_filename ) )
 
     # Publish research copy of database
     input_db = util.read_database( args.master_filename )

@@ -25,6 +25,7 @@ if __name__ == '__main__':
     parser.add_argument( '-n', dest='dropna_subset',  help='Column subset to be considered in dropna() operation' )
     parser.add_argument( '-p', dest='drop_columns',  help='Comma-separated list of column labels to drop' )
     parser.add_argument( '-k', dest='keep_columns',  help='Comma-separated list of column labels to keep' )
+    parser.add_argument( '-u', dest='uppercase_columns',  help='Comma-separated list of column labels for conversion to uppercase' )
     parser.add_argument( '-s', dest='sort_columns',  help='Comma-separated list of column labels to be used as basis for sort' )
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     parser.add_argument( '-t', dest='output_table_name',  help='Output table name - Name of target table in SQLite database file', required=True )
@@ -54,6 +55,12 @@ if __name__ == '__main__':
     # Drop unwanted rows
     if args.dropna_subset != None:
         df_xl = df_xl.dropna( subset=args.dropna_subset.split( ',' ) )
+
+    # Convert values in specified columns to uppercase
+    if args.uppercase_columns != None:
+        uppercase_columns = args.uppercase_columns.split( ',' )
+        for col in uppercase_columns:
+            df_xl[col] = df_xl[col].fillna('').astype( str ).str.upper()
 
     # Sort based on specified column values
     if args.sort_columns != None:

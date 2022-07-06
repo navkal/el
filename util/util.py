@@ -331,6 +331,8 @@ STATUS = 'status'
 BUILDING_CONDITION = 'building_condition'
 STYLE = 'style'
 WORK_DESCRIPTION = 'work_description'
+PERMIT_NUMBER = 'permit_number'
+DATE = 'date'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -456,7 +458,7 @@ CONSISTENT_COLUMN_NAMES = \
     },
     'BuildingPermits_L': \
     {
-        'Permit#': 'permit_number',
+        'Permit#': PERMIT_NUMBER,
         'Permit Type': 'permit_type',
         'Work Description': WORK_DESCRIPTION,
         'Property Owner': OWNER_NAME,
@@ -466,6 +468,17 @@ CONSISTENT_COLUMN_NAMES = \
         'Applicant Name': 'applicant_name',
         'Applicant Phone#': 'applicant_phone',
         'Applicant Email': 'applicant_email',
+    },
+    'BuildingPermits_L_Cga': \
+    {
+        'City/Town': TOWN_NAME,
+        'Permit #': PERMIT_NUMBER,
+        'Address Num': ADDR_STREET_NUMBER,
+        'Street': ADDR_STREET_NAME,
+        'Contractor ID': 'contractor_id',
+        'Date': DATE,
+        'General Notes': 'general_notes',
+        'Insp Notes': 'inspection_notes',
     },
     'Census': \
     {
@@ -949,6 +962,14 @@ COLUMN_ORDER = \
         KITCHEN_STYLE + _DESC,
         LAND_USE_CODE,
         GIS_ID,
+    ],
+    'BuildingPermits_L_Cga':
+    [
+        DATE,
+        PERMIT_NUMBER,
+        ADDR_STREET_NUMBER,
+        ADDR_STREET_NAME,
+        TOWN_NAME,
     ],
     'Census':
     [
