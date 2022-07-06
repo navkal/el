@@ -330,7 +330,7 @@ PAGE = 'page'
 STATUS = 'status'
 BUILDING_CONDITION = 'building_condition'
 STYLE = 'style'
-
+WORK_DESCRIPTION = 'work_description'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -433,7 +433,7 @@ CONSISTENT_COLUMN_NAMES = \
     'BuildingPermits': \
     {
         PIN: 'pin',
-        'OwnerName': 'owner_name',
+        'OwnerName': OWNER_NAME,
         PERMITFOR: PERMIT_FOR,
         'DateIssued': DATE_ISSUED,
         'DateIssued/Submit': DATE_ISSUED,
@@ -448,11 +448,24 @@ CONSISTENT_COLUMN_NAMES = \
         'Type': 'occupancy_type',
         'BuildingType': 'building_type',
         'BldgType': 'building_type',
-        'WorkDescription': 'work_description',
+        'WorkDescription': WORK_DESCRIPTION,
         'ContractorName': 'contractor_name',
         PROJECTCOST: 'project_cost',
         COST: 'project_cost',
         TOTALFEE: 'total_fee',
+    },
+    'BuildingPermits_L': \
+    {
+        'Permit#': 'permit_number',
+        'Permit Type': 'permit_type',
+        'Work Description': WORK_DESCRIPTION,
+        'Property Owner': OWNER_NAME,
+        'Address': ADDRESS,
+        'Application Date': 'application_date',
+        'Status': STATUS,
+        'Applicant Name': 'applicant_name',
+        'Applicant Phone#': 'applicant_phone',
+        'Applicant Email': 'applicant_email',
     },
     'Census': \
     {
@@ -941,6 +954,17 @@ COLUMN_ORDER = \
     [
         RESIDENT_ID,
     ],
+    'Census_L':
+    [
+        RESIDENT_ID,
+        LAST_NAME,
+        FIRST_NAME,
+        MIDDLE_NAME,
+        NORMALIZED_ADDRESS,
+        NORMALIZED_STREET_NUMBER,
+        NORMALIZED_STREET_NAME,
+        NORMALIZED_OCCUPANCY,
+    ],
     'ElectionHistory':
     [
     ],
@@ -961,17 +985,6 @@ COLUMN_ORDER = \
     ],
     'Gender_2014':
     [
-    ],
-    'Census_L':
-    [
-        RESIDENT_ID,
-        LAST_NAME,
-        FIRST_NAME,
-        MIDDLE_NAME,
-        NORMALIZED_ADDRESS,
-        NORMALIZED_STREET_NUMBER,
-        NORMALIZED_STREET_NAME,
-        NORMALIZED_OCCUPANCY,
     ],
     'LocalElectionResults':
     [

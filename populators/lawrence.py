@@ -42,6 +42,10 @@ if __name__ == '__main__':
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
     util.create_about_table( 'Lawrence', df_about, args.master_filename )
 
+    # Read building permit data source
+    print( '\n=======> Building Permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits.xlsx -n "Permit#" -s "Permit#" -t BuildingPermits_L -o {0}'.format( args.master_filename ) )
+
     # Publish research copy of database
     input_db = util.read_database( args.master_filename )
     publish_info = \
