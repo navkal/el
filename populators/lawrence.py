@@ -37,18 +37,26 @@ if __name__ == '__main__':
     print( '\n=======> Housing merge' )
     os.system( 'python lawrence_housing.py -m {0}'.format( args.master_filename ) )
 
+    # Read city building permit data
+    print( '\n=======> City Building Permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits.xlsx -n "Permit#" -s "Permit#" -t RawBuildingPermits -o {0}'.format( args.master_filename ) )
+
+    # Generate city Building Permits table
+    print( '\n=======> City Building Permits table' )
+    os.system( 'python lawrence_building_permits.py -m {0}'.format( args.master_filename ) )
+
+    # Read Columbia Gas building permit data
+    print( '\n=======> Columbia Gas Building Permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_columbia_gas.xls -n "Permit #" -u "City/Town,Address Num,Street" -s "Date,Permit #,Address Num,Street" -t RawBuildingPermits_Cga -o {0}'.format( args.master_filename ) )
+
+    # Generate Columbia Gas Building Permits table
+    print( '\n=======> Columbia Gas Building Permits table' )
+    os.system( 'python lawrence_building_permits_cga.py -m {0}'.format( args.master_filename ) )
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
     util.create_about_table( 'Lawrence', df_about, args.master_filename )
-
-    # Read Lawrence building permit data
-    print( '\n=======> City Building Permit input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits.xlsx -n "Permit#" -s "Permit#" -t BuildingPermits_L -o {0}'.format( args.master_filename ) )
-
-    # Read Columbia Gas building permit data
-    print( '\n=======> Columbia Gas Building Permit input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_columbia_gas.xls -n "Permit #" -u "City/Town,Address Num,Street" -s "Date,Permit #,Address Num,Street" -t BuildingPermits_L_Cga -o {0}'.format( args.master_filename ) )
 
     # Publish research copy of database
     input_db = util.read_database( args.master_filename )
@@ -61,6 +69,8 @@ if __name__ == '__main__':
             'RawHousing_1',
             'RawHousing_2',
             'RawHousing_3',
+            'RawBuildingPermits',
+            'RawBuildingPermits_Cga',
          ],
         'encipher_column_names':
         [

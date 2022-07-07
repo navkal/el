@@ -333,6 +333,8 @@ STYLE = 'style'
 WORK_DESCRIPTION = 'work_description'
 PERMIT_NUMBER = 'permit_number'
 DATE = 'date'
+APPLICATION_DATE = 'application_date'
+
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -455,30 +457,6 @@ CONSISTENT_COLUMN_NAMES = \
         PROJECTCOST: 'project_cost',
         COST: 'project_cost',
         TOTALFEE: 'total_fee',
-    },
-    'BuildingPermits_L': \
-    {
-        'Permit#': PERMIT_NUMBER,
-        'Permit Type': 'permit_type',
-        'Work Description': WORK_DESCRIPTION,
-        'Property Owner': OWNER_NAME,
-        'Address': ADDRESS,
-        'Application Date': 'application_date',
-        'Status': STATUS,
-        'Applicant Name': 'applicant_name',
-        'Applicant Phone#': 'applicant_phone',
-        'Applicant Email': 'applicant_email',
-    },
-    'BuildingPermits_L_Cga': \
-    {
-        'City/Town': TOWN_NAME,
-        'Permit #': PERMIT_NUMBER,
-        'Address Num': ADDR_STREET_NUMBER,
-        'Street': ADDR_STREET_NAME,
-        'Contractor ID': 'contractor_id',
-        'Date': DATE,
-        'General Notes': 'general_notes',
-        'Insp Notes': 'inspection_notes',
     },
     'Census': \
     {
@@ -646,6 +624,30 @@ CONSISTENT_COLUMN_NAMES = \
     {
         'Resident Id Number': RESIDENT_ID,
         'Gender': GENDER,
+    },
+    'RawBuildingPermits': \
+    {
+        'Permit#': PERMIT_NUMBER,
+        'Permit Type': 'permit_type',
+        'Work Description': WORK_DESCRIPTION,
+        'Property Owner': OWNER_NAME,
+        'Address': ADDRESS,
+        'Application Date': APPLICATION_DATE,
+        'Status': STATUS,
+        'Applicant Name': 'applicant_name',
+        'Applicant Phone#': 'applicant_phone',
+        'Applicant Email': 'applicant_email',
+    },
+    'RawBuildingPermits_Cga': \
+    {
+        'City/Town': TOWN_NAME,
+        'Permit #': PERMIT_NUMBER,
+        'Address Num': ADDR_STREET_NUMBER,
+        'Street': ADDR_STREET_NAME,
+        'Contractor ID': 'contractor_id',
+        'Date': DATE,
+        'General Notes': 'general_notes',
+        'Insp Notes': 'inspection_notes',
     },
     'RawHousing_1': \
     {
@@ -904,8 +906,15 @@ COLUMN_GROUP = \
         IS_HOMEOWNER,
         IS_FAMILY,
     ],
-
+    'NORMALIZED_ADDRESS_PARTS':
+    [
+        NORMALIZED_ADDRESS,
+        NORMALIZED_STREET_NUMBER,
+        NORMALIZED_STREET_NAME,
+        NORMALIZED_OCCUPANCY,
+    ],
 }
+
 COLUMN_ORDER = \
 {
     'Assessment':
@@ -917,10 +926,7 @@ COLUMN_ORDER = \
         ACCOUNT_NUMBER,
         OWNER_NAME,
         LOCATION,
-        NORMALIZED_ADDRESS,
-        NORMALIZED_STREET_NUMBER,
-        NORMALIZED_STREET_NAME,
-        NORMALIZED_OCCUPANCY,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         TOTAL_ASSESSED_VALUE,
         OWNER_1_NAME,
         OWNER_2_NAME,
@@ -963,12 +969,18 @@ COLUMN_ORDER = \
         LAND_USE_CODE,
         GIS_ID,
     ],
+    'BuildingPermits_L':
+    [
+        APPLICATION_DATE,
+        PERMIT_NUMBER,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+        STATUS,
+    ],
     'BuildingPermits_L_Cga':
     [
         DATE,
         PERMIT_NUMBER,
-        ADDR_STREET_NUMBER,
-        ADDR_STREET_NAME,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         TOWN_NAME,
     ],
     'Census':
@@ -981,10 +993,7 @@ COLUMN_ORDER = \
         LAST_NAME,
         FIRST_NAME,
         MIDDLE_NAME,
-        NORMALIZED_ADDRESS,
-        NORMALIZED_STREET_NUMBER,
-        NORMALIZED_STREET_NAME,
-        NORMALIZED_OCCUPANCY,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
     ],
     'ElectionHistory':
     [
@@ -1119,7 +1128,6 @@ COLUMN_ORDER = \
 }
 
 CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
-COLUMN_ORDER['RawCensus'] = COLUMN_ORDER['Census']
 
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
