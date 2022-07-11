@@ -21,9 +21,9 @@ OCCUPANCY = util.NORMALIZED_OCCUPANCY
 def document_column_names():
 
     # Invert column name mappings
-    map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawHousing_1'].items() }
-    map_2 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawHousing_2'].items() }
-    map_3 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawHousing_3'].items() }
+    map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_1'].items() }
+    map_2 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_2'].items() }
+    map_3 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_3'].items() }
 
     # Build matrix mapping each database column name to its origins
     names = []
@@ -41,14 +41,14 @@ def document_column_names():
     df_names = pd.DataFrame( columns = ['database', 'drop_7', 'drop_6', 'drop_2'], data=names )
 
     # Save in database
-    util.create_table( 'Housing_ColumnNames', conn, cur, df=df_names )
+    util.create_table( 'Residential_ColumnNames', conn, cur, df=df_names )
 
 
 # Main program
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Correlate data in housing tables' )
+    parser = argparse.ArgumentParser( description='Correlate data in residential tables' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
@@ -56,9 +56,9 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Retrieve tables from database
-    df_1 = pd.read_sql_table( 'RawHousing_1', engine, index_col=util.ID, parse_dates=True )
-    df_2 = pd.read_sql_table( 'RawHousing_2', engine, index_col=util.ID, parse_dates=True )
-    df_3 = pd.read_sql_table( 'RawHousing_3', engine, index_col=util.ID, parse_dates=True )
+    df_1 = pd.read_sql_table( 'RawResidential_1', engine, index_col=util.ID, parse_dates=True )
+    df_2 = pd.read_sql_table( 'RawResidential_2', engine, index_col=util.ID, parse_dates=True )
+    df_3 = pd.read_sql_table( 'RawResidential_3', engine, index_col=util.ID, parse_dates=True )
 
     # For duplicated account numbers, retain only last entry
     df_1 = df_1.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # Document column names in database
     document_column_names()
 
-    # Save final table of housing assessments
-    util.create_table( 'Assessment_L_Housing', conn, cur, df=df_merge )
+    # Save final table of residential assessments
+    util.create_table( 'Assessment_L_Residential', conn, cur, df=df_merge )
 
     util.report_elapsed_time()

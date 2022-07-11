@@ -25,17 +25,27 @@ if __name__ == '__main__':
     print( '\n=======> Census table' )
     os.system( 'python lawrence_census.py -m {0}'.format( args.master_filename ) )
 
-    # Read housing assessment data
-    print( '\n=======> Housing input 1' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_1.xlsx -t RawHousing_1 -r 1 -o {0}'.format( args.master_filename ) )
-    print( '\n=======> Housing input 2' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_2.xlsx -t RawHousing_2 -r 1 -o {0}'.format( args.master_filename ) )
-    print( '\n=======> Housing input 3' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/housing_3.xlsx -t RawHousing_3 -r 1 -o {0}'.format( args.master_filename ) )
+    # Read residential assessment data
+    print( '\n=======> Residential input 1' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential_1.xlsx -t RawResidential_1 -r 1 -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Residential input 2' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential_2.xlsx -t RawResidential_2 -r 1 -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Residential input 3' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential_3.xlsx -t RawResidential_3 -r 1 -o {0}'.format( args.master_filename ) )
 
-    # Generate table of housing assessments
-    print( '\n=======> Housing merge' )
-    os.system( 'python lawrence_housing.py -m {0}'.format( args.master_filename ) )
+    # Generate table of residential assessments
+    print( '\n=======> Residential merge' )
+    os.system( 'python lawrence_residential.py -m {0}'.format( args.master_filename ) )
+
+    # Read commercial assessment data
+    print( '\n=======> Commercial input 1' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/commercial_1.xlsx -t RawCommercial_1 -r 2 -n Location -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Commercial input 2' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/commercial_2.xlsx -t RawCommercial_2 -r 2 -k "REM_ACCT_NUM,REM_USE_CODE,CNS_OCC,CNS_OCC_DESC" -n REM_USE_CODE -o {0}'.format( args.master_filename ) )
+
+    # Generate table of commercial assessments
+    print( '\n=======> Commercial merge' )
+    os.system( 'python lawrence_commercial.py -m {0}'.format( args.master_filename ) )
 
     # Read city building permit data
     print( '\n=======> City Building Permit input' )
@@ -65,12 +75,14 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
-            'RawCensus',
-            'RawHousing_1',
-            'RawHousing_2',
-            'RawHousing_3',
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
+            'RawCensus',
+            'RawCommercial_1',
+            'RawCommercial_2',
+            'RawResidential_1',
+            'RawResidential_2',
+            'RawResidential_3',
          ],
         'encipher_column_names':
         [
