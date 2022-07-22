@@ -71,8 +71,8 @@ if __name__ == '__main__':
     # Drop empty columns
     df_merge = df_merge.dropna( how='all', axis=1 )
 
-    # Remove parenthesized text from addresses
-    df_merge[ADDR] = df_merge[util.LOCATION].str.replace( r"\(.*\)?", "", regex=True ).str.strip()
+    # Clean up addresses before normalization
+    df_merge = normalize.prepare_to_normalize( df_merge, util.LOCATION, ADDR )
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_merge[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df_merge.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )

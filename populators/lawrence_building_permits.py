@@ -31,8 +31,8 @@ if __name__ == '__main__':
     # Retrieve table from database
     df = pd.read_sql_table( 'RawBuildingPermits', engine, index_col=util.ID, parse_dates=True )
 
-    # Prepare to normalize: Remove parenthesized text, clean up corner cases
-    df[ADDR] = df[util.ADDRESS].str.replace( r"\(.*\)?", "", regex=True ).str.strip()
+    # Prepare to normalize
+    df = normalize.prepare_to_normalize( df, util.ADDRESS, ADDR )
     df[ADDR] = df[ADDR].str.replace( r"UNION$", "UNION ST", regex=True )
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!

@@ -11,6 +11,45 @@ import collections
 
 import util
 
+
+ADDITIONAL_ADDRESS_INFO = 'additional_address_info'
+
+# Prepare address column for normalization
+def prepare_to_normalize( df, original_address_column_name, prepared_address_column_name, additional_info_column_name=ADDITIONAL_ADDRESS_INFO ):
+
+    paren_regex = '\(.*\)?'
+
+    # Optionally preserve text that will be excluded from the address data prepared for normalization
+    if additional_info_column_name:
+
+        # Attempt to extract text
+        df_extracted = df[original_address_column_name].str.extractall( r'(' + paren_regex + ')' )
+
+        # If text was extracted, save results in the specified column
+        if df_extracted.first_valid_index() is not None:
+
+            # Initialize column in which to save extracted text
+            df[additional_info_column_name] = None
+
+            # Iterate over extracted text
+            idx_row = 0
+            for index, row in df_extracted.iterrows():
+                if idx_row != index[0]:
+                    # Initialize string of extracted text
+                    idx_row = index[0]
+                    df.at[idx_row, additional_info_column_name] = df_extracted.loc[index][0]
+                else:
+                    # Append to string of extracted text
+                    df.at[idx_row, additional_info_column_name] += ' ' + df_extracted.loc[index][0]
+
+    # Generate clean address data that can be supplied to the normalize utility
+    # - Strip parenthesized text
+    # - Strip leading and trailing whitespace
+    # - Convert to uppercase
+    df[prepared_address_column_name] = df[original_address_column_name].str.replace( r'' + paren_regex + '', '', regex=True ).str.strip().str.upper()
+
+    return df
+
 # Based on USPS guidelines: https://pe.usps.com/text/pub28/28apc_002.htm
 STREET_TYPES = \
 {

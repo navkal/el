@@ -47,6 +47,14 @@ if __name__ == '__main__':
     print( '\n=======> Commercial merge' )
     os.system( 'python lawrence_commercial.py -m {0}'.format( args.master_filename ) )
 
+    # Read Chamber of Commerce data
+    print( '\n=======> Chamber of Commerce input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/chamber_of_commerce.xlsx -s License# -t RawChamberOfCommerce -o {0}'.format( args.master_filename ) )
+
+    # Generate expanded Chamber of Commerce table
+    print( '\n=======> Commercial merge' )
+    os.system( 'python lawrence_chamber_of_commerce.py -m {0}'.format( args.master_filename ) )
+
     # Read city building permit data
     print( '\n=======> City Building Permit input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits.xlsx -n "Permit#" -s "Permit#" -t RawBuildingPermits -o {0}'.format( args.master_filename ) )
@@ -78,6 +86,7 @@ if __name__ == '__main__':
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
             'RawCensus',
+            'RawChamberOfCommerce',
             'RawCommercial_1',
             'RawCommercial_2',
             'RawResidential_1',

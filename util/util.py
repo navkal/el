@@ -337,6 +337,7 @@ DATE = 'date'
 APPLICATION_DATE = 'application_date'
 OCCUPANCY_TYPE = 'occupancy_type'
 RENTAL_LIVING_UNITS = 'rental_living_units'
+LICENSE_NUMBER = 'license_number'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -658,6 +659,19 @@ CONSISTENT_COLUMN_NAMES = \
         'General Notes': 'general_notes',
         'Insp Notes': 'inspection_notes',
     },
+    'RawChamberOfCommerce': \
+    {
+        'License#': LICENSE_NUMBER,
+        'Applicant': 'applicant',
+        'Property Address': LOCATION,
+        'Status': STATUS,
+        'Applicant Address': 'applicant_address',
+        'Phone Number(s)': PHONE,
+        'Email Address': 'email',
+        'Num Employees': 'number_of_employees',
+        'Business Manager': 'business_manager',
+        'SBR#': 'sbr_number',
+    },
     'RawCommercial_1': \
     {
         'Account Number': ACCOUNT_NUMBER,
@@ -685,7 +699,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Heating Type': HEATING_TYPE,
         'Usrfld 208 Desc': HEATING_TYPE + _DESC,
         'AC Type': AC_TYPE,
-        'Usrfld 209 Desc': AC_TYPE+ _DESC,
+        'Usrfld 209 Desc': AC_TYPE + _DESC,
         'Total Bedrms': BEDROOOMS,
         'Usrfld 216 Desc': BEDROOOMS + _DESC,
         'Total Baths': BATHS,
