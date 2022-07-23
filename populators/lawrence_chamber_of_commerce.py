@@ -17,10 +17,10 @@ STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
 
 
-def expand_addresses():
+def expand_addresses( df ):
 
-    # Extract assessment entries that represent address ranges
-    df_ranges = df_assessment.copy()
+    # Extract entries that represent address ranges
+    df_ranges = df.copy()
     df_ranges = df_ranges[ df_ranges[ADDR].str.match( '^\d+ \d+ .*$' ) ]
 
     # Generate a new dataframe that expands the ranges into individual addresses
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     df_merge = df_merge.dropna( subset=[util.ACCOUNT_NUMBER] )
 
     # Create dataframe with address ranges expanded into individual addresses
-    df_expanded = expand_addresses()
+    df_expanded = expand_addresses( df_assessment )
 
     # Retry the merge
     df_retry = pd.merge( df_failed, df_expanded, how='left', on=[ADDR] )
