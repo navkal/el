@@ -6,6 +6,8 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import re
+
 import sys
 sys.path.append( '../util' )
 import util
@@ -39,19 +41,23 @@ def expand_address_ranges( df ):
 
     # Extract entries that represent address ranges
     df_ranges = df.copy()
-    df_ranges = df_ranges[ df_ranges[ADDR].str.match( '^\d+-\d+ .*$' ) ]
+    df_ranges = df_ranges[ df_ranges[ADDR].str.match( '^\d+[A-Z]*-\d+[A-Z]* .*$' ) ]
 
     # Generate a new dataframe that expands the ranges into individual addresses
     df_expanded = pd.DataFrame( columns=df_ranges.columns )
 
     for index, row in df_ranges.iterrows():
 
-        # Separate address into address range and street
+        # Extract numeric address range
         address_range = row[ADDR].split()[0].split( '-' )
+        range_start = int( re.search( '^\d*', address_range[0] ).group(0) )
+        range_end = int( re.search( '^\d*', address_range[1] ).group(0) ) + 1
+
+        # Extract street
         street = ' '.join( row[ADDR].split()[1:] )
 
         # Iterate over all numbers in the address range
-        for num in range( int( address_range[0] ), int( address_range[-1] ) + 1, 2 ):
+        for num in range( range_start, range_end, 2 ):
             new_address = str( num ) + ' ' + street
             new_row = row.copy()
             new_row[ADDR] = new_address

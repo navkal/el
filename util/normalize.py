@@ -118,6 +118,7 @@ EXPECTED_KEYS = \
     'USPSBoxID',
     'OccupancyType',
     'StreetNamePreType',
+    'StreetNamePreModifier',
 }
 
 # Normalize street address
@@ -146,10 +147,11 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
     address = re.sub( r' ST ST ', ' ST ', address )
     address = re.sub( r' T$', ' ST', address )
     address = re.sub( r' APT FRT ', ' ', address )
+    address = re.sub( r' BROADWAY ST[A-Z]*$', ' BROADWAY ', address )
 
     # Handle hyphens
-    address = address.replace( ' - ', '-' )
-    if re.search( '^\d+ ?- ?\d+ ', address ):
+    address = re.sub( r' ?- ?', '-', address )
+    if re.search( '^\d+[A-Z]? ?- ?\d+[A-Z]? ', address ):
         address_parts = address.split( ' ', 1 )
         address_parts[1] = address_parts[1].replace( '-', ' ' )
         address = ' '.join( address_parts )
@@ -165,7 +167,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
     if address != '':
 
         try:
-            trailing_address_parts = ' ' + city + ' XX 00000'
+            trailing_address_parts = ( ( ' ' + city ) if city else '' )+ ' XX 00000'
             norm = usaddress.tag( address + trailing_address_parts )
 
             if len( norm ) and isinstance( norm[0], dict ):
@@ -254,6 +256,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
             if s_new.endswith( trailing_address_parts ):
                 address = s_new[ :-len( trailing_address_parts ) ]
             else:
+                print( '<{}> expected to end with <{}>'.format( s_new, trailing_address_parts ) )
                 print( 'BAD ENDING!!!' )
                 exit()
 
