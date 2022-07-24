@@ -12,43 +12,6 @@ import collections
 import util
 
 
-ADDITIONAL_ADDRESS_INFO = 'additional_address_info'
-
-# Prepare address column for normalization
-def prepare_to_normalize( df, original_address_column_name, prepared_address_column_name, additional_info_column_name=ADDITIONAL_ADDRESS_INFO ):
-
-    paren_regex = '\(.*\)?'
-
-    # Optionally preserve text that will be excluded from the address data prepared for normalization
-    if additional_info_column_name:
-
-        # Attempt to extract text
-        df_extracted = df[original_address_column_name].str.extractall( r'(' + paren_regex + ')' )
-
-        # If text was extracted, save results in the specified column
-        if df_extracted.first_valid_index() is not None:
-
-            # Initialize column in which to save extracted text
-            df[additional_info_column_name] = None
-
-            # Iterate over extracted text
-            idx_row = 0
-            for index, row in df_extracted.iterrows():
-                if idx_row != index[0]:
-                    # Initialize string of extracted text
-                    idx_row = index[0]
-                    df.at[idx_row, additional_info_column_name] = df_extracted.loc[index][0]
-                else:
-                    # Append to string of extracted text
-                    df.at[idx_row, additional_info_column_name] += ' ' + df_extracted.loc[index][0]
-
-    # Generate clean address data that can be supplied to the normalize utility
-    # - Strip parenthesized text
-    # - Strip leading and trailing whitespace
-    # - Convert to uppercase
-    df[prepared_address_column_name] = df[original_address_column_name].str.replace( r'' + paren_regex + '', '', regex=True ).str.strip().str.upper()
-
-    return df
 
 # Based on USPS guidelines: https://pe.usps.com/text/pub28/28apc_002.htm
 STREET_TYPES = \
@@ -164,12 +127,34 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
     original = row[col_name]
 
     # Initialize return value
-    address = original.strip()
+    address = original.strip().upper()
 
+    #
     # Help usaddress parsing algorithm with these troublesome cases
+    #
+
+    # Optionally extract and remove parenthesized text
+    if return_parts:
+        address_parts = address.split( '(', 1 )
+        address = address_parts[0]
+        additional_info = '(' + address_parts[1] if len( address_parts ) == 2 else None
+
+    # Miscellaneous typos
     address = re.sub( r' CI$', ' CIR', address )
     address = address.replace( ' CI ', ' CIR ' )
-    address = address.replace( '-', ' ' )
+    address = re.sub( r' UNION$', ' UNION ST', address )
+    address = re.sub( r' ST ST ', ' ST ', address )
+    address = re.sub( r' T$', ' ST', address )
+    address = re.sub( r' APT FRT ', ' ', address )
+
+    # Handle hyphens
+    address = address.replace( ' - ', '-' )
+    if re.search( '^\d+ ?- ?\d+ ', address ):
+        address_parts = address.split( ' ', 1 )
+        address_parts[1] = address_parts[1].replace( '-', ' ' )
+        address = ' '.join( address_parts )
+    else:
+        address = address.replace( '-', ' ' )
 
     if verbose:
         print( '' )
@@ -319,7 +304,8 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
             util.NORMALIZED_ADDRESS: address,
             util.NORMALIZED_STREET_NUMBER: number,
             util.NORMALIZED_STREET_NAME: street,
-            util.NORMALIZED_OCCUPANCY: occupancy
+            util.NORMALIZED_OCCUPANCY: occupancy,
+            util.NORMALIZED_ADDITIONAL_INFO: additional_info
         }
 
     else:

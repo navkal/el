@@ -15,6 +15,7 @@ ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
 STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
+ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 
 # Main program
@@ -48,7 +49,7 @@ if __name__ == '__main__':
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df[ADDR] = df[util.RADDR_STREET_NUMBER] + df[util.RADDR_STREET_NUMBER_SUFFIX] + ' ' + df[util.RADDR_STREET_NAME] + ' ' + df[util.RADDR_APARTMENT_NUMBER]
-    df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+    df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Overwrite table in database
     util.create_table( 'Census_L', conn, cur, df=df )

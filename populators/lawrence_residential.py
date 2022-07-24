@@ -15,6 +15,7 @@ ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
 STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
+ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 
 # Create database table documenting column name mappings
@@ -77,11 +78,9 @@ if __name__ == '__main__':
     # Drop empty columns
     df_merge = df_merge.dropna( how='all', axis=1 )
 
-    # Clean up addresses before normalization
-    df_merge = normalize.prepare_to_normalize( df_merge, util.LOCATION, ADDR )
-
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
-    df_merge[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df_merge.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+    df_merge[ADDR] = df_merge[util.LOCATION]
+    df_merge[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_merge.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Document column names in database
     document_column_names()

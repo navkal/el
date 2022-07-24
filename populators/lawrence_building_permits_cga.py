@@ -15,6 +15,7 @@ ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
 STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
+ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 
 # Main program
@@ -31,14 +32,9 @@ if __name__ == '__main__':
     # Retrieve table from database
     df = pd.read_sql_table( 'RawBuildingPermits_Cga', engine, index_col=util.ID, parse_dates=True )
 
-    # Prepare to normalize
-    df[ADDR] = df[util.ADDR_STREET_NUMBER].str.strip() + ' ' + df[util.ADDR_STREET_NAME].str.strip()
-    df[ADDR] = df[ADDR].str.replace( r" ST ST ", " ST ", regex=True ).str.strip()
-    df[ADDR] = df[ADDR].str.replace( r" T$", " ST", regex=True ).str.strip()
-    df[ADDR] = df[ADDR].str.replace( r" APT FRT ", " ", regex=True ).str.strip()
-
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
-    df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+    df[ADDR] = df[util.ADDR_STREET_NUMBER].str.strip() + ' ' + df[util.ADDR_STREET_NAME].str.strip()
+    df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Create table in database
     util.create_table( 'BuildingPermits_L_Cga', conn, cur, df=df )

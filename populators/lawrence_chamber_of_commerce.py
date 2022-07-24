@@ -15,13 +15,14 @@ ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
 STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
+ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 
 def expand_addresses( df ):
 
     # Extract entries that represent address ranges
     df_ranges = df.copy()
-    df_ranges = df_ranges[ df_ranges[ADDR].str.match( '^\d+ \d+ .*$' ) ]
+    df_ranges = df_ranges[ df_ranges[ADDR].str.match( '^\d+-\d+ .*$' ) ]
 
     # Generate a new dataframe that expands the ranges into individual addresses
     df_expanded = pd.DataFrame( columns=df_ranges.columns )
@@ -29,12 +30,14 @@ def expand_addresses( df ):
     for index, row in df_ranges.iterrows():
 
         # Separate address into address range and street
-        address_range = row[ADDR].split()[:2]
-        street = ' '.join( row[ADDR].split()[2:] )
+        address_range = row[ADDR].split()[0].split( '-' )
+        street = ' '.join( row[ADDR].split()[1:] )
+        print( '<{0}>,<{1}>'.format( address_range, street ) )
 
         # Iterate over all numbers in the address range
         for num in range( int( address_range[0] ), int( address_range[-1] ) + 1, 2 ):
             new_address = str( num ) + ' ' + street
+            print( new_address )
             new_row = row.copy()
             new_row[ADDR] = new_address
             df_expanded = df_expanded.append( new_row, ignore_index=True )
@@ -56,11 +59,9 @@ if __name__ == '__main__':
     # Retrieve raw Chamber of Commerce table from database
     df_raw = pd.read_sql_table( 'RawChamberOfCommerce', engine, index_col=util.ID, parse_dates=True )
 
-    # Clean up addresses before normalization
-    df_raw = normalize.prepare_to_normalize( df_raw, util.LOCATION, ADDR )
-
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
-    df_raw[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY]] = df_raw.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+    df_raw[ADDR] = df_raw[util.LOCATION]
+    df_raw[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_raw.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Retrieve commercial assessment table from database
     assessment_columns = \
