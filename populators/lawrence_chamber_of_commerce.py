@@ -17,8 +17,25 @@ STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
 ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
+SAVE_ADDR = 'save_normalized_address'
 
-def expand_addresses( df ):
+
+# Isolate entries that did not find matches in the merge
+def isolate_unmatched( df_merge ):
+
+    # Create dataframe of unmatched entries
+    df_unmatched = df_merge.copy()
+    df_unmatched = df_unmatched[ df_unmatched[util.ACCOUNT_NUMBER].isna() ]
+    df_unmatched = df_unmatched[df_raw.columns]
+
+    # Clear unmatched entries out of merged data
+    df_matched = df_merge.dropna( subset=[util.ACCOUNT_NUMBER] )
+
+    return df_matched, df_unmatched
+
+
+# Expand address ranges into entries that represent all addresses in the range
+def expand_address_ranges( df ):
 
     # Extract entries that represent address ranges
     df_ranges = df.copy()
@@ -32,15 +49,16 @@ def expand_addresses( df ):
         # Separate address into address range and street
         address_range = row[ADDR].split()[0].split( '-' )
         street = ' '.join( row[ADDR].split()[1:] )
-        print( '<{0}>,<{1}>'.format( address_range, street ) )
 
         # Iterate over all numbers in the address range
         for num in range( int( address_range[0] ), int( address_range[-1] ) + 1, 2 ):
             new_address = str( num ) + ' ' + street
-            print( new_address )
             new_row = row.copy()
             new_row[ADDR] = new_address
             df_expanded = df_expanded.append( new_row, ignore_index=True )
+
+    df_no_ranges = df.loc[ df.index.difference( df_ranges.index ) ]
+    df_expanded = df_expanded.append( df_no_ranges, ignore_index=True )
 
     return( df_expanded )
 
@@ -96,25 +114,43 @@ if __name__ == '__main__':
     # Merge
     df_merge = pd.merge( df_raw, df_assessment, how='left', on=[ADDR] )
 
-    # Isolate match failures in new dataframe, to retry the merge with expanded address ranges
-    df_failed = df_merge.copy()
-    df_failed = df_failed[ df_failed[util.ACCOUNT_NUMBER].isna() ]
-    df_failed = df_failed[df_raw.columns]
-    df_merge = df_merge.dropna( subset=[util.ACCOUNT_NUMBER] )
+    # Isolate unmatched entries in new dataframe, to retry the merge with expanded address ranges on right
+    df_matched, df_unmatched = isolate_unmatched( df_merge )
+    df_result = df_matched
 
     # Create dataframe with address ranges expanded into individual addresses
-    df_expanded = expand_addresses( df_assessment )
+    df_expanded_right = expand_address_ranges( df_assessment )
 
-    # Retry the merge
-    df_retry = pd.merge( df_failed, df_expanded, how='left', on=[ADDR] )
+    # Retry the merge with expanded addresses on right
+    df_merge = pd.merge( df_unmatched, df_expanded_right, how='left', on=[ADDR] )
 
-    # Append retry result to original merge
-    df_chamber = df_merge.append( df_retry, ignore_index=True )
+    # Isolate unmatched entries in new dataframe, to retry the merge with expanded address ranges on left
+    df_matched, df_unmatched = isolate_unmatched( df_merge )
+    df_result = df_result.append( df_matched, ignore_index=True )
+
+    # Create dataframe with address ranges expanded into individual addresses
+    df_unmatched[SAVE_ADDR] = df_unmatched[ADDR]
+    df_expanded_left = expand_address_ranges( df_unmatched )
+
+    # Re-retry the merge with expanded addresses on left
+    df_merge = pd.merge( df_expanded_left, df_assessment, how='left', on=[ADDR] )
+    df_merge[ADDR] = df_merge[SAVE_ADDR]
+    df_merge = df_merge.drop( columns=[SAVE_ADDR] )
+
+    # Isolate unmatched entries in new dataframe, to retry the merge with expanded address ranges on left
+    df_matched, df_unmatched = isolate_unmatched( df_merge )
+    df_result = df_result.append( df_matched, ignore_index=True )
+
+    # Append unmatched entries
+    df_result = df_result.append( df_unmatched, ignore_index=True )
+
+    # Drop duplicates
+    df_result = df_result.drop_duplicates()
 
     # Sort on license number
-    df_chamber = df_chamber.sort_values( by=[util.LICENSE_NUMBER] )
+    df_result = df_result.sort_values( by=[util.LICENSE_NUMBER, util.ACCOUNT_NUMBER] )
 
     # Save final table of Chamber of Commerce members
-    util.create_table( 'ChamberOfCommerce', conn, cur, df=df_chamber )
+    util.create_table( 'ChamberOfCommerce', conn, cur, df=df_result )
 
     util.report_elapsed_time()
