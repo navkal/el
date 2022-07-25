@@ -37,14 +37,14 @@ def isolate_unmatched( df_merge, df_result, property_type ):
     df_matched = df_merge.copy()
     df_matched = df_matched.dropna( subset=[util.ACCOUNT_NUMBER] )
 
-    print( '---' )
-    print( property_type )
-    print( 'Matched: {}, Unmatched: {}'.format( df_matched.shape, df_unmatched.shape ) )
-
     # Append matched entries to the result
     df_matched[PROPERTY_TYPE] = property_type
     df_result = df_result.append( df_matched, ignore_index=True )
 
+    # Report progress
+    print( '---' )
+    print( property_type )
+    print( 'Matched: {}, Unmatched: {}'.format( df_matched.shape, df_unmatched.shape ) )
     print( 'Result: {}'.format( df_result.shape ) )
 
     return df_result, df_unmatched
@@ -87,15 +87,17 @@ def expand_address_ranges( df ):
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Correlate Chamber of Commerce entries with commercial assessment data' )
+    parser = argparse.ArgumentParser( description='Correlate business entries with assessment data' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
-    # Retrieve raw Chamber of Commerce table from database
-    df_raw = pd.read_sql_table( 'RawChamberOfCommerce', engine, index_col=util.ID, parse_dates=True )
+    # Retrieve raw Businesses table from database
+    df_bus_1 = pd.read_sql_table( 'RawBusinesses_1', engine, index_col=util.ID, parse_dates=True )
+    df_bus_2 = pd.read_sql_table( 'RawBusinesses_2', engine, index_col=util.ID, parse_dates=True, columns=[util.LICENSE_NUMBER, util.BUSINESS_MANAGER] )
+    df_raw = pd.merge( df_bus_1, df_bus_2, how='left', on=util.LICENSE_NUMBER )
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_raw[ADDR] = df_raw[util.LOCATION]
@@ -146,46 +148,58 @@ if __name__ == '__main__':
 
     # Initialize empty result
     df_result = pd.DataFrame()
+    df_raw[SAVE_ADDR] = df_raw[ADDR]
+    df_unmatched = df_raw.copy()
 
-    # Merge Chamber of Commerce data with commercial assessment data
-    df_merge = pd.merge( df_raw, df_assessment_com, how='left', on=[ADDR] )
+    # Merge unmatched with commercial
+    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[ADDR] )
     df_result, df_unmatched = isolate_unmatched( df_merge, df_result, COMMERCIAL )
 
-    # Merge unmatched entries with residential asessment data
+    # Merge unmatched with residential
     df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[ADDR] )
     df_result, df_unmatched = isolate_unmatched( df_merge, df_result, RESIDENTIAL )
 
-    # Merge unmatched with expanded commercial assessment addresses
-    df_expanded_com = expand_address_ranges( df_assessment_com )
-    df_merge = pd.merge( df_unmatched, df_expanded_com, how='left', on=[ADDR] )
+    # Expand addresses in assessment data
+    df_assessment_com = expand_address_ranges( df_assessment_com )
+    df_assessment_res = expand_address_ranges( df_assessment_res )
+
+    # Merge unmatched with commercial
+    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[ADDR] )
     df_result, df_unmatched = isolate_unmatched( df_merge, df_result, COMMERCIAL )
 
-    # Merge unmatched with expanded residential assessment addresses
-    df_expanded_res = expand_address_ranges( df_assessment_res )
-    df_merge = pd.merge( df_unmatched, df_expanded_res, how='left', on=[ADDR] )
+    # Merge unmatched with residential
+    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[ADDR] )
     df_result, df_unmatched = isolate_unmatched( df_merge, df_result, RESIDENTIAL )
 
-    # Merge expanded unmatched with expanded commercial assessment addresses
-    df_unmatched[SAVE_ADDR] = df_unmatched[ADDR]
-    df_expanded_left = expand_address_ranges( df_unmatched )
-    df_merge = pd.merge( df_expanded_left, df_expanded_com, how='left', on=[ADDR] )
+    # Expand addresses in unmatched business data
+    df_unmatched = expand_address_ranges( df_unmatched )
+
+    # Merge unmatched with commercial
+    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[ADDR] )
+    df_merge[ADDR] = df_merge[SAVE_ADDR]
     df_result, df_unmatched = isolate_unmatched( df_merge, df_result, COMMERCIAL )
 
-    # Merge expanded unmatched with expanded residential assessment addresses
-    df_merge = pd.merge( df_unmatched, df_expanded_res, how='left', on=[ADDR] )
+    # Merge unmatched with residential
+    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[ADDR] )
+    df_merge[ADDR] = df_merge[SAVE_ADDR]
     df_result, df_unmatched = isolate_unmatched( df_merge, df_result, RESIDENTIAL )
 
     # Finish up
     df_result = df_result.append( df_unmatched, ignore_index=True )
-    df_result[ADDR] = df_result[SAVE_ADDR]
     df_result = df_result.drop( columns=[SAVE_ADDR] )
     df_result = df_result.drop_duplicates()
     df_result = df_result.sort_values( by=[util.LICENSE_NUMBER, util.ACCOUNT_NUMBER] )
 
+    # Report final statistics
     print( '---' )
-    print( 'FINAL Result: {}'.format( df_result.shape ) )
+    len_result = len( df_result )
+    len_unmatched = len( df_result[df_result[util.ACCOUNT_NUMBER].isna() ] )
+    len_matched = len_result - len_unmatched
+    print( 'FINAL Matched: {}'.format( len_matched ) )
+    print( 'FINAL Unmatched: {}'.format( len_unmatched ) )
+    print( 'FINAL Result: {}'.format( len_result ) )
 
-    # Save final table of Chamber of Commerce members
-    util.create_table( 'ChamberOfCommerce_L', conn, cur, df=df_result )
+    # Save final table of businesses
+    util.create_table( 'Businesses_L', conn, cur, df=df_result )
 
     util.report_elapsed_time()

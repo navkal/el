@@ -340,6 +340,12 @@ OCCUPANCY_TYPE = 'occupancy_type'
 RENTAL_LIVING_UNITS = 'rental_living_units'
 LICENSE_NUMBER = 'license_number'
 
+EMPLOYEES = 'number_of_employees'
+APPLICANT = 'applicant'
+EMAIL = 'email'
+APPLICANT_ADDRESS = 'applicant_address'
+BUSINESS_MANAGER = 'business_manager'
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \
@@ -660,17 +666,33 @@ CONSISTENT_COLUMN_NAMES = \
         'General Notes': 'general_notes',
         'Insp Notes': 'inspection_notes',
     },
-    'RawChamberOfCommerce': \
+    'RawBusinesses_1': \
     {
         'License#': LICENSE_NUMBER,
-        'Applicant': 'applicant',
+        'Business Name': 'business_name',
+        'Number of Employees': EMPLOYEES,
+        'License Type': 'license_type',
+        'Subtype': 'subtype',
+        'Property Address': LOCATION,
+        'Applicant': APPLICANT,
+        'Email': EMAIL,
+        'Phone Number': PHONE,
+        'Address': APPLICANT_ADDRESS,
+        'Application Date': APPLICATION_DATE,
+        'Closed Date': 'closed_date',
+        'Status': STATUS,
+    },
+    'RawBusinesses_2': \
+    {
+        'License#': LICENSE_NUMBER,
+        'Applicant': APPLICANT,
         'Property Address': LOCATION,
         'Status': STATUS,
-        'Applicant Address': 'applicant_address',
+        'Applicant Address': APPLICANT_ADDRESS,
         'Phone Number(s)': PHONE,
-        'Email Address': 'email',
-        'Num Employees': 'number_of_employees',
-        'Business Manager': 'business_manager',
+        'Email Address': EMAIL,
+        'Num Employees': EMPLOYEES,
+        'Business Manager': BUSINESS_MANAGER,
         'SBR#': 'sbr_number',
     },
     'RawCommercial_1': \
