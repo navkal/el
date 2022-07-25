@@ -345,6 +345,11 @@ APPLICANT = 'applicant'
 EMAIL = 'email'
 APPLICANT_ADDRESS = 'applicant_address'
 BUSINESS_MANAGER = 'business_manager'
+BUSINESS_NAME = 'business_name'
+SUBTYPE = 'subtype'
+LICENSE_TYPE = 'license_type'
+CLOSED_DATE = 'closed_date'
+PROPERTY_TYPE = 'property_type'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -669,17 +674,17 @@ CONSISTENT_COLUMN_NAMES = \
     'RawBusinesses_1': \
     {
         'License#': LICENSE_NUMBER,
-        'Business Name': 'business_name',
+        'Business Name': BUSINESS_NAME,
         'Number of Employees': EMPLOYEES,
         'License Type': 'license_type',
-        'Subtype': 'subtype',
+        'Subtype': SUBTYPE,
         'Property Address': LOCATION,
         'Applicant': APPLICANT,
         'Email': EMAIL,
         'Phone Number': PHONE,
         'Address': APPLICANT_ADDRESS,
         'Application Date': APPLICATION_DATE,
-        'Closed Date': 'closed_date',
+        'Closed Date': CLOSED_DATE,
         'Status': STATUS,
     },
     'RawBusinesses_2': \
@@ -1066,6 +1071,48 @@ COLUMN_ORDER = \
         PERMIT_NUMBER,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         TOWN_NAME,
+    ],
+    'Businesses_L':
+    [
+        LICENSE_NUMBER,
+        ACCOUNT_NUMBER,
+        BUSINESS_NAME,
+        SUBTYPE,
+        STATUS,
+        LOCATION,
+        APPLICANT,
+        EMAIL,
+        PHONE,
+        APPLICANT_ADDRESS,
+        APPLICATION_DATE,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+        RENTAL_LIVING_UNITS,
+        EMPLOYEES,
+        OWNER_NAME,
+        BUSINESS_MANAGER,
+        MADDR_LINE.format( 1 ),
+        MADDR_CITY,
+        MADDR_STATE,
+        MADDR_ZIP_CODE,
+        HEATING_FUEL,
+        HEATING_FUEL + _DESC,
+        HEATING_TYPE,
+        HEATING_TYPE + _DESC,
+        AC_TYPE,
+        AC_TYPE + _DESC,
+        TOTAL_ASSESSED_VALUE,
+        LAND_USE_CODE,
+        LAND_USE_CODE + '_1',
+        LAND_USE_CODE + _DESC,
+        PROPERTY_TYPE,
+        STORY_HEIGHT,
+        ROOF_STRUCTURE,
+        ROOF_STRUCTURE + _DESC,
+        ROOF_COVER,
+        ROOF_COVER + _DESC,
+        LEGAL_REFERENCE_SALE_DATE,
+        LICENSE_TYPE,
+        CLOSED_DATE,
     ],
     'Census':
     [

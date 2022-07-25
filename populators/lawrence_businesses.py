@@ -21,7 +21,6 @@ ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 SAVE_ADDR = 'save_normalized_address'
 
-PROPERTY_TYPE = 'property_type'
 COMMERCIAL = 'Commercial'
 RESIDENTIAL = 'Residential'
 
@@ -38,7 +37,7 @@ def isolate_unmatched( df_merge, df_result, property_type ):
     df_matched = df_matched.dropna( subset=[util.ACCOUNT_NUMBER] )
 
     # Append matched entries to the result
-    df_matched[PROPERTY_TYPE] = property_type
+    df_matched[util.PROPERTY_TYPE] = property_type
     df_result = df_result.append( df_matched, ignore_index=True )
 
     # Report progress
