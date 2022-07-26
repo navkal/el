@@ -4,6 +4,7 @@ import os
 import sqlite3
 import sqlalchemy
 import pandas as pd
+import re
 import string
 import time
 START_TIME = time.time()
@@ -116,6 +117,7 @@ NORMALIZED_STREET_NUMBER = 'street_number'
 NORMALIZED_STREET_NAME = 'street_name'
 NORMALIZED_OCCUPANCY = 'occupancy'
 NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
+SAVE_NORMALIZED_ADDR = 'save_normalized_address'
 
 ADDRESS = 'address'
 ADDR_STREET_NUMBER = STREET_NUMBER.format( ADDRESS )
@@ -349,7 +351,11 @@ BUSINESS_NAME = 'business_name'
 SUBTYPE = 'subtype'
 LICENSE_TYPE = 'license_type'
 CLOSED_DATE = 'closed_date'
+
 PROPERTY_TYPE = 'property_type'
+COMMERCIAL = 'Commercial'
+RESIDENTIAL = 'Residential'
+
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1060,15 +1066,15 @@ COLUMN_ORDER = \
     ],
     'BuildingPermits_L':
     [
-        APPLICATION_DATE,
         PERMIT_NUMBER,
+        APPLICATION_DATE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         STATUS,
     ],
     'BuildingPermits_L_Cga':
     [
-        DATE,
         PERMIT_NUMBER,
+        DATE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         TOWN_NAME,
     ],
@@ -1397,6 +1403,127 @@ def likely_dem_to_party_preference_score( dem_score ):
         pref_score += ' ' + str( int( abs( dem_score ) ) ).zfill( 3 )
 
     return pref_score
+
+
+# Isolate entries that did not find matches when merged with assessment data
+def isolate_unmatched( df_merge, left_columns, df_result, property_type ):
+
+    # Create dataframe of unmatched entries
+    df_unmatched = df_merge.copy()
+    df_unmatched = df_unmatched[ df_unmatched[ACCOUNT_NUMBER].isna() ]
+    df_unmatched = df_unmatched[left_columns]
+
+    # Clear unmatched entries out of merged data
+    df_matched = df_merge.copy()
+    df_matched = df_matched.dropna( subset=[ACCOUNT_NUMBER] )
+
+    # Append matched entries to the result
+    df_matched[PROPERTY_TYPE] = property_type
+    df_result = df_result.append( df_matched, ignore_index=True )
+
+    # Report progress
+    print( '---' )
+    print( property_type )
+    print( 'Matched: {}, Unmatched: {}'.format( df_matched.shape, df_unmatched.shape ) )
+    print( 'Result: {}'.format( df_result.shape ) )
+
+    return df_result, df_unmatched
+
+
+# Expand dataframe such that each address range entry is replaced by a series of entries representing the range
+def expand_address_ranges( df ):
+
+    # Extract entries that represent address ranges
+    df_ranges = df.copy()
+    df_ranges = df_ranges[ df_ranges[NORMALIZED_ADDRESS].str.match( '^\d+[A-Z]*-\d+[A-Z]* .*$' ) ]
+
+    # Generate a new dataframe that expands the ranges into individual addresses
+    df_expanded = pd.DataFrame( columns=df_ranges.columns )
+
+    for index, row in df_ranges.iterrows():
+
+        # Extract numeric address range
+        address_range = row[NORMALIZED_ADDRESS].split()[0].split( '-' )
+        range_start = int( re.search( '^\d*', address_range[0] ).group(0) )
+        range_end = int( re.search( '^\d*', address_range[1] ).group(0) ) + 1
+
+        # Extract street
+        street = ' '.join( row[NORMALIZED_ADDRESS].split()[1:] )
+
+        # Iterate over all numbers in the address range
+        for num in range( range_start, range_end, 2 ):
+            new_address = str( num ) + ' ' + street
+            new_row = row.copy()
+            new_row[NORMALIZED_ADDRESS] = new_address
+            df_expanded = df_expanded.append( new_row, ignore_index=True )
+
+    df_no_ranges = df.loc[ df.index.difference( df_ranges.index ) ]
+    df_expanded = df_expanded.append( df_no_ranges, ignore_index=True )
+
+    return( df_expanded )
+
+
+# Merge dataframe with commercial and residential assessment data based on normalized addresses
+def merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, sort_by ):
+
+    print( '---' )
+    print( 'Left: {}'.format( df_left.shape ) )
+
+    # Initialize empty result
+    df_result = pd.DataFrame()
+    df_left[SAVE_NORMALIZED_ADDR] = df_left[NORMALIZED_ADDRESS]
+    left_columns = df_left.columns
+    df_unmatched = df_left.copy()
+
+    # Merge unmatched with commercial
+    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[NORMALIZED_ADDRESS] )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, COMMERCIAL )
+
+    # Merge unmatched with residential
+    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[NORMALIZED_ADDRESS] )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, RESIDENTIAL )
+
+    # Expand addresses in assessment data
+    df_assessment_com = expand_address_ranges( df_assessment_com )
+    df_assessment_res = expand_address_ranges( df_assessment_res )
+
+    # Merge unmatched with commercial
+    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[NORMALIZED_ADDRESS] )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, COMMERCIAL )
+
+    # Merge unmatched with residential
+    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[NORMALIZED_ADDRESS] )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, RESIDENTIAL )
+
+    # Expand addresses in unmatched business data
+    df_unmatched = expand_address_ranges( df_unmatched )
+
+    # Merge unmatched with commercial
+    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[NORMALIZED_ADDRESS] )
+    df_merge[NORMALIZED_ADDRESS] = df_merge[SAVE_NORMALIZED_ADDR]
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, COMMERCIAL )
+
+    # Merge unmatched with residential
+    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[NORMALIZED_ADDRESS] )
+    df_merge[NORMALIZED_ADDRESS] = df_merge[SAVE_NORMALIZED_ADDR]
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, RESIDENTIAL )
+
+    # Finish up
+    df_result = df_result.append( df_unmatched, ignore_index=True )
+    df_result = df_result.drop( columns=[SAVE_NORMALIZED_ADDR] )
+    df_result = df_result.drop_duplicates()
+    df_result = df_result.sort_values( by=sort_by )
+
+    # Report final statistics
+    print( '---' )
+    len_result = len( df_result )
+    len_unmatched = len( df_result[df_result[ACCOUNT_NUMBER].isna() ] )
+    len_matched = len_result - len_unmatched
+    print( 'FINAL Matched: {}'.format( len_matched ) )
+    print( 'FINAL Unmatched: {}'.format( len_unmatched ) )
+    print( 'FINAL Result: {}'.format( len_result ) )
+
+    return df_result
 
 
 # Read series of input files in specified directory
