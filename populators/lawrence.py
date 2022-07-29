@@ -73,6 +73,14 @@ if __name__ == '__main__':
     print( '\n=======> Columbia Gas Building Permits table' )
     os.system( 'python lawrence_building_permits_cga.py -m {0}'.format( args.master_filename ) )
 
+    # Read Sunrun data
+    print( '\n=======> Sunrun Building Permits input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_sunrun.xlsx -y -t RawBuildingPermits_Sunrun -o {0}'.format( args.master_filename ) )
+
+    # Generate Sunrun Building Permits table
+    print( '\n=======> Sunrun Building Permits table' )
+    os.system( 'python lawrence_building_permits_sunrun.py -m {0}'.format( args.master_filename ) )
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
@@ -95,6 +103,7 @@ if __name__ == '__main__':
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',
+            'RawBuildingPermits_Sunrun',
          ],
         'encipher_column_names':
         [

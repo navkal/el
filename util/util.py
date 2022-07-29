@@ -4,6 +4,7 @@ import os
 import sqlite3
 import sqlalchemy
 import pandas as pd
+import openpyxl
 import re
 import string
 import time
@@ -356,6 +357,9 @@ PROPERTY_TYPE = 'property_type'
 COMMERCIAL = 'Commercial'
 RESIDENTIAL = 'Residential'
 
+OPENED = 'opened'
+CLOSED = 'date_closed'
+
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -676,6 +680,15 @@ CONSISTENT_COLUMN_NAMES = \
         'Date': DATE,
         'General Notes': 'general_notes',
         'Insp Notes': 'inspection_notes',
+    },
+    'RawBuildingPermits_Sunrun': \
+    {
+        'STATUS': STATUS,
+        'STATUS_1': STATUS + '_1',
+        'ADDRESS': ADDRESS,
+        'ADDRESS_1': ADDRESS + '_1',
+        'OPENED': OPENED,
+        'CLOSED': CLOSED,
     },
     'RawBusinesses_1': \
     {
@@ -1524,6 +1537,79 @@ def merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, s
     print( 'FINAL Result: {}'.format( len_result ) )
 
     return df_result
+
+
+# Read single input file with hyperlinks expanded
+def read_excel_with_hyperlinks( input_filename, skiprows ):
+
+    # Get the worksheet
+    workbook = openpyxl.load_workbook( input_filename, data_only=True )
+    worksheet = workbook.active
+
+    # Determine index of column header row
+    header_index = skiprows.stop if ( skiprows != None ) else 0
+
+    # Extract column names and identify columns that contain hyperlinks
+    col_names = []
+    linked_cols = {}
+    for row_index, row in enumerate( worksheet.iter_rows() ):
+        if row_index == header_index:
+            # Extract column names
+            for cell in row:
+                col_names.append( cell.value )
+        elif row_index > header_index:
+            # Determine which columns, if any, contain hyperlinks
+            cell_index = -1
+            for cell in row:
+                cell_index += 1
+                if cell.hyperlink != None:
+                    linked_cols[col_names[cell_index]] = cell_index
+
+    # Extract cell values and hyperlinks for dataframe
+    data = []
+    for row_index, row in enumerate( worksheet.iter_rows() ):
+
+        if row_index > header_index:
+            # It's a data row.  Load into the grid.
+            data_row = []
+
+            cell_index = -1
+            for cell in row:
+                cell_index += 1
+
+                # Extract the value
+                data_row.append( cell.value )
+
+                # Optionally extract the hyperlink
+                if col_names[cell_index] in linked_cols:
+                    target = cell.hyperlink.target if cell.hyperlink != None else None
+                    data_row.append( target )
+
+            # Save row in grid
+            data.append( data_row )
+
+    # Build list of column names for dataframe
+    columns = []
+    for col_name in col_names:
+        columns.append( col_name )
+        if col_name in linked_cols:
+
+            # Generate a unique column name
+            n_suffix = 1
+            linked_col_name = col_name + '_' + str( n_suffix )
+            while linked_col_name in col_names:
+                n_suffix += 1
+                linked_col_name = col_name + n_suffix
+
+            columns.append( linked_col_name )
+
+    # Construct dataframe from extracted values
+    df = pd.DataFrame( data=data, columns=columns )
+
+    # Drop empty columns
+    df = df.dropna( how='all', axis=1 )
+
+    return df
 
 
 # Read series of input files in specified directory

@@ -1,4 +1,4 @@
-# Copyright 2019 Energize Andover.  All rights reserved.
+# Copyright 2022 Energize Andover.  All rights reserved.
 
 import argparse
 import os
@@ -17,9 +17,10 @@ import util
 # Main program
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser( description='Process town data' )
+    parser = argparse.ArgumentParser( description='Generate database table from Excel spreadsheet' )
     parser.add_argument( '-i', dest='input_filename',  help='Input filename - Name of MS Excel file' )
     parser.add_argument( '-d', dest='input_directory',  help='Input directory - Location of MS Excel file(s)' )
+    parser.add_argument( '-y', dest='hyperlinks', action='store_true', help='Preserve hyperlinks?'  )
     parser.add_argument( '-l', dest='column_labels',  help='Labels of additional columns, to be populated by fragments of filename, delimited by underscore' )
     parser.add_argument( '-r', dest='skip_rows', type=int, help='Number of leading rows to skip' )
     parser.add_argument( '-n', dest='dropna_subset',  help='Column subset to be considered in dropna() operation' )
@@ -43,7 +44,13 @@ if __name__ == '__main__':
     elif args.input_filename != None:
 
         # Read single input file
-        df_xl = pd.read_excel( args.input_filename, dtype=object, skiprows=skiprows )
+
+        if args.hyperlinks:
+            # Get dataframe with hyperlinks
+            df_xl = util.read_excel_with_hyperlinks( args.input_filename, skiprows )
+        else:
+            # Get dataframe without hyperlinks
+            df_xl = pd.read_excel( args.input_filename, dtype=object, skiprows=skiprows )
 
     else:
         # Error: No input specified
