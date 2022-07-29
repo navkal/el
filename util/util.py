@@ -358,7 +358,11 @@ COMMERCIAL = 'Commercial'
 RESIDENTIAL = 'Residential'
 
 OPENED = 'opened'
-CLOSED = 'date_closed'
+
+_LINK = '_link'
+FILE_NUMBER = 'file_number'
+FILE_NUMBER_LINK = 'file_number' + _LINK
+PERMIT_NUMBER_LINK = PERMIT_NUMBER + _LINK
 
 
 CONSISTENT_COLUMN_NAMES = \
@@ -688,7 +692,7 @@ CONSISTENT_COLUMN_NAMES = \
         'ADDRESS': ADDRESS,
         'ADDRESS_1': ADDRESS + '_1',
         'OPENED': OPENED,
-        'CLOSED': CLOSED,
+        'CLOSED': CLOSED_DATE,
     },
     'RawBusinesses_1': \
     {
@@ -1090,6 +1094,15 @@ COLUMN_ORDER = \
         DATE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         TOWN_NAME,
+    ],
+    'BuildingPermits_L_Sunrun':
+    [
+        PERMIT_NUMBER,
+        PERMIT_NUMBER_LINK,
+        FILE_NUMBER,
+        FILE_NUMBER_LINK,
+        CLOSED_DATE,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
     ],
     'Businesses_L':
     [

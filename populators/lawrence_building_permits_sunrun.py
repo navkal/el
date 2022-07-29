@@ -6,6 +6,8 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import re
+
 import sys
 sys.path.append( '../util' )
 import util
@@ -17,10 +19,11 @@ STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
 ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
-_LINK = '_link'
-FILE_NUMBER = 'file_number'
-FILE_NUMBER_LINK = 'file_number' + _LINK
-PERMIT_NUMBER_LINK = util.PERMIT_NUMBER + _LINK
+PERMIT_PREFIX = 'Permit #:'
+
+def fix_permit_number( pn ):
+    pn = re.sub( '\\u00A0', ' ', pn ).replace( PERMIT_PREFIX, '' ).strip()
+    return pn
 
 # Main program
 if __name__ == '__main__':
@@ -50,22 +53,22 @@ if __name__ == '__main__':
                 sr_row = pd.Series( dtype=object )
 
             # Unscramble values that occur in row that supposedly contains status column
-            sr_row[FILE_NUMBER] = row[util.STATUS]
-            sr_row[FILE_NUMBER_LINK] = row[util.STATUS + '_1']
+            sr_row[util.FILE_NUMBER] = row[util.STATUS]
+            sr_row[util.FILE_NUMBER_LINK] = row[util.STATUS + '_1']
             sr_row[util.STATUS] = row[util.ADDRESS]
             sr_row[util.ADDRESS] = row[util.OPENED]
-            sr_row[util.CLOSED] = row[util.CLOSED]
+            sr_row[util.CLOSED_DATE] = row[util.CLOSED_DATE]
 
         elif row[util.ADDRESS] != None:
 
             # Unscramble values that occur in row that supposedly contains address column
 
             if row[util.ADDRESS + '_1'] != None:
-                sr_row[util.PERMIT_NUMBER] = row[util.ADDRESS]
-                sr_row[PERMIT_NUMBER_LINK] = row[util.ADDRESS + '_1']
+                sr_row[util.PERMIT_NUMBER] = fix_permit_number( row[util.ADDRESS] )
+                sr_row[util.PERMIT_NUMBER_LINK] = row[util.ADDRESS + '_1']
 
-            elif row[util.ADDRESS].startswith( 'Permit #:' ):
-                sr_row[util.PERMIT_NUMBER] = row[util.ADDRESS]
+            elif row[util.ADDRESS].startswith( PERMIT_PREFIX ):
+                sr_row[util.PERMIT_NUMBER] = fix_permit_number( row[util.ADDRESS] )
 
             else:
                 sr_row[util.DESCRIPTION] = row[util.ADDRESS]
@@ -99,7 +102,7 @@ if __name__ == '__main__':
     df_assessment_res = pd.read_sql_table( 'Assessment_L_Residential', engine, index_col=util.ID, columns=residential_columns, parse_dates=True )
 
     # Merge left dataframe with assessment data
-    df_result = util.merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, [util.PERMIT_NUMBER, util.ACCOUNT_NUMBER] )
+    df_result = util.merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, [util.PERMIT_NUMBER, util.FILE_NUMBER, util.ACCOUNT_NUMBER] )
 
     # Create table in database
     util.create_table( 'BuildingPermits_L_Sunrun', conn, cur, df=df_result )
