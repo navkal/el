@@ -21,23 +21,13 @@ ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 PERMIT_PREFIX = 'Permit #:'
 
+
 def fix_permit_number( pn ):
     pn = re.sub( '\\u00A0', ' ', pn ).replace( PERMIT_PREFIX, '' ).strip()
     return pn
 
-# Main program
-if __name__ == '__main__':
 
-    # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Generate Sunrun Building Permits table' )
-    parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
-    args = parser.parse_args()
-
-    # Open the master database
-    conn, cur, engine = util.open_database( args.master_filename, False )
-
-    # Retrieve table from database
-    df_raw = pd.read_sql_table( 'RawBuildingPermits_Sunrun', engine, index_col=util.ID, parse_dates=True )
+def unscramble_data():
 
     # Initialize empty dataframe and series
     df_left = pd.DataFrame()
@@ -75,6 +65,26 @@ if __name__ == '__main__':
 
     # Append the last row
     df_left = df_left.append( sr_row, ignore_index=True )
+
+    return df_left
+
+
+# Main program
+if __name__ == '__main__':
+
+    # Retrieve and validate arguments
+    parser = argparse.ArgumentParser( description='Generate Sunrun Building Permits table' )
+    parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
+    args = parser.parse_args()
+
+    # Open the master database
+    conn, cur, engine = util.open_database( args.master_filename, False )
+
+    # Retrieve table from database
+    df_raw = pd.read_sql_table( 'RawBuildingPermits_Sunrun', engine, index_col=util.ID, parse_dates=True )
+
+    # Build unscrambled dataframe from scrambled raw data
+    df_left = unscramble_data()
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_left[ADDR] = df_left[util.ADDRESS]
