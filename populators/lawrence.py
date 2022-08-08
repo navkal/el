@@ -73,6 +73,14 @@ if __name__ == '__main__':
     print( '\n=======> Columbia Gas Building Permits table' )
     os.system( 'python lawrence_building_permits_cga.py -m {0}'.format( args.master_filename ) )
 
+    # Read solar building permit data
+    print( '\n=======> Solar Building Permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_solar.xlsx -p "Permit Type,Subtype,Use of Property" -t RawBuildingPermits_Solar -o {0}'.format( args.master_filename ) )
+
+    # Generate Solar Building Permits table
+    print( '\n=======> Solar Building Permits table' )
+    os.system( 'python lawrence_building_permits_solar.py -m {0}'.format( args.master_filename ) )
+
     # Read Sunrun data
     print( '\n=======> Sunrun Building Permits input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_sunrun.xlsx -y -t RawBuildingPermits_Sunrun -o {0}'.format( args.master_filename ) )
@@ -103,6 +111,7 @@ if __name__ == '__main__':
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',
+            'RawBuildingPermits_Solar',
             'RawBuildingPermits_Sunrun',
          ],
         'encipher_column_names':

@@ -7,6 +7,8 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import warnings
+
 import sys
 sys.path.append( '../util' )
 import util
@@ -20,8 +22,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Generate database table from Excel spreadsheet' )
     parser.add_argument( '-i', dest='input_filename',  help='Input filename - Name of MS Excel file' )
     parser.add_argument( '-d', dest='input_directory',  help='Input directory - Location of MS Excel file(s)' )
-    parser.add_argument( '-y', dest='hyperlinks', action='store_true', help='Preserve hyperlinks?'  )
     parser.add_argument( '-l', dest='column_labels',  help='Labels of additional columns, to be populated by fragments of filename, delimited by underscore' )
+    parser.add_argument( '-y', dest='hyperlinks', action='store_true', help='Preserve hyperlinks?'  )
     parser.add_argument( '-r', dest='skip_rows', type=int, help='Number of leading rows to skip' )
     parser.add_argument( '-n', dest='dropna_subset',  help='Column subset to be considered in dropna() operation' )
     parser.add_argument( '-p', dest='drop_columns',  help='Comma-separated list of column labels to drop' )
@@ -50,6 +52,7 @@ if __name__ == '__main__':
             df_xl = util.read_excel_with_hyperlinks( args.input_filename, skiprows )
         else:
             # Get dataframe without hyperlinks
+            warnings.filterwarnings( 'ignore', category=UserWarning, module='openpyxl' )
             df_xl = pd.read_excel( args.input_filename, dtype=object, skiprows=skiprows )
 
     else:

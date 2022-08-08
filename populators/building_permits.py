@@ -96,7 +96,7 @@ def clean_df( df ):
     # Create row for current input file in audit dataframe
     global df_audit, audit_year, audit_month
     sr_audit = df_copy[~df_copy.index.isin( df.index )].iloc[0]
-    df_audit = df_audit.append( { 'year': audit_year, 'month': audit_month, 'published_total_cost': sr_audit['project_cost'], 'calculated_total_cost': df['project_cost'].sum(), 'published_total_fee': sr_audit['total_fee'], 'calculated_total_fee': df['total_fee'].sum() }, ignore_index=True )
+    df_audit = df_audit.append( { 'year': audit_year, 'month': audit_month, 'published_total_cost': sr_audit[util.PROJECT_COST], 'calculated_total_cost': df[util.PROJECT_COST].sum(), 'published_total_fee': sr_audit[util.TOTAL_FEE], 'calculated_total_fee': df[util.TOTAL_FEE].sum() }, ignore_index=True )
 
     return df
 

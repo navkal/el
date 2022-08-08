@@ -349,7 +349,7 @@ EMAIL = 'email'
 APPLICANT_ADDRESS = 'applicant_address'
 BUSINESS_MANAGER = 'business_manager'
 BUSINESS_NAME = 'business_name'
-SUBTYPE = 'subtype'
+LICENSE_SUBTYPE = 'license_subtype'
 LICENSE_TYPE = 'license_type'
 CLOSED_DATE = 'closed_date'
 
@@ -363,6 +363,27 @@ _LINK = '_link'
 FILE_NUMBER = 'file_number'
 FILE_NUMBER_LINK = 'file_number' + _LINK
 PERMIT_NUMBER_LINK = PERMIT_NUMBER + _LINK
+PERMIT_TYPE = 'permit_type'
+TOTAL_FEE = 'total_fee_$'
+PROJECT_COST = 'project_cost_$'
+ELECTRICAL_PERMIT_NUMBER = 'electrical_' + PERMIT_NUMBER
+INSPECTION_NOTES = 'inspection_notes'
+PERMIT_SUBTYPE = 'permit_subtype'
+
+WATTS_PER_MODULE = 'watts_per_module'
+MODULES ='number_of_solar_pv_modules'
+PERMIT_STATUS = 'permit_status'
+KW_DC = 'kw_dc'
+INTERACTIVE_INVERTERS = 'number_of_interactive_inverters'
+PROPERTY_USE_GROUP = 'property_use_group'
+POWER_RATINGS_EACH = 'power_ratings_each'
+APPROVAL_DATE = 'approval_date'
+EXPIRATION_DATE = 'expiration_date'
+LAST_INSPECTION_DATE = 'last_inspection_date'
+INSPECTION_TYPE = 'inspection_type'
+ASSIGNED_TO = 'assigned_to'
+DATE_DUE_FOR_INSPECTION = 'date_due_for_inspection'
+INSPECTION_STATUS = 'inspection_status'
 
 
 CONSISTENT_COLUMN_NAMES = \
@@ -483,9 +504,9 @@ CONSISTENT_COLUMN_NAMES = \
         'BldgType': 'building_type',
         'WorkDescription': WORK_DESCRIPTION,
         'ContractorName': 'contractor_name',
-        PROJECTCOST: 'project_cost',
-        COST: 'project_cost',
-        TOTALFEE: 'total_fee',
+        PROJECTCOST: PROJECT_COST,
+        COST: PROJECT_COST,
+        TOTALFEE: TOTAL_FEE,
     },
     'Census': \
     {
@@ -664,7 +685,7 @@ CONSISTENT_COLUMN_NAMES = \
     'RawBuildingPermits': \
     {
         'Permit#': PERMIT_NUMBER,
-        'Permit Type': 'permit_type',
+        'Permit Type': PERMIT_TYPE,
         'Work Description': WORK_DESCRIPTION,
         'Property Owner': OWNER_NAME,
         'Address': ADDRESS,
@@ -683,7 +704,35 @@ CONSISTENT_COLUMN_NAMES = \
         'Contractor ID': 'contractor_id',
         'Date': DATE,
         'General Notes': 'general_notes',
-        'Insp Notes': 'inspection_notes',
+        'Insp Notes': INSPECTION_NOTES,
+    },
+    'RawBuildingPermits_Solar': \
+    {
+        'PERMIT#': PERMIT_NUMBER,
+        'FILE#': FILE_NUMBER,
+        'Address of the property': ADDRESS,
+        'Property Owner': OWNER_NAME,
+        'Work Description': WORK_DESCRIPTION,
+        'Applicant': APPLICANT,
+        'Status': PERMIT_STATUS,
+        'Permit Fees': TOTAL_FEE,
+        'Use Group': PROPERTY_USE_GROUP,
+        'Total project cost': PROJECT_COST,
+        'Number of solar PV modules': MODULES,
+        'Watts per module': WATTS_PER_MODULE,
+        'Number of interactive inverters': INTERACTIVE_INVERTERS,
+        'Power ratings (each)': POWER_RATINGS_EACH,
+        'Electrical permit number': ELECTRICAL_PERMIT_NUMBER,
+        'Application Date': APPLICATION_DATE,
+        'Approval Date': APPROVAL_DATE,
+        'Issue Date': DATE_ISSUED,
+        'Expiration Date': EXPIRATION_DATE,
+        'Close Date': CLOSED_DATE,
+        'Last Inspection': LAST_INSPECTION_DATE,
+        'Inspection Type': INSPECTION_TYPE,
+        'Assigned to': ASSIGNED_TO,
+        'Due (for inspection)': DATE_DUE_FOR_INSPECTION,
+        'Status.1': INSPECTION_STATUS,
     },
     'RawBuildingPermits_Sunrun': \
     {
@@ -700,7 +749,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Business Name': BUSINESS_NAME,
         'Number of Employees': EMPLOYEES,
         'License Type': 'license_type',
-        'Subtype': SUBTYPE,
+        'Subtype': LICENSE_SUBTYPE,
         'Property Address': LOCATION,
         'Applicant': APPLICANT,
         'Email': EMAIL,
@@ -1095,6 +1144,44 @@ COLUMN_ORDER = \
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         TOWN_NAME,
     ],
+    'BuildingPermits_L_Solar':
+    [
+        PERMIT_NUMBER,
+        FILE_NUMBER,
+        ADDRESS,
+        APPLICANT,
+        PERMIT_STATUS,
+        DATE_ISSUED,
+        KW_DC,
+        MODULES,
+        WATTS_PER_MODULE,
+        INTERACTIVE_INVERTERS,
+        ELECTRICAL_PERMIT_NUMBER,
+        TOTAL_FEE,
+        PROJECT_COST,
+        PROPERTY_USE_GROUP,
+        APPLICATION_DATE,
+        POWER_RATINGS_EACH,
+        OWNER_NAME,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+        APPROVAL_DATE,
+        EXPIRATION_DATE,
+        CLOSED_DATE,
+        LAST_INSPECTION_DATE,
+        INSPECTION_TYPE,
+        ASSIGNED_TO,
+        DATE_DUE_FOR_INSPECTION,
+        INSPECTION_STATUS,
+        WORK_DESCRIPTION,
+        ACCOUNT_NUMBER,
+        HEATING_FUEL,
+        HEATING_FUEL + _DESC,
+        HEATING_TYPE,
+        HEATING_TYPE + _DESC,
+        AC_TYPE,
+        AC_TYPE + _DESC,
+        PROPERTY_TYPE,
+    ],
     'BuildingPermits_L_Sunrun':
     [
         PERMIT_NUMBER,
@@ -1109,7 +1196,7 @@ COLUMN_ORDER = \
         LICENSE_NUMBER,
         ACCOUNT_NUMBER,
         BUSINESS_NAME,
-        SUBTYPE,
+        LICENSE_SUBTYPE,
         STATUS,
         LOCATION,
         APPLICANT,
