@@ -77,7 +77,14 @@ if __name__ == '__main__':
     # Merge left dataframe with assessment data
     df_result = util.merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, [util.PERMIT_NUMBER, util.ACCOUNT_NUMBER] )
 
+    # Sort
+    df_result = df_result.sort_values( by=[util.PERMIT_NUMBER, util.FILE_NUMBER, util.DATE_DUE_FOR_INSPECTION] )
+
     # Create table in database
     util.create_table( 'BuildingPermits_L_Solar', conn, cur, df=df_result )
+
+    # Create summary table in database
+    df_result = df_result.drop_duplicates( subset=[util.PERMIT_NUMBER], keep='last' )
+    util.create_table( 'BuildingPermits_L_Solar_Summary', conn, cur, df=df_result )
 
     util.report_elapsed_time()

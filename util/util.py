@@ -1380,6 +1380,7 @@ COLUMN_ORDER = \
 CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
+COLUMN_ORDER['BuildingPermits_L_Solar_Summary'] = COLUMN_ORDER['BuildingPermits_L_Solar']
 
 # Information on how to publish databases
 PUBLISH_INFO = \
