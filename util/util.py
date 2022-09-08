@@ -7,6 +7,8 @@ import pandas as pd
 import openpyxl
 import re
 import string
+import datetime
+
 import time
 START_TIME = time.time()
 print( 'Starting at', time.strftime( '%H:%M:%S', time.localtime( START_TIME ) ) )
@@ -882,6 +884,18 @@ CONSISTENT_COLUMN_NAMES = \
         'election_date': ELECTION_DATE,
         'PRECINCTS:': OFFICE_OR_CANDIDATE,
     },
+    'RawMassEnergyInsight': \
+    {
+        'Department': DEPARTMENT,
+        'Complex': 'complex',
+        'Facility': 'facility',
+        'Fuel (units)': 'fuel_units',
+        'Account #': ACCOUNT_NUMBER,
+        'Usage End Date Null': 'usage_end_null',
+        'One': 'one',
+        'Provider': 'provider',
+        'Unnamed: 8': 'cost_or_use',
+    },
     'RawResidential_1': \
     {
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
@@ -1019,6 +1033,45 @@ CONSISTENT_COLUMN_NAMES = \
         'service_type': SERVICE_TYPE,
     },
 }
+
+CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
+
+# --> Generate column name mappings for Mass Energy Insight table -->
+def populate_mei_column_names( dict, start_year, end_year ):
+
+    fy_month_base = 6 # End of fiscal year
+    months_per_year = 12
+    start_month = months_per_year
+    end_month = start_month + months_per_year
+
+    for n_year in range( start_year, end_year ):
+
+        for n in range( start_month, end_month ):
+
+            # Format month number
+            n_month = 1 + ( n % 12 )
+            month_number = str( n_month )
+
+            # Derive month name from month number
+            datetime_object = datetime.datetime.strptime( month_number, '%m' )
+            month_name = datetime_object.strftime( '%B' )
+
+            # Optionally add entry to dictionary
+            if ( n_month > fy_month_base ) or ( n_year > start_year ):
+
+                # Generate suffix to match column names produced by pandas
+                suffix_number = n_year - start_year
+                if n_month <= fy_month_base:
+                    suffix_number = suffix_number - 1
+                if suffix_number > 0:
+                    month_name = month_name + '.'  + str( suffix_number )
+
+                dict[month_name] = str( n_year ) + '_' + month_number.zfill( 2 )
+
+populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight'], 2012, 2026 )
+
+# <-- Generate column name mappings for Mass Energy Insight table <--
+
 
 
 COLUMN_GROUP = \
@@ -1377,7 +1430,6 @@ COLUMN_ORDER = \
     ],
 }
 
-CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['BuildingPermits_L_Solar_Summary'] = COLUMN_ORDER['BuildingPermits_L_Solar']

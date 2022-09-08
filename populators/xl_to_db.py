@@ -22,7 +22,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Generate database table from Excel spreadsheet' )
     parser.add_argument( '-i', dest='input_filename',  help='Input filename - Name of MS Excel file' )
     parser.add_argument( '-d', dest='input_directory',  help='Input directory - Location of MS Excel file(s)' )
+    parser.add_argument( '-v', dest='csv', action='store_true',  help='Read input as CSV' )
+    parser.add_argument( '-f', dest='field_separator', help='Field separator in CSV input file' )
     parser.add_argument( '-l', dest='column_labels',  help='Labels of additional columns, to be populated by fragments of filename, delimited by underscore' )
+    parser.add_argument( '-e', dest='keep_unnamed', action='store_true', help='Keep unnamed columns?'  )
     parser.add_argument( '-y', dest='hyperlinks', action='store_true', help='Preserve hyperlinks?'  )
     parser.add_argument( '-r', dest='skip_rows', type=int, help='Number of leading rows to skip' )
     parser.add_argument( '-n', dest='dropna_subset',  help='Column subset to be considered in dropna() operation' )
@@ -47,7 +50,11 @@ if __name__ == '__main__':
 
         # Read single input file
 
-        if args.hyperlinks:
+        if args.csv:
+            # Get dataframe from a CSV-format file
+            sep = bytes( args.field_separator, 'utf-8' ).decode( 'unicode_escape' ) if args.field_separator != None else ','
+            df_xl = pd.read_csv( args.input_filename, encoding = 'utf-16', sep=sep, dtype=object, skiprows=skiprows )
+        elif args.hyperlinks:
             # Get dataframe with hyperlinks
             df_xl = util.read_excel_with_hyperlinks( args.input_filename, skiprows )
         else:
@@ -79,11 +86,12 @@ if __name__ == '__main__':
             df_xl[col] = df_xl[col].fillna('').astype( str )
         df_xl = df_xl.sort_values( by=sort_columns )
 
-    # Drop unnamed columns
-    cols = df_xl.columns
-    for col in cols:
-        if col.startswith( 'Unnamed: ' ):
-            df_xl = df_xl.drop( columns=[col] )
+    # Optionally drop unnamed columns
+    if not args.keep_unnamed:
+        cols = df_xl.columns
+        for col in cols:
+            if col.startswith( 'Unnamed: ' ):
+                df_xl = df_xl.drop( columns=[col] )
 
     # Drop unwanted columns
     if args.drop_columns != None:
