@@ -89,6 +89,14 @@ if __name__ == '__main__':
     print( '\n=======> Sunrun Building Permits table' )
     os.system( 'python lawrence_building_permits_sunrun.py -m {0}'.format( args.master_filename ) )
 
+    # Read Mass Energy Insight data
+    print( '\n=======> Mass Energy Insight input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/mass_energy_insight.csv -t RawMassEnergyInsight -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0}'.format( args.master_filename ) )
+
+    # Generate clean Mass Energy Insight table
+    print( '\n=======> Mass Energy Insight table' )
+    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight -o MassEnergyInsight_L -d {0}'.format( args.master_filename ) )
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
@@ -113,6 +121,7 @@ if __name__ == '__main__':
             'RawResidential_3',
             'RawBuildingPermits_Solar',
             'RawBuildingPermits_Sunrun',
+            'RawMassEnergyInsight',
          ],
         'encipher_column_names':
         [
