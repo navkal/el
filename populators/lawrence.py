@@ -91,14 +91,17 @@ if __name__ == '__main__':
 
     # Read Mass Energy Insight data
     print( '\n=======> Mass Energy Insight input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/mass_energy_insight.csv -t RawMassEnergyInsight -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/mass_energy_insight/mass_energy_insight_a.csv -t RawMassEnergyInsight_A -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/mass_energy_insight/mass_energy_insight_l.csv -t RawMassEnergyInsight_L -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0}'.format( args.master_filename ) )
 
     # Generate clean Mass Energy Insight table
-    print( '\n=======> Mass Energy Insight table' )
-    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight -o MassEnergyInsight_L -d {0}'.format( args.master_filename ) )
+    print( '\n=======> Mass Energy Insight tables' )
+    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_A -o MassEnergyInsight_A -d {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_L -o MassEnergyInsight_L -d {0}'.format( args.master_filename ) )
 
     # Generate Mass Energy Insight totals
     print( '\n=======> Mass Energy Insight totals' )
+    os.system( 'python lawrence_mass_energy_insight_totals.py -i MassEnergyInsight_A -o MassEnergyInsightTotals_A -d {0}'.format( args.master_filename ) )
     os.system( 'python lawrence_mass_energy_insight_totals.py -i MassEnergyInsight_L -o MassEnergyInsightTotals_L -d {0}'.format( args.master_filename ) )
 
     # Generate copyright notice
@@ -125,7 +128,8 @@ if __name__ == '__main__':
             'RawResidential_3',
             'RawBuildingPermits_Solar',
             'RawBuildingPermits_Sunrun',
-            'RawMassEnergyInsight',
+            'RawMassEnergyInsight_A',
+            'RawMassEnergyInsight_L',
          ],
         'encipher_column_names':
         [
