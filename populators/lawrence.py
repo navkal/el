@@ -96,13 +96,13 @@ if __name__ == '__main__':
 
     # Generate clean Mass Energy Insight table
     print( '\n=======> Mass Energy Insight tables' )
-    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_A -o MassEnergyInsight_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_L -o MassEnergyInsight_L -d {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_A -o Mei_A -d {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_L -o Mei_L -d {0}'.format( args.master_filename ) )
 
     # Generate Mass Energy Insight totals
     print( '\n=======> Mass Energy Insight totals' )
-    os.system( 'python lawrence_mass_energy_insight_totals.py -i MassEnergyInsight_A -o MassEnergyInsightTotals_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python lawrence_mass_energy_insight_totals.py -i MassEnergyInsight_L -o MassEnergyInsightTotals_L -d {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_mass_energy_insight_totals.py -i Mei_A -o Mei_A_Totals -d {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_mass_energy_insight_totals.py -i Mei_L -o Mei_L_Totals -d {0}'.format( args.master_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
