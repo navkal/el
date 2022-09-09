@@ -886,7 +886,7 @@ CONSISTENT_COLUMN_NAMES = \
         'election_date': ELECTION_DATE,
         'PRECINCTS:': OFFICE_OR_CANDIDATE,
     },
-    'RawMassEnergyInsight_L': \
+    'RawMassEnergyInsight_A': \
     {
         'Department': DEPARTMENT,
         'Complex': 'complex',
@@ -1037,7 +1037,7 @@ CONSISTENT_COLUMN_NAMES = \
 }
 
 CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
-CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L']
+CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
 
 # --> Generate column name mappings for Mass Energy Insight tables -->
 def populate_mei_column_names( dict, start_year, end_year ):
@@ -1071,8 +1071,8 @@ def populate_mei_column_names( dict, start_year, end_year ):
 
                 dict[month_name] = str( n_year ) + '_' + month_number.zfill( 2 )
 
-populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'], 2011, 2025 )
 populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A'], 2011, 2025 )
+populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'], 2011, 2025 )
 
 # <-- Generate column name mappings for Mass Energy Insight tables <--
 

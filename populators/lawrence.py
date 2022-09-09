@@ -104,6 +104,11 @@ if __name__ == '__main__':
     os.system( 'python lawrence_mass_energy_insight_totals.py -i Mei_A -o Mei_A_Totals -d {0}'.format( args.master_filename ) )
     os.system( 'python lawrence_mass_energy_insight_totals.py -i Mei_L -o Mei_L_Totals -d {0}'.format( args.master_filename ) )
 
+    # Generate Mass Energy Insight month tables
+    print( '\n=======> Mass Energy Insight months' )
+    os.system( 'python lawrence_mass_energy_insight_months.py -i Mei_A -o Mei_A -d {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_mass_energy_insight_months.py -i Mei_L -o Mei_L -d {0}'.format( args.master_filename ) )
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
