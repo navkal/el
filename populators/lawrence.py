@@ -97,6 +97,10 @@ if __name__ == '__main__':
     print( '\n=======> Mass Energy Insight table' )
     os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight -o MassEnergyInsight_L -d {0}'.format( args.master_filename ) )
 
+    # Generate Mass Energy Insight totals
+    print( '\n=======> Mass Energy Insight totals' )
+    os.system( 'python lawrence_mass_energy_insight_totals.py -i MassEnergyInsight_L -o MassEnergyInsightTotals_L -d {0}'.format( args.master_filename ) )
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )

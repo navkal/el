@@ -387,6 +387,8 @@ ASSIGNED_TO = 'assigned_to'
 DATE_DUE_FOR_INSPECTION = 'date_due_for_inspection'
 INSPECTION_STATUS = 'inspection_status'
 
+USAGE_END_NULL = 'usage_end_null'
+ONE = 'one'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -891,8 +893,8 @@ CONSISTENT_COLUMN_NAMES = \
         'Facility': 'facility',
         'Fuel (units)': 'fuel_units',
         'Account #': ACCOUNT_NUMBER,
-        'Usage End Date Null': 'usage_end_null',
-        'One': 'one',
+        'Usage End Date Null': USAGE_END_NULL,
+        'One': ONE,
         'Provider': 'provider',
         'Unnamed: 8': 'cost_or_use',
     },
