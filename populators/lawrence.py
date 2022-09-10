@@ -89,26 +89,6 @@ if __name__ == '__main__':
     print( '\n=======> Sunrun Building Permits table' )
     os.system( 'python lawrence_building_permits_sunrun.py -m {0}'.format( args.master_filename ) )
 
-    # Read Mass Energy Insight data
-    print( '\n=======> Mass Energy Insight input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/mass_energy_insight/mass_energy_insight_a.csv -t RawMassEnergyInsight_A -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0}'.format( args.master_filename ) )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/mass_energy_insight/mass_energy_insight_l.csv -t RawMassEnergyInsight_L -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0}'.format( args.master_filename ) )
-
-    # Generate clean Mass Energy Insight table
-    print( '\n=======> Mass Energy Insight tables' )
-    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_A -o Mei_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python lawrence_mass_energy_insight.py -i RawMassEnergyInsight_L -o Mei_L -d {0}'.format( args.master_filename ) )
-
-    # Generate Mass Energy Insight totals
-    print( '\n=======> Mass Energy Insight totals' )
-    os.system( 'python lawrence_mass_energy_insight_totals.py -i Mei_A -o Mei_A_Totals -d {0}'.format( args.master_filename ) )
-    os.system( 'python lawrence_mass_energy_insight_totals.py -i Mei_L -o Mei_L_Totals -d {0}'.format( args.master_filename ) )
-
-    # Generate Mass Energy Insight month tables
-    print( '\n=======> Mass Energy Insight months' )
-    os.system( 'python lawrence_mass_energy_insight_months.py -i Mei_A -o Mei_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python lawrence_mass_energy_insight_months.py -i Mei_L -o Mei_L -d {0}'.format( args.master_filename ) )
-
     # Generate copyright notice
     print( '\n=======> Copyright' )
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
@@ -133,8 +113,6 @@ if __name__ == '__main__':
             'RawResidential_3',
             'RawBuildingPermits_Solar',
             'RawBuildingPermits_Sunrun',
-            'RawMassEnergyInsight_A',
-            'RawMassEnergyInsight_L',
          ],
         'encipher_column_names':
         [
