@@ -24,8 +24,8 @@ if __name__ == '__main__':
 
     # Generate clean Mass Energy Insight tables
     print( '\n=======> Mass Energy Insight tables' )
-    os.system( 'python mass_energy_insight_read.py -i RawMassEnergyInsight_A -o Mei_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python mass_energy_insight_read.py -i RawMassEnergyInsight_L -o Mei_L -d {0}'.format( args.master_filename ) )
+    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_A -o Mei_A -d {0}'.format( args.master_filename ) )
+    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_L -o Mei_L -d {0}'.format( args.master_filename ) )
 
     # Generate Mass Energy Insight month tables
     print( '\n=======> Mass Energy Insight months' )
