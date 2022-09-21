@@ -1038,6 +1038,8 @@ CONSISTENT_COLUMN_NAMES = \
 
 CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
+CONSISTENT_COLUMN_NAMES['RawCommercialExperiment'] = { **CONSISTENT_COLUMN_NAMES['RawCommercial_1'], **CONSISTENT_COLUMN_NAMES['RawCommercial_2'], }
+CONSISTENT_COLUMN_NAMES['RawResidentialExperiment'] = { **CONSISTENT_COLUMN_NAMES['RawResidential_1'], **CONSISTENT_COLUMN_NAMES['RawResidential_2'], **CONSISTENT_COLUMN_NAMES['RawResidential_3'], }
 
 # --> Generate column name mappings for Mass Energy Insight tables -->
 def populate_mei_column_names( dict, start_year, end_year ):
@@ -1799,7 +1801,7 @@ def read_excel_files( input_directory, column_labels, skiprows ):
 
 
 # Rename columns according to mappings
-def rename_columns( df, table_name ):
+def rename_columns( df, table_name, experiment=False ):
 
     # Strip whitespace from column names
     df.columns = df.columns.str.strip()
@@ -1815,7 +1817,11 @@ def rename_columns( df, table_name ):
 
     if len( not_in ):
         print( '!!! CONSISTENT_COLUMN_NAMES mappings missing for table {0}, {1} columns: {2}'.format( table_name, len(not_in), not_in ) )
-        exit()
+        if experiment:
+            print( '!!! Continuing as an experiment' )
+            make_experimental_column_names( table_name, not_in )
+        else:
+            exit()
 
     # Correct misspelling and mislabeling
     if table_name in CONSISTENT_COLUMN_NAMES:
@@ -1829,6 +1835,19 @@ def rename_columns( df, table_name ):
             print( '    To: {0}'.format( list( af.difference( bf ) ) ) )
 
     return df
+
+
+# Generate column names for experimental-stage table to be dumped into a database
+def make_experimental_column_names( table_name, not_in ):
+
+    # Create entry if it doesn't exist
+    if table_name not in CONSISTENT_COLUMN_NAMES:
+        CONSISTENT_COLUMN_NAMES[table_name] = {}
+
+    # Generate column name mappings
+    for original_name in not_in:
+        experimental_name = "_".join( original_name.replace( '.', '_' ).replace( ':', '' ).replace( '%', 'pct' ).lower().split() )
+        CONSISTENT_COLUMN_NAMES[table_name][original_name] = experimental_name
 
 
 # Open the SQLite database
@@ -1968,10 +1987,10 @@ def pdtype_to_sqltype( df, col_name ):
 
 
 # Prepare dataframe for saving to database
-def prepare_for_database( df, table_name ):
+def prepare_for_database( df, table_name, experiment=False ):
 
     # Correct misspelled and inconsistent column names
-    df = rename_columns( df, table_name )
+    df = rename_columns( df, table_name, experiment )
 
     # Fix numeric columns
     df = fix_numeric_columns( df )

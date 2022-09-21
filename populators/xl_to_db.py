@@ -3,6 +3,8 @@
 import argparse
 import os
 
+import chardet
+
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
@@ -28,11 +30,13 @@ if __name__ == '__main__':
     parser.add_argument( '-e', dest='keep_unnamed', action='store_true', help='Keep unnamed columns?'  )
     parser.add_argument( '-y', dest='hyperlinks', action='store_true', help='Preserve hyperlinks?'  )
     parser.add_argument( '-r', dest='skip_rows', type=int, help='Number of leading rows to skip' )
+    parser.add_argument( '-m', dest='drop_empty', action='store_true', help='Drop all empty columns and rows?'  )
     parser.add_argument( '-n', dest='dropna_subset',  help='Column subset to be considered in dropna() operation' )
     parser.add_argument( '-p', dest='drop_columns',  help='Comma-separated list of column labels to drop' )
     parser.add_argument( '-k', dest='keep_columns',  help='Comma-separated list of column labels to keep' )
     parser.add_argument( '-u', dest='uppercase_columns',  help='Comma-separated list of column labels for conversion to uppercase' )
     parser.add_argument( '-s', dest='sort_columns',  help='Comma-separated list of column labels to be used as basis for sort' )
+    parser.add_argument( '-x', dest='experiment', action='store_true', help='Is this operation an experiment?'  )
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     parser.add_argument( '-t', dest='output_table_name',  help='Output table name - Name of target table in SQLite database file', required=True )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
@@ -51,9 +55,18 @@ if __name__ == '__main__':
         # Read single input file
 
         if args.csv:
-            # Get dataframe from a CSV-format file
+            # Extract dataframe from a delimited text file
+
+            # Determine field separator.  Default is comma - i.e., CSV format.
             sep = bytes( args.field_separator, 'utf-8' ).decode( 'unicode_escape' ) if args.field_separator != None else ','
-            df_xl = pd.read_csv( args.input_filename, encoding = 'utf-16', sep=sep, dtype=object, skiprows=skiprows )
+
+            # Detect encoding of input file
+            with open( args.input_filename, 'rb' ) as rawdata:
+                encoding_info = chardet.detect( rawdata.read( 10000 ) )
+
+            # Get the dataframe from the input file
+            df_xl = pd.read_csv( args.input_filename, encoding=encoding_info['encoding'], sep=sep, dtype=object, skiprows=skiprows )
+
         elif args.hyperlinks:
             # Get dataframe with hyperlinks
             df_xl = util.read_excel_with_hyperlinks( args.input_filename, skiprows )
@@ -68,6 +81,11 @@ if __name__ == '__main__':
 
     # Remove excess whitespace in column heads
     df_xl.columns = df_xl.columns.str.replace( '\s+', ' ', regex=True ).str.strip()
+
+    # Optionally drop all empty columns and rows
+    if args.drop_empty:
+        df_xl = df_xl.dropna( axis='columns', how='all' )
+        df_xl = df_xl.dropna( axis='rows', how='all' )
 
     # Drop unwanted rows
     if args.dropna_subset != None:
@@ -102,7 +120,7 @@ if __name__ == '__main__':
         df_xl = df_xl[ args.keep_columns.split( ',' ) ]
 
     # Prepare data for saving to database
-    df_xl = util.prepare_for_database( df_xl, args.output_table_name )
+    df_xl = util.prepare_for_database( df_xl, args.output_table_name, experiment=args.experiment )
 
     # Open output file
     conn, cur, engine = util.open_database( args.output_filename, args.create )
