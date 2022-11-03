@@ -390,6 +390,10 @@ INSPECTION_STATUS = 'inspection_status'
 USAGE_END_NULL = 'usage_end_null'
 ONE = 'one'
 
+CUSTOMER_NAME = 'customer_name'
+UTILITY_ACCOUNT = 'utility_account'
+EXTERNAL_SUPPLIER = 'external_supplier'
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \
@@ -838,6 +842,44 @@ CONSISTENT_COLUMN_NAMES = \
         'Nov': NOV,
         'Dec': DEC,
         'Annual': ANNUAL_ELECTRIC_USAGE,
+    },
+    'RawExternalSuppliersElectric': \
+    {
+        'CustNo_i': 'customer_number',
+        'CustomerName': CUSTOMER_NAME,
+        'LDCAcctNo_vc': ACCOUNT_NUMBER,
+        'Acctno_i': ACCOUNT_NUMBER + '_i',
+        'LDC_vc': 'ldc',
+        'AcctStatus': 'account_status',
+        'Address': LOCATION_ADDRESS,
+        'TurnOnDate': 'turn_on_date',
+        'TurnOffDate': 'turn_off_date',
+        'OfferContract_vc': 'offer_contract',
+        'ContractStatus': 'contract_status',
+        'ContractID': 'contract_id',
+        'PlanName': 'plan_name',
+        'OPP_WonBid_ID': 'opp_won_bid_id',
+        'OriginationDate': 'origination_date',
+        'Effective_Start': 'effective_start_date',
+        'Effective_End': 'effective_end_date',
+        'Origination_Start': 'origination_start_date',
+        'Origination_End': 'origination_end_date',
+        'PMT_Term': 'pmt_term',
+        'InvoiceResponsible_vc': 'invoice_responsible',
+    },
+    'RawExternalSuppliersGas': \
+    {
+        'Customer Name': CUSTOMER_NAME,
+        'Commodity': 'commodity',
+        'Billing Account': 'billing_account',
+        'Utility Account': UTILITY_ACCOUNT,
+        'Address': 'street',
+        'City': 'city',
+        'State': 'state',
+        'Zip': ZIP,
+        'Status': STATUS,
+        'Service Start Date': 'service_start_date',
+        'Service End Date': 'service_end_date',
     },
     'RawGasUsage': \
     {

@@ -17,17 +17,42 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Clean up raw energy usage table from MassSave' )
     parser.add_argument( '-d', dest='db_filename', help='Database filename' )
     parser.add_argument( '-i', dest='input_table', help='Input table name' )
+    parser.add_argument( '-e', dest='input_table_electric', help='Name of table containing external electricity suppliers' )
+    parser.add_argument( '-g', dest='input_table_gas', help='Name of table containing external gas suppliers' )
     parser.add_argument( '-o', dest='output_table', help='Output table name' )
     args = parser.parse_args()
 
     # Open the database
     conn, cur, engine = util.open_database( args.db_filename, False )
 
-    # Read table from database
+    # Read raw input table from database
     df_raw = pd.read_sql_table( args.input_table, engine, index_col=util.ID )
+
+    # Read optional table of external electricity suppliers from database
+    if args.input_table_electric is not None:
+        df_es = pd.read_sql_table( args.input_table_electric, engine, columns=[util.ACCOUNT_NUMBER] )
+    else:
+        df_es = pd.DataFrame( columns=[util.ACCOUNT_NUMBER] )
+
+    # Read optional table of external gas suppliers from database
+    if args.input_table_gas is not None:
+        df_gas = pd.read_sql_table( args.input_table_gas, engine, columns=[util.UTILITY_ACCOUNT] )
+        df_gas[ [util.ACCOUNT_NUMBER, 'not_used'] ] = df_gas[util.UTILITY_ACCOUNT].str.split( '-', expand=True )
+        df_gas = df_gas[ [util.ACCOUNT_NUMBER] ]
+        df_es = df_es.append( df_gas, ignore_index=True )
+        df_es[util.ACCOUNT_NUMBER] = df_es[util.ACCOUNT_NUMBER].astype(str)
 
     # Create copy of dataframe
     df = df_raw.copy()
+
+    # Merge optional external supplier flag into dataframe
+    if len( df_es ):
+        df_es[util.EXTERNAL_SUPPLIER] = util.YES
+        df = df.reset_index()
+        df_es = df_es.reset_index()
+        df = pd.merge( df, df_es, how='left', on=[util.ACCOUNT_NUMBER] )
+        df.insert( df.columns.get_loc( util.ACCOUNT_NUMBER ) + 1, util.EXTERNAL_SUPPLIER, df.pop( util.EXTERNAL_SUPPLIER ) )
+        df[util.EXTERNAL_SUPPLIER] = df[util.EXTERNAL_SUPPLIER].fillna( util.NO )
 
     # Names of columns representing monthly statistics start with 4-digit year.  Convert values from text to numeric.
     for col_name in df.columns:
