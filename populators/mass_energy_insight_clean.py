@@ -30,17 +30,27 @@ if __name__ == '__main__':
 
     # Read optional table of external electricity suppliers from database
     if args.input_table_electric is not None:
-        df_es = pd.read_sql_table( args.input_table_electric, engine, columns=[util.ACCOUNT_NUMBER] )
+        df_es = pd.read_sql_table( args.input_table_electric, engine, columns=[util.ACCOUNT_NUMBER, util.LOCATION_ADDRESS] )
     else:
         df_es = pd.DataFrame( columns=[util.ACCOUNT_NUMBER] )
 
     # Read optional table of external gas suppliers from database
     if args.input_table_gas is not None:
-        df_gas = pd.read_sql_table( args.input_table_gas, engine, columns=[util.UTILITY_ACCOUNT] )
-        df_gas[ [util.ACCOUNT_NUMBER, 'not_used'] ] = df_gas[util.UTILITY_ACCOUNT].str.split( '-', expand=True )
-        df_gas = df_gas[ [util.ACCOUNT_NUMBER] ]
+
+        # Read the table
+        df_gas = pd.read_sql_table( args.input_table_gas, engine, columns=[util.UTILITY_ACCOUNT, util.STREET, util.CITY, util.STATE, util.ZIP] )
+
+        # Extract account number
+        df_gas[util.ACCOUNT_NUMBER] = df_gas[util.UTILITY_ACCOUNT].str.split( '-', expand=True )[0]
+
+        # Concatenate address fragments into single field
+        df_gas[util.LOCATION_ADDRESS] = df_gas[util.STREET] + ' ' + df_gas[util.CITY] + ' ' + df_gas[util.STATE] + ' ' + df_gas[util.ZIP]
+        df_gas = df_gas[ [util.ACCOUNT_NUMBER, util.LOCATION_ADDRESS] ]
+
+        # Combine all external suppliers into single dataframe
         df_es = df_es.append( df_gas, ignore_index=True )
         df_es[util.ACCOUNT_NUMBER] = df_es[util.ACCOUNT_NUMBER].astype(str)
+        df_es = df_es.drop_duplicates()
 
     # Create copy of dataframe
     df = df_raw.copy()
@@ -48,11 +58,12 @@ if __name__ == '__main__':
     # Merge optional external supplier flag into dataframe
     if len( df_es ):
         df_es[util.EXTERNAL_SUPPLIER] = util.YES
-        df = df.reset_index()
-        df_es = df_es.reset_index()
         df = pd.merge( df, df_es, how='left', on=[util.ACCOUNT_NUMBER] )
-        df.insert( df.columns.get_loc( util.ACCOUNT_NUMBER ) + 1, util.EXTERNAL_SUPPLIER, df.pop( util.EXTERNAL_SUPPLIER ) )
         df[util.EXTERNAL_SUPPLIER] = df[util.EXTERNAL_SUPPLIER].fillna( util.NO )
+
+        # Reorder columns
+        df.insert( df.columns.get_loc( util.ACCOUNT_NUMBER ) + 1, util.EXTERNAL_SUPPLIER, df.pop( util.EXTERNAL_SUPPLIER ) )
+        df.insert( df.columns.get_loc( util.EXTERNAL_SUPPLIER ) + 1, util.LOCATION_ADDRESS, df.pop( util.LOCATION_ADDRESS ) )
 
     # Names of columns representing monthly statistics start with 4-digit year.  Convert values from text to numeric.
     for col_name in df.columns:

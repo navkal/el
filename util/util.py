@@ -393,6 +393,10 @@ ONE = 'one'
 CUSTOMER_NAME = 'customer_name'
 UTILITY_ACCOUNT = 'utility_account'
 EXTERNAL_SUPPLIER = 'external_supplier'
+STREET = 'street'
+CITY = 'city'
+STATE = 'state'
+
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -873,9 +877,9 @@ CONSISTENT_COLUMN_NAMES = \
         'Commodity': 'commodity',
         'Billing Account': 'billing_account',
         'Utility Account': UTILITY_ACCOUNT,
-        'Address': 'street',
-        'City': 'city',
-        'State': 'state',
+        'Address': STREET,
+        'City': CITY,
+        'State': STATE,
         'Zip': ZIP,
         'Status': STATUS,
         'Service Start Date': 'service_start_date',
