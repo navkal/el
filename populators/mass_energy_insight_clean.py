@@ -12,6 +12,92 @@ import util
 
 #------------------------------------------------------
 
+HISTORY = 'history'
+ORIGINAL = 'Original'
+UPDATED = 'Updated'
+
+# Handle conflicts between rows that represent same account
+def handle_conflicts( df ):
+
+    # Find rows that bear conflicting information about a specific account
+    sr_b_duped = df.duplicated( subset=[util.ACCOUNT_NUMBER, util.COST_OR_USE], keep=False )
+    df_dupes = df.iloc[ sr_b_duped[sr_b_duped].index.values ]
+
+    # Initialize dataframe representing history of conflict removal
+    df_history = df_dupes.copy()
+    df_history[HISTORY] = ORIGINAL
+    df_history.insert( 0, HISTORY, df_history.pop( HISTORY ) )
+
+    # Initialize list of conflicting rows to drop
+    ls_drop_idx = []
+
+    # Iterate over groups of conflicting rows
+    for idx_group, df_group in df_dupes.groupby( by=[util.ACCOUNT_NUMBER, util.COST_OR_USE] ):
+
+        # Initialize dictionary that will indicate which is the preferred row among the conflicts
+        dc_preference_score = {}
+
+        # Iterate over current group of conflicting rows, calculating preference score for each
+        for idx_row, row in df_group.iterrows():
+
+            # Calculate preference score for current row.  (Low is good.)
+            n_preference_score = 0
+            n_weight = 1
+            for col_name in df_group.columns:
+                if is_tally_column( col_name ) and row[col_name] == 0:
+                    n_preference_score += n_weight
+                    n_weight = n_weight + 1
+
+            # Save preference score for current row
+            dc_preference_score[idx_row] = n_preference_score
+
+        # Get index of preferred row, i.e., row with minimum preference score
+        idx_preferred = min( dc_preference_score, key=dc_preference_score.get )
+
+        # Add remaining, non-preferred rows to list of rows to be dropped
+        del dc_preference_score[idx_preferred]
+        ls_drop_idx.extend( list( dc_preference_score.keys() ) )
+
+        # Optionally update preferred row with values from other rows
+        b_preferred_row_updated = False
+        for col_name in df_group.columns:
+
+            # If this is a tally column...
+            if is_tally_column( col_name ):
+
+                # ... and current value is not already the maximum
+                cur_value = df[col_name].values[idx_preferred]
+                max_value = df_group[col_name].max()
+                if pd.notnull( max_value ) and ( cur_value != max_value ):
+
+                    # Update the cell
+                    df.at[idx_preferred, col_name] = max_value
+                    b_preferred_row_updated = True
+
+        # Insert updated row into history
+        if b_preferred_row_updated:
+            df_history = df_history.append( df_group.loc[idx_preferred], ignore_index = True )
+
+    # Drop non-preferred conflicting rows
+    if len( ls_drop_idx ):
+        df = df.drop( index=ls_drop_idx )
+        df = df.reset_index( drop=True )
+
+    # Optionally complete history details and save to database
+    if len( df_history ):
+        df_history[HISTORY] = df_history[HISTORY].fillna( UPDATED )
+        df_history = df_history.sort_values( by=[util.ACCOUNT_NUMBER, util.COST_OR_USE, HISTORY] )
+        df_history = df_history.reset_index( drop=True )
+
+    return df, df_history
+
+
+# Names of columns representing monthly tallies start with 4-digit year.
+def is_tally_column( col_name ):
+    return col_name[:4].isnumeric()
+
+
+
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
@@ -66,9 +152,9 @@ if __name__ == '__main__':
         df.insert( df.columns.get_loc( util.ACCOUNT_NUMBER ) + 1, util.EXTERNAL_SUPPLIER, df.pop( util.EXTERNAL_SUPPLIER ) )
         df.insert( df.columns.get_loc( util.EXTERNAL_SUPPLIER ) + 1, util.LOCATION_ADDRESS, df.pop( util.LOCATION_ADDRESS ) )
 
-    # Names of columns representing monthly statistics start with 4-digit year.  Convert values from text to numeric.
+    # Convert tallies from text to numeric.
     for col_name in df.columns:
-        if col_name[:4].isnumeric() and ( df[col_name].dtype == object ):
+        if is_tally_column( col_name ) and ( df[col_name].dtype == object ):
 
             # Clean up text
             df[col_name] = df[col_name].replace( ',', '', regex=True )
@@ -76,63 +162,15 @@ if __name__ == '__main__':
             # Convert to numeric datatype
             df[col_name] = df[col_name].fillna( 0 ).astype( int )
 
-
-
-
-
-
-
-
-
-
-    sr_b_duped = df.duplicated( subset=[util.ACCOUNT_NUMBER, 'cost_or_use'], keep=False )
-    idx_duped = sr_b_duped[sr_b_duped].index.values
-    df_dupes = df.iloc[ idx_duped ]
-    # df_dupes = df_dupes.sort_values( by=[util.ACCOUNT_NUMBER, 'cost_or_use'] )
-    # print( df_dupes )
-    ls_drop_idx = []
-    for idx, df_group in df_dupes.groupby( by=[util.ACCOUNT_NUMBER, 'cost_or_use'] ):
-        print( '--------' )
-        # print( df_group )
-        print( idx )
-        dc_zeroes = {}
-        for index, row in df_group.iterrows():
-            n_zeroes = 0
-            for col_name in df_group.columns:
-                if col_name[:4].isnumeric() and row[col_name] == 0:
-                    n_zeroes += 1
-            dc_zeroes[index] = n_zeroes
-        print( dc_zeroes )
-        for idx in dc_zeroes.keys():
-            print( idx, dc_zeroes[idx] )
-        index_with_most_zeroes = max( dc_zeroes, key=dc_zeroes.get )
-        print( 'index with most zeroes:', index_with_most_zeroes )
-        index_with_fewest_zeroes = min( dc_zeroes, key=dc_zeroes.get )
-        print( 'index with fewest zeroes:', index_with_fewest_zeroes )
-        del dc_zeroes[index_with_fewest_zeroes]
-        print( dc_zeroes )
-        ls_drop_idx.extend( list( dc_zeroes.keys() ) )
-        print( 'keys to drop --> ', ls_drop_idx )
-
-    print( '--------' )
-
-
-    print( df.shape )
-    print( df.index )
-    df = df.drop( index=ls_drop_idx )
-    print( df.shape )
-    print( df.index )
-    df = df.reset_index( drop=True )
-    print( df.shape )
-    print( df.index )
-    
-
-
-
-
+    # Handle conflicts between rows representing same account
+    df, df_history = handle_conflicts( df )
 
     # Save result to database
     util.create_table( args.output_table, conn, cur, df=df )
+
+    # Optionally save change history to database
+    if len( df_history ):
+        util.create_table( args.output_table + '_ChangeHistory', conn, cur, df=df_history )
 
     # Report elapsed time
     util.report_elapsed_time()

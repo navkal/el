@@ -396,6 +396,7 @@ EXTERNAL_SUPPLIER = 'external_supplier'
 STREET = 'street'
 CITY = 'city'
 STATE = 'state'
+COST_OR_USE = 'cost_or_use'
 
 
 CONSISTENT_COLUMN_NAMES = \
@@ -942,7 +943,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Usage End Date Null': USAGE_END_NULL,
         'One': ONE,
         'Provider': 'provider',
-        'Unnamed: 8': 'cost_or_use',
+        'Unnamed: 8': COST_OR_USE,
     },
     'RawResidential_1': \
     {
