@@ -3,6 +3,7 @@
 import argparse
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
+pd.set_option('display.max_rows', 500)
 pd.set_option( 'display.width', 1000 )
 
 import sys
@@ -74,6 +75,61 @@ if __name__ == '__main__':
 
             # Convert to numeric datatype
             df[col_name] = df[col_name].fillna( 0 ).astype( int )
+
+
+
+
+
+
+
+
+
+
+    sr_b_duped = df.duplicated( subset=[util.ACCOUNT_NUMBER, 'cost_or_use'], keep=False )
+    idx_duped = sr_b_duped[sr_b_duped].index.values
+    df_dupes = df.iloc[ idx_duped ]
+    # df_dupes = df_dupes.sort_values( by=[util.ACCOUNT_NUMBER, 'cost_or_use'] )
+    # print( df_dupes )
+    ls_drop_idx = []
+    for idx, df_group in df_dupes.groupby( by=[util.ACCOUNT_NUMBER, 'cost_or_use'] ):
+        print( '--------' )
+        # print( df_group )
+        print( idx )
+        dc_zeroes = {}
+        for index, row in df_group.iterrows():
+            n_zeroes = 0
+            for col_name in df_group.columns:
+                if col_name[:4].isnumeric() and row[col_name] == 0:
+                    n_zeroes += 1
+            dc_zeroes[index] = n_zeroes
+        print( dc_zeroes )
+        for idx in dc_zeroes.keys():
+            print( idx, dc_zeroes[idx] )
+        index_with_most_zeroes = max( dc_zeroes, key=dc_zeroes.get )
+        print( 'index with most zeroes:', index_with_most_zeroes )
+        index_with_fewest_zeroes = min( dc_zeroes, key=dc_zeroes.get )
+        print( 'index with fewest zeroes:', index_with_fewest_zeroes )
+        del dc_zeroes[index_with_fewest_zeroes]
+        print( dc_zeroes )
+        ls_drop_idx.extend( list( dc_zeroes.keys() ) )
+        print( 'keys to drop --> ', ls_drop_idx )
+
+    print( '--------' )
+
+
+    print( df.shape )
+    print( df.index )
+    df = df.drop( index=ls_drop_idx )
+    print( df.shape )
+    print( df.index )
+    df = df.reset_index( drop=True )
+    print( df.shape )
+    print( df.index )
+    
+
+
+
+
 
     # Save result to database
     util.create_table( args.output_table, conn, cur, df=df )
