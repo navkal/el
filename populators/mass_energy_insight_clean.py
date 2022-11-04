@@ -78,17 +78,15 @@ def handle_conflicts( df ):
 
         # Insert updated row into history
         if b_preferred_row_updated:
-            df_history = df_history.append( df_group.loc[idx_preferred] )
+            df_history = df_history.append( df.loc[idx_preferred] )
         else:
             df_history.loc[idx_preferred,HISTORY] = RETAINED
 
-    # Drop non-preferred conflicting rows
+    # Drop non-preferred conflicting rows and finalize history
     if len( ls_drop_idx ):
         df = df.drop( index=ls_drop_idx )
         df = df.reset_index( drop=True )
 
-    # Complete history details
-    if len( df_history ):
         df_history.loc[ls_drop_idx, HISTORY] = DROPPED
         df_history[HISTORY] = df_history[HISTORY].fillna( UPDATED )
         df_history = df_history.sort_values( by=[util.ACCOUNT_NUMBER, util.COST_OR_USE, HISTORY] )
