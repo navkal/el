@@ -80,7 +80,7 @@ def handle_conflicts( df ):
         if b_preferred_row_updated:
             df_history = df_history.append( df.loc[idx_preferred] )
         else:
-            df_history.loc[idx_preferred,HISTORY] = RETAINED
+            df_history.loc[idx_preferred, HISTORY] = RETAINED
 
     # Drop non-preferred conflicting rows and finalize history
     if len( ls_drop_idx ):
@@ -147,6 +147,7 @@ if __name__ == '__main__':
 
     # Merge optional external supplier flag into dataframe
     if len( df_es ):
+        df_es[util.ACCOUNT_NUMBER] = df_es[util.ACCOUNT_NUMBER].str.zfill(10)
         df_es[util.EXTERNAL_SUPPLIER] = util.YES
         df = pd.merge( df, df_es, how='left', on=[util.ACCOUNT_NUMBER] )
         df[util.EXTERNAL_SUPPLIER] = df[util.EXTERNAL_SUPPLIER].fillna( util.NO )
