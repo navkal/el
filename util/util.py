@@ -848,7 +848,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Dec': DEC,
         'Annual': ANNUAL_ELECTRIC_USAGE,
     },
-    'RawExternalSuppliersElectric': \
+    'RawExternalSuppliersElectric_L': \
     {
         'CustNo_i': 'customer_number',
         'CustomerName': CUSTOMER_NAME,
@@ -872,7 +872,7 @@ CONSISTENT_COLUMN_NAMES = \
         'PMT_Term': 'pmt_term',
         'InvoiceResponsible_vc': 'invoice_responsible',
     },
-    'RawExternalSuppliersGas': \
+    'RawExternalSuppliersGas_L': \
     {
         'Customer Name': CUSTOMER_NAME,
         'Commodity': 'commodity',
@@ -2302,6 +2302,13 @@ def publish_database( input_db, output_filename, publish_info ):
         print( 'Publishing table', table_name )
         df = output_db[table_name]
         df.to_sql( table_name, conn, index=False )
+
+
+def print_full( x ):
+    pd.set_option( 'display.max_rows', len( x ) )
+    print( x )
+    pd.reset_option( 'display.max_rows' )
+
 
 
 def report_elapsed_time( prefix='\n', start_time=START_TIME ):

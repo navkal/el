@@ -95,6 +95,19 @@ def handle_conflicts( df ):
     return df, df_history
 
 
+# Strip leading zeros from numeric values
+def strip_leading_zeros( sr ):
+
+    df_result = sr.to_frame( name='original' )
+    df_result['numeric'] = sr[sr.str.isdecimal()]
+    df_result['not_numeric'] = sr[~sr.str.isdecimal()]
+    df_result['stripped'] = df_result['numeric'].str.replace( r'^0+(?!.*\D)', '', regex=True )
+    df_result = df_result.fillna( '' )
+    df_result['result'] = df_result['stripped'] + df_result['not_numeric']
+
+    return df_result['result']
+
+
 # Names of columns representing monthly tallies start with 4-digit year.
 def is_tally_column( col_name ):
     return col_name[:4].isnumeric()
@@ -104,11 +117,11 @@ def is_tally_column( col_name ):
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Clean up raw energy usage table from MassSave' )
+    parser = argparse.ArgumentParser( description='Clean up Mass Energy Insight and optional related tables' )
     parser.add_argument( '-d', dest='db_filename', help='Database filename' )
     parser.add_argument( '-i', dest='input_table', help='Input table name' )
-    parser.add_argument( '-e', dest='input_table_electric', help='Name of table containing external electricity suppliers' )
-    parser.add_argument( '-g', dest='input_table_gas', help='Name of table containing external gas suppliers' )
+    parser.add_argument( '-e', dest='input_table_electric', help='Input table name: external electricity suppliers' )
+    parser.add_argument( '-g', dest='input_table_gas', help='Input table name: external gas suppliers' )
     parser.add_argument( '-o', dest='output_table', help='Output table name' )
     args = parser.parse_args()
 
@@ -120,9 +133,11 @@ if __name__ == '__main__':
 
     # Read optional table of external electricity suppliers from database
     if args.input_table_electric is not None:
-        df_es = pd.read_sql_table( args.input_table_electric, engine, columns=[util.ACCOUNT_NUMBER, util.LOCATION_ADDRESS] )
+        df_el = pd.read_sql_table( args.input_table_electric, engine, columns=[util.ACCOUNT_NUMBER, util.LOCATION_ADDRESS] )
     else:
-        df_es = pd.DataFrame( columns=[util.ACCOUNT_NUMBER] )
+        df_el = pd.DataFrame( columns=[util.ACCOUNT_NUMBER] )
+
+    df_es = df_el.copy()
 
     # Read optional table of external gas suppliers from database
     if args.input_table_gas is not None:
@@ -136,18 +151,22 @@ if __name__ == '__main__':
         # Concatenate address fragments into single field
         df_gas[util.LOCATION_ADDRESS] = df_gas[util.STREET] + ' ' + df_gas[util.CITY] + ' ' + df_gas[util.STATE] + ' ' + df_gas[util.ZIP]
         df_gas = df_gas[ [util.ACCOUNT_NUMBER, util.LOCATION_ADDRESS] ]
+    else:
+        df_gas = pd.DataFrame( columns=[util.ACCOUNT_NUMBER, util.LOCATION_ADDRESS] )
 
-        # Combine all external suppliers into single dataframe
-        df_es = df_es.append( df_gas, ignore_index=True )
-        df_es[util.ACCOUNT_NUMBER] = df_es[util.ACCOUNT_NUMBER].astype(str)
-        df_es = df_es.drop_duplicates()
+    # Combine all external suppliers into single dataframe
+    df_es = df_es.append( df_gas, ignore_index=True )
+    df_es[util.ACCOUNT_NUMBER] = df_es[util.ACCOUNT_NUMBER].astype(str)
+    df_es = df_es.drop_duplicates()
 
     # Create copy of dataframe
     df = df_raw.copy()
 
+    # Strip leading zeros from numeric account numbers
+    df[util.ACCOUNT_NUMBER] = strip_leading_zeros( df[util.ACCOUNT_NUMBER] )
+
     # Merge optional external supplier flag into dataframe
     if len( df_es ):
-        df_es[util.ACCOUNT_NUMBER] = df_es[util.ACCOUNT_NUMBER].str.zfill(10)
         df_es[util.EXTERNAL_SUPPLIER] = util.YES
         df = pd.merge( df, df_es, how='left', on=[util.ACCOUNT_NUMBER] )
         df[util.EXTERNAL_SUPPLIER] = df[util.EXTERNAL_SUPPLIER].fillna( util.NO )

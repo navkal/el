@@ -24,13 +24,13 @@ if __name__ == '__main__':
 
     # Read external suppliers data
     print( '\n=======> External suppliers input' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_electric.xlsx -t RawExternalSuppliersElectric -o {0}'.format( args.master_filename ) )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_gas.xlsx -t RawExternalSuppliersGas -r 1 -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_electric.xlsx -t RawExternalSuppliersElectric_L -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_gas.xlsx -t RawExternalSuppliersGas_L -r 1 -o {0}'.format( args.master_filename ) )
 
     # Generate clean Mass Energy Insight tables with optional addition of external suppliers data
     print( '\n=======> Mass Energy Insight tables' )
     os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_A -o Mei_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_L -e RawExternalSuppliersElectric -g RawExternalSuppliersGas -o Mei_L -d {0}'.format( args.master_filename ) )
+    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_L -e RawExternalSuppliersElectric_L -g RawExternalSuppliersGas_L -o Mei_L -d {0}'.format( args.master_filename ) )
 
     # Generate Mass Energy Insight month tables
     print( '\n=======> Mass Energy Insight months' )
