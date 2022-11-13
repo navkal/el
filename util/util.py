@@ -399,6 +399,13 @@ CITY = 'city'
 STATE = 'state'
 COST_OR_USE = 'cost_or_use'
 
+CONTRACT = 'contract'
+METHOD = 'method'
+PERIOD = 'period'
+VENDOR = 'vendor'
+VENDOR_NUMBER = 'vendor_number'
+VENDOR_NAME = 'vendor_name'
+AMOUNT = 'amount_$'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -830,6 +837,18 @@ CONSISTENT_COLUMN_NAMES = \
         'CNS_OCC': LAND_USE_CODE + '_1',
         'CNS_OCC_DESC': LAND_USE_CODE + _DESC,
     },
+    'RawContracts': \
+    {
+        'Contract': CONTRACT,
+        'Method': METHOD,
+        'Status': STATUS,
+        'Description': DESCRIPTION,
+        'Year': YEAR,
+        'Period': PERIOD,
+        'Revised Amount': AMOUNT,
+        'Vendor': VENDOR,
+        'Dept': DEPARTMENT,
+    },
     'RawElectricUsage': \
     {
         'year': YEAR,
@@ -1046,6 +1065,22 @@ CONSISTENT_COLUMN_NAMES = \
         'Roof Structure:': ROOF_STRUCTURE,
         'Roof Struct Desc': ROOF_STRUCTURE + _DESC,
         'Style:': STYLE,
+    },
+    'RawVendors': \
+    {
+        'VDR NUM': VENDOR_NUMBER,
+        'NAME': VENDOR_NAME,
+        'DBA': 'dba',
+        'ADDR1': 'address_1',
+        'ADDR2': 'address_2',
+        'CITY': CITY,
+        'ST': STATE,
+        'ZIP': ZIP,
+        'ALPHA': 'alpha',
+        'EMAIL': EMAIL,
+        'CONTACT1 NAME': 'contact_name',
+        'CONTACT1 EMAIL': 'contact_email',
+        'CONTACT1 PHONE': PHONE,
     },
     'Solar': \
     {
@@ -1351,6 +1386,12 @@ COLUMN_ORDER = \
         FIRST_NAME,
         MIDDLE_NAME,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+    ],
+    'Contracts':
+    [
+        CONTRACT,
+        VENDOR_NUMBER,
+        VENDOR,
     ],
     'ElectionHistory':
     [
