@@ -16,10 +16,6 @@ if __name__ == '__main__':
     parser.add_argument( '-m', dest='master_filename',  help='Output filename - Name of master database file', required=True )
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
-########################
-    # os.system( 'python city_contracts_cost_history.py -c Contracts -v Vendors -o CostHistory -d {0}'.format( args.master_filename ) )
-    # exit()
-########################
 
     # Read contracts data
     print( '\n=======> Contracts input' )

@@ -26,7 +26,8 @@ if __name__ == '__main__':
     # Read table from database
     df = pd.read_sql_table( args.input_table, engine, index_col=util.ID )
 
-    # Create a dataframe with no duplicated vendor numbers
+    # Create a dataframe with distinct vendor numbers and phones, if available
+    df = df.sort_values(  by=[util.VENDOR_NUMBER, util.PHONE] )
     df = df.drop_duplicates( subset=[util.VENDOR_NUMBER] )
 
     # Save result to database
