@@ -406,6 +406,9 @@ VENDOR = 'vendor'
 VENDOR_NUMBER = 'vendor_number'
 VENDOR_NAME = 'vendor_name'
 AMOUNT = 'amount_$'
+ADDR_1 = 'address_1'
+ADDR_2 = 'address_2'
+CONTACT_EMAIL = 'contact_email'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1071,15 +1074,15 @@ CONSISTENT_COLUMN_NAMES = \
         'VDR NUM': VENDOR_NUMBER,
         'NAME': VENDOR_NAME,
         'DBA': 'dba',
-        'ADDR1': 'address_1',
-        'ADDR2': 'address_2',
+        'ADDR1': ADDR_1,
+        'ADDR2': ADDR_2,
         'CITY': CITY,
         'ST': STATE,
         'ZIP': ZIP,
         'ALPHA': 'alpha',
         'EMAIL': EMAIL,
         'CONTACT1 NAME': 'contact_name',
-        'CONTACT1 EMAIL': 'contact_email',
+        'CONTACT1 EMAIL': CONTACT_EMAIL,
         'CONTACT1 PHONE': PHONE,
     },
     'Solar': \
@@ -1392,6 +1395,18 @@ COLUMN_ORDER = \
         CONTRACT,
         VENDOR_NUMBER,
         VENDOR,
+    ],
+    'CostHistory':
+    [
+        VENDOR_NUMBER,
+        VENDOR_NAME,
+        PHONE,
+        EMAIL,
+        ADDR_1,
+        ADDR_2,
+        CITY,
+        STATE,
+        ZIP,
     ],
     'ElectionHistory':
     [

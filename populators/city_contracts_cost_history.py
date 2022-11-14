@@ -36,6 +36,10 @@ if __name__ == '__main__':
     idx_empty = df[ pd.isnull( df[util.VENDOR_NAME] ) ].index
     df.at[idx_empty, util.VENDOR_NAME] = df.loc[idx_empty, util.VENDOR].str.extract( r'\([0-9]+\) (.*)', expand=False )
 
+    # Fill in empty email addresses
+    idx_empty = df[ pd.isnull( df[util.EMAIL] ) ].index
+    df.at[idx_empty, util.EMAIL] = df.loc[idx_empty, util.CONTACT_EMAIL]
+
     # Initialize totals table
     df_totals = df.copy()
     df_totals = df_totals[ [util.VENDOR_NUMBER] ]
@@ -60,12 +64,18 @@ if __name__ == '__main__':
         grand_total = df_group_vn[util.AMOUNT].sum()
         df_totals.at[row_index, util.AMOUNT] = grand_total
 
-    # Sort totals columns
-    df_totals = df_totals.reindex( sorted( df_totals.columns ), axis=1 )
+    # Drop unwanted columns
+    df = df.drop( columns=[util.CONTRACT, util.METHOD, util.STATUS, util.DESCRIPTION, util.YEAR, util.PERIOD, util.AMOUNT, util.VENDOR, util.DEPARTMENT, util.CONTACT_EMAIL] )
 
-    # Drop unwanted columns and merge totals
-    df = df.drop( columns=[util.CONTRACT, util.METHOD, util.STATUS, util.DESCRIPTION, util.YEAR, util.PERIOD, util.AMOUNT, util.VENDOR, util.DEPARTMENT] )
+    # Plan final column order
+    first_cols = util.COLUMN_ORDER[args.output_table]
+    mid_cols = sorted( set( df_totals.columns ).difference( { util.VENDOR_NUMBER } ), reverse=True )
+    last_cols = df.columns.difference( first_cols )
+    cols = [ *first_cols, *mid_cols, *last_cols ]
+
+    # Merge and reindex
     df = pd.merge( df, df_totals, how='left', on=[util.VENDOR_NUMBER] )
+    df = df.reindex( columns=cols )
 
     # Save result to database
     util.create_table( args.output_table, conn, cur, df=df )
