@@ -60,6 +60,7 @@ if __name__ == '__main__':
         exit()
 
     # Create filtered table
+    df[args.input_column_name] = df[args.input_column_name].fillna( '' ).astype( str )
     df_filter = df[ df[args.input_column_name].str.contains( args.filter_string, regex=False ) ]
     df_filter = df_filter.drop( ['id'], axis=1 )
 
