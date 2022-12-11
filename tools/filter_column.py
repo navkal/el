@@ -10,7 +10,7 @@ import sqlalchemy
 #
 # Sample parameter sequence
 #
-# -d db.sqlite -t TableName -c column_name -f filter_string [-o OutputTableName]
+# -d db.sqlite -t TableName -c column_name -f filter_string -o OutputTableName
 #
 ######################
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument( '-t', dest='input_table_name',  help='Input table name - Name of table in specified database', required=True )
     parser.add_argument( '-c', dest='input_column_name',  help='Input column name - Name of column in specified table', required=True )
     parser.add_argument( '-f', dest='filter_string',  help='Filter to apply to specified column', required=True )
-    parser.add_argument( '-o', dest='output_table_name',  help='Output table name (optional) - Name of result table' )
+    parser.add_argument( '-o', dest='output_table_name',  help='Output table name - Name of result table', required=True )
     args = parser.parse_args()
 
     # Report
@@ -60,24 +60,16 @@ if __name__ == '__main__':
         exit()
 
     # Create filtered table
-    df_filter = df[ df[args.input_column_name] == args.filter_string ]
-    df_filter = df_filter.drop( columns=['id'] )
+    df_filter = df[ df[args.input_column_name].str.contains( args.filter_string, regex=False ) ]
+    df_filter = df_filter.drop( ['id'], axis=1 )
 
-    # Determine output table name
-    if args.output_table_name is not None:
-        output_table_name = args.output_table_name
-    else:
-        table_part = '_'.join( args.input_table_name.split() )
-        column_part = '_'.join( args.input_column_name.split() )
-        filter_part = '_'.join( args.filter_string.split() )
-        output_table_name = table_part + '_' +  column_part + '_' + filter_part + FILTER_TABLE_SUFFIX
-    print( "Saving results to table '{}'".format( output_table_name ) )
+    print( "Saving results to table '{}'".format( args.output_table_name ) )
 
     # Drop table if it already exists
-    cur.execute( 'DROP TABLE IF EXISTS ' + output_table_name )
+    cur.execute( 'DROP TABLE IF EXISTS ' + args.output_table_name )
 
     # Generate SQL command to create table
-    create_sql = 'CREATE TABLE ' + output_table_name + ' ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
+    create_sql = 'CREATE TABLE ' + args.output_table_name + ' ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
     for col_name in df_filter.columns:
         create_sql += ', "{0}"'.format( col_name )
     create_sql += ' )'
@@ -86,7 +78,7 @@ if __name__ == '__main__':
     cur.execute( create_sql )
 
     # Load data into table
-    df_filter.to_sql( output_table_name, conn, if_exists='append', index=False )
+    df_filter.to_sql( args.output_table_name, conn, if_exists='append', index=False )
 
     # Commit changes
     conn.commit()
