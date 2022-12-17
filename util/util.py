@@ -147,6 +147,7 @@ MADDR_APARTMENT_NUMBER = APARTMENT_NUMBER.format( MAILING_ADDRESS )
 MADDR_CITY = MAILING_ADDRESS + '_city'
 MADDR_STATE = MAILING_ADDRESS + '_state'
 MADDR_STREET = MAILING_ADDRESS + '_street'
+MADDR_CSZ = MAILING_ADDRESS + '_csz'
 MADDR_ZIP_CODE = ZIP_CODE.format( MAILING_ADDRESS )
 MADDR_LINE = MAILING_ADDRESS + '_line_{0}'
 
@@ -767,6 +768,29 @@ CONSISTENT_COLUMN_NAMES = \
         'OPENED': OPENED,
         'CLOSED': CLOSED_DATE,
     },
+    'RawBuildingPermits_Wx': \
+    {
+        'File#': FILE_NUMBER,
+        'Address': ADDRESS,
+        'Project Description': WORK_DESCRIPTION,
+        'Permit#': PERMIT_NUMBER,
+        'Permit Type': PERMIT_TYPE,
+        'Subtype': PERMIT_SUBTYPE,
+        'Applicant': APPLICANT,
+        'Business Name': BUSINESS_NAME,
+        'Mailing Address': MADDR_STREET,
+        'Mailing CSZ': MADDR_CSZ,
+        'Permit Status': PERMIT_STATUS,
+        'Permit Fees': TOTAL_FEE,
+        'Application Date': APPLICATION_DATE,
+        'Approval Date': APPROVAL_DATE,
+        'Issue Date': DATE_ISSUED,
+        'Expiration Date': EXPIRATION_DATE,
+        'Close Date': CLOSED_DATE,
+        'Property Owner': OWNER_NAME,
+        'Use Group': PROPERTY_USE_GROUP,
+        'Total Project Cost': PROJECT_COST,
+    },
     'RawBusinesses_1': \
     {
         'License#': LICENSE_NUMBER,
@@ -941,6 +965,24 @@ CONSISTENT_COLUMN_NAMES = \
         'Annual Gas Usage (Therms)': ANNUAL_GAS_USAGE,
         'Annual Gas Savings (Therms)': ANNUAL_GAS_SAVINGS,
         'Gas Incentives': GAS_INCENTIVES,
+    },
+    'RawGlcacProjects': \
+    {
+        'Job Num': 'job_number',
+        'Address': ADDRESS,
+        'Completed Date': 'completed_date',
+        'Residence Type': 'residence_type',
+        'Ownership': 'ownership',
+        'Fuel Type': HEATING_FUEL,
+        'DHW Fuel Type': 'dhw_fuel',
+        'First Name': FIRST_NAME,
+        'Last Name': LAST_NAME,
+        'Phone Number': PHONE,
+        'Utility Compensation': 'utility_compensation_$',
+        'Total Job Cost': PROJECT_COST,
+        'Diffrence': 'cost_difference_$',
+        'Residence Status': STATUS,
+        'Uitlity': 'utility',
     },
     'RawLocalElectionResults': \
     {
