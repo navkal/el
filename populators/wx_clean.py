@@ -22,7 +22,7 @@ ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Generate weatherization records table' )
+    parser = argparse.ArgumentParser( description='Clean weatherization data' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
