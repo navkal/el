@@ -47,7 +47,8 @@ if __name__ == '__main__':
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_projects[ADDR] = df_projects[util.ADDRESS].str.strip()
-    df_projects[ADDR] = df_projects[ADDR].str.split( ' Ma ', expand=True )[0]
+    df_projects[ADDR] = df_projects[ADDR].str.upper()
+    df_projects[ADDR] = df_projects[ADDR].str.split( ' MA ', expand=True )[0]
     df_projects[ADDR] = df_projects[ADDR].str.rsplit( n=1, expand=True )[0]
     df_projects[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_projects.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
