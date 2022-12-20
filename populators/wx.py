@@ -22,11 +22,11 @@ if __name__ == '__main__':
     os.system( 'python xl_to_db.py -i ../xl/wx/glcac_jobs.xlsx -t RawGlcacJobs -o {0} -c'.format( args.master_filename ) )
 
     # Read weatherization permit data
-    print( '\n=======> Weatherization permit input' )
+    print( '\n=======> Weatherization permits input' )
     os.system( 'python xl_to_db.py -i ../xl/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0}'.format( args.master_filename ) )
 
     # Read past weatherization permit data
-    print( '\n=======> Weatherization permit input' )
+    print( '\n=======> Past weatherization permits input' )
     os.system( 'python xl_to_db.py -i ../xl/wx/building_permits_past_wx.xlsx -p "id" -t RawBuildingPermits_Past_Wx -o {0}'.format( args.master_filename ) )
 
     # Clean weatherization data
