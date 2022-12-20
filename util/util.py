@@ -410,6 +410,7 @@ AMOUNT = 'amount_$'
 ADDR_1 = 'address_1'
 ADDR_2 = 'address_2'
 CONTACT_EMAIL = 'contact_email'
+JOB_NUMBER = 'job_number'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -966,9 +967,9 @@ CONSISTENT_COLUMN_NAMES = \
         'Annual Gas Savings (Therms)': ANNUAL_GAS_SAVINGS,
         'Gas Incentives': GAS_INCENTIVES,
     },
-    'RawGlcacProjects': \
+    'RawGlcacJobs': \
     {
-        'Job Num': 'job_number',
+        'Job Num': JOB_NUMBER,
         'Address': ADDRESS,
         'Completed Date': 'completed_date',
         'Residence Type': 'residence_type',
@@ -1470,6 +1471,11 @@ COLUMN_ORDER = \
     ],
     'Gender_2014':
     [
+    ],
+    'GlcacJobsWithPermits_L':
+    [
+        JOB_NUMBER,
+        PERMIT_NUMBER,
     ],
     'LocalElectionResults':
     [

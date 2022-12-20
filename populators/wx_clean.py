@@ -29,6 +29,22 @@ if __name__ == '__main__':
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
+    # Retrieve GLCAC jobs table from database
+    df_jobs = pd.read_sql_table( 'RawGlcacJobs', engine, index_col=util.ID, parse_dates=True )
+
+    # Normalize addresses.  Use result_type='expand' to load multiple columns!
+    df_jobs[ADDR] = df_jobs[util.ADDRESS].str.strip()
+    df_jobs[ADDR] = df_jobs[ADDR].str.upper()
+    df_jobs[ADDR] = df_jobs[ADDR].str.split( ' MA ', expand=True )[0]
+    df_jobs[ADDR] = df_jobs[ADDR].str.rsplit( n=1, expand=True )[0]
+    df_jobs[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_jobs.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+
+    # Drop empty columns
+    df_jobs = df_jobs.dropna( axis='columns', how='all' )
+
+    # Create table in database
+    util.create_table( 'GlcacJobs_L', conn, cur, df=df_jobs )
+
     # Retrieve city permits table from database
     df_permits = pd.read_sql_table( 'RawBuildingPermits_Wx', engine, index_col=util.ID, parse_dates=True )
 
@@ -41,21 +57,5 @@ if __name__ == '__main__':
 
     # Create table in database
     util.create_table( 'BuildingPermits_L_Wx', conn, cur, df=df_permits )
-
-    # Retrieve GLCAC projects table from database
-    df_projects = pd.read_sql_table( 'RawGlcacProjects', engine, index_col=util.ID, parse_dates=True )
-
-    # Normalize addresses.  Use result_type='expand' to load multiple columns!
-    df_projects[ADDR] = df_projects[util.ADDRESS].str.strip()
-    df_projects[ADDR] = df_projects[ADDR].str.upper()
-    df_projects[ADDR] = df_projects[ADDR].str.split( ' MA ', expand=True )[0]
-    df_projects[ADDR] = df_projects[ADDR].str.rsplit( n=1, expand=True )[0]
-    df_projects[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_projects.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
-
-    # Drop empty columns
-    df_projects = df_projects.dropna( axis='columns', how='all' )
-
-    # Create table in database
-    util.create_table( 'GlcacProjects_L', conn, cur, df=df_projects )
 
     util.report_elapsed_time()

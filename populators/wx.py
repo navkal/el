@@ -17,13 +17,13 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
+    # Read GLCAC weatherization jobs data
+    print( '\n=======> GLCAC weatherization jobs input' )
+    os.system( 'python xl_to_db.py -i ../xl/wx/glcac_jobs.xlsx -t RawGlcacJobs -o {0} -c'.format( args.master_filename ) )
+
     # Read weatherization permit data
     print( '\n=======> Weatherization permit input' )
-    os.system( 'python xl_to_db.py -i ../xl/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0} -c'.format( args.master_filename ) )
-
-    # Read GLCAC weatherization project data
-    print( '\n=======> GLCAC weatherization project input' )
-    os.system( 'python xl_to_db.py -i ../xl/wx/glcac_projects.xlsx -t RawGlcacProjects -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0}'.format( args.master_filename ) )
 
     # Clean weatherization data
     print( '\n=======> Clean weatherization data' )
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         'drop_table_names':
         [
             'RawBuildingPermits_Wx',
-            'RawGlcacProjects',
+            'RawGlcacJobs',
          ],
         'encipher_column_names':
         [
