@@ -25,6 +25,10 @@ if __name__ == '__main__':
     print( '\n=======> Weatherization permit input' )
     os.system( 'python xl_to_db.py -i ../xl/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0}'.format( args.master_filename ) )
 
+    # Read past weatherization permit data
+    print( '\n=======> Weatherization permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/wx/building_permits_past_wx.xlsx -p "id" -t RawBuildingPermits_Past_Wx -o {0}'.format( args.master_filename ) )
+
     # Clean weatherization data
     print( '\n=======> Clean weatherization data' )
     os.system( 'python wx_clean.py -m {0}'.format( args.master_filename ) )
@@ -45,6 +49,7 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
+            'RawBuildingPermits_Past_Wx',
             'RawBuildingPermits_Wx',
             'RawGlcacJobs',
          ],

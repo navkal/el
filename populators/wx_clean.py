@@ -58,4 +58,17 @@ if __name__ == '__main__':
     # Create table in database
     util.create_table( 'BuildingPermits_L_Wx', conn, cur, df=df_permits )
 
+    # Retrieve past city permits table from database
+    df_past = pd.read_sql_table( 'RawBuildingPermits_Past_Wx', engine, index_col=util.ID, parse_dates=True )
+
+    # Normalize addresses.  Use result_type='expand' to load multiple columns!
+    df_past[ADDR] = df_past[util.ADDRESS].str.strip()
+    df_past[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_past.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+
+    # Drop empty columns
+    df_past = df_past.dropna( axis='columns', how='all' )
+
+    # Create table in database
+    util.create_table( 'BuildingPermits_Past_L_Wx', conn, cur, df=df_past )
+
     util.report_elapsed_time()

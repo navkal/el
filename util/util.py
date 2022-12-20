@@ -769,6 +769,18 @@ CONSISTENT_COLUMN_NAMES = \
         'OPENED': OPENED,
         'CLOSED': CLOSED_DATE,
     },
+    'RawBuildingPermits_Past_Wx': \
+    {
+        'Info_1': FILE_NUMBER,
+        'Permit#': PERMIT_NUMBER,
+        'Status': PERMIT_STATUS,
+        'Address': ADDRESS,
+        'Opened': DATE_ISSUED,
+        'Closed': CLOSED_DATE,
+        'Permit#2': PERMIT_NUMBER + '_2',
+        'Permit#3': PERMIT_NUMBER + '_3',
+        'Description': WORK_DESCRIPTION,
+    },
     'RawBuildingPermits_Wx': \
     {
         'File#': FILE_NUMBER,
