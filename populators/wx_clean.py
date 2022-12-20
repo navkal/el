@@ -17,6 +17,9 @@ STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
 ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
+PERMIT_SOURCE = 'permit_source'
+OFFICIAL = 'official'
+PAST = 'past'
 
 # Main program
 if __name__ == '__main__':
@@ -45,8 +48,15 @@ if __name__ == '__main__':
     # Create table in database
     util.create_table( 'GlcacJobs_L', conn, cur, df=df_jobs )
 
-    # Retrieve city permits table from database
+    # Retrieve city permits tables - official and past - from database
     df_permits = pd.read_sql_table( 'RawBuildingPermits_Wx', engine, index_col=util.ID, parse_dates=True )
+    df_past = pd.read_sql_table( 'RawBuildingPermits_Past_Wx', engine, index_col=util.ID, parse_dates=True )
+
+    # Combine official and past permits in one dataframe, preserving source information
+    df_permits[PERMIT_SOURCE] = OFFICIAL
+    df_past[PERMIT_SOURCE] = PAST
+    df_permits = df_permits.append( df_past, ignore_index=True )
+    df_permits = df_permits.drop_duplicates( subset=[util.PERMIT_NUMBER] )
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_permits[ADDR] = df_permits[util.ADDRESS].str.strip()
@@ -57,18 +67,5 @@ if __name__ == '__main__':
 
     # Create table in database
     util.create_table( 'BuildingPermits_L_Wx', conn, cur, df=df_permits )
-
-    # Retrieve past city permits table from database
-    df_past = pd.read_sql_table( 'RawBuildingPermits_Past_Wx', engine, index_col=util.ID, parse_dates=True )
-
-    # Normalize addresses.  Use result_type='expand' to load multiple columns!
-    df_past[ADDR] = df_past[util.ADDRESS].str.strip()
-    df_past[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_past.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
-
-    # Drop empty columns
-    df_past = df_past.dropna( axis='columns', how='all' )
-
-    # Create table in database
-    util.create_table( 'BuildingPermits_Past_L_Wx', conn, cur, df=df_past )
 
     util.report_elapsed_time()

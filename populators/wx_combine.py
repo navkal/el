@@ -95,11 +95,6 @@ if __name__ == '__main__':
     # Retrieve tables from database
     df_jobs = pd.read_sql_table( 'GlcacJobs_L', engine, index_col=util.ID, parse_dates=True )
     df_permits = pd.read_sql_table( 'BuildingPermits_L_Wx', engine, index_col=util.ID, parse_dates=True )
-    df_past = pd.read_sql_table( 'BuildingPermits_Past_L_Wx', engine, index_col=util.ID, parse_dates=True )
-
-    # Combine official and past permits in one dataframe
-    df_permits = df_permits.append( df_past, ignore_index=True )
-    df_permits = df_permits.drop_duplicates( subset=[util.PERMIT_NUMBER] )
 
     # Use normalized addresses to correlate projects with permits
     df_result = combine_tables( df_jobs, df_permits )
