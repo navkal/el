@@ -1124,6 +1124,46 @@ CONSISTENT_COLUMN_NAMES = \
         'Roof Struct Desc': ROOF_STRUCTURE + _DESC,
         'Style:': STYLE,
     },
+    'RawResidential_4': \
+    {
+        'ACCOUNT NUM': ACCOUNT_NUMBER,
+        'GIS ID': GIS_ID,
+        'OWNER': OWNER_NAME,
+        'STREET NUM': LADDR_STREET_NUMBER,
+        'STREET NAME': LADDR_STREET_NAME,
+        'ASSESS CODE 1': LAND_USE_CODE,
+        'GRANTEE 1': OWNER_1_NAME,
+        'GRANTEE 2': OWNER_2_NAME,
+        'ADDRESS1': MADDR_LINE.format( 1 ),
+        'ADDRESS2': MADDR_LINE.format( 2 ),
+        'CITY': MADDR_CITY,
+        'STATE': MADDR_STATE,
+        'ZIP': MADDR_ZIP_CODE,
+        'SALE DATE 1': LEGAL_REFERENCE_SALE_DATE,
+        'BOOK PAGE 1': BOOK,
+        'SALE PRICE 1': SALE_PRICE,
+        'Stories:': STORY_HEIGHT,
+        'Stories Desc': STORY_HEIGHT + _DESC,
+        'Roof Cover': ROOF_COVER,
+        'Roof Cover Desc': ROOF_COVER + _DESC,
+        'Roof Structure:': ROOF_STRUCTURE,
+        'Roof Struct Desc': ROOF_STRUCTURE + _DESC,
+        'Heat Type:': HEATING_FUEL + _CODE,
+        'Usrfld 82 Desc': HEATING_FUEL,
+        'Heat Fuel': HEATING_TYPE,
+        'Heat Type Desc': HEATING_TYPE + _DESC,
+        'AC Type:': AC_TYPE,
+        'Ac Type Desc': AC_TYPE + _CODE,
+        'Total Bedrooms:': BEDROOOMS,
+        'Num Bedrm Desc': BEDROOOMS + _DESC,
+        'Total Bthrms:': FULL_BATHS,
+        'Num Bathrm Desc': FULL_BATHS + _DESC,
+        'Total Half Baths:': HALF_BATHS,
+        'Total Rooms:': ROOMS,
+        'Num Rms Desc': ROOMS + _DESC,
+        'Kitchen Style:': KITCHEN_STYLE,
+        'Kitchen Style Desc': KITCHEN_STYLE + _DESC,
+    },
     'RawVendors': \
     {
         'VDR NUM': VENDOR_NUMBER,
@@ -1179,8 +1219,7 @@ CONSISTENT_COLUMN_NAMES = \
 
 CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
-CONSISTENT_COLUMN_NAMES['RawCommercialExperiment'] = { **CONSISTENT_COLUMN_NAMES['RawCommercial_1'], **CONSISTENT_COLUMN_NAMES['RawCommercial_2'], }
-CONSISTENT_COLUMN_NAMES['RawResidentialExperiment'] = { **CONSISTENT_COLUMN_NAMES['RawResidential_1'], **CONSISTENT_COLUMN_NAMES['RawResidential_2'], **CONSISTENT_COLUMN_NAMES['RawResidential_3'], }
+CONSISTENT_COLUMN_NAMES['RawCommercialProperties_L'] = { **CONSISTENT_COLUMN_NAMES['RawCommercial_1'], **CONSISTENT_COLUMN_NAMES['RawCommercial_2'], }
 
 # --> Generate column name mappings for Mass Energy Insight tables -->
 def populate_mei_column_names( dict, start_year, end_year ):
@@ -1965,7 +2004,7 @@ def read_excel_files( input_directory, column_labels, skiprows ):
 
 
 # Rename columns according to mappings
-def rename_columns( df, table_name, experiment=False ):
+def rename_columns( df, table_name, exclude_unmapped=False, synthesize_unmapped=False ):
 
     # Strip whitespace from column names
     df.columns = df.columns.str.strip()
@@ -1981,9 +2020,15 @@ def rename_columns( df, table_name, experiment=False ):
 
     if len( not_in ):
         print( '!!! CONSISTENT_COLUMN_NAMES mappings missing for table {0}, {1} columns: {2}'.format( table_name, len(not_in), not_in ) )
-        if experiment:
-            print( '!!! Continuing as an experiment' )
-            make_experimental_column_names( table_name, not_in )
+        if exclude_unmapped:
+            print( '!!! Excluding unmapped column names' )
+            df = df.drop( columns=not_in )
+            if len( df.columns ) == 0:
+                print( '!!! No columns left in table after excluding unmapped column names' )
+                exit()
+        elif synthesize_unmapped:
+            print( '!!! Synthesizing unmapped column names' )
+            synthesize_unmapped_column_names( table_name, not_in )
         else:
             exit()
 
@@ -2001,8 +2046,8 @@ def rename_columns( df, table_name, experiment=False ):
     return df
 
 
-# Generate column names for experimental-stage table to be dumped into a database
-def make_experimental_column_names( table_name, not_in ):
+# Synthesize column names that do not have mappings
+def synthesize_unmapped_column_names( table_name, not_in ):
 
     # Create entry if it doesn't exist
     if table_name not in CONSISTENT_COLUMN_NAMES:
@@ -2010,8 +2055,8 @@ def make_experimental_column_names( table_name, not_in ):
 
     # Generate column name mappings
     for original_name in not_in:
-        experimental_name = "_".join( original_name.replace( '.', '_' ).replace( ':', '' ).replace( '%', 'pct' ).lower().split() )
-        CONSISTENT_COLUMN_NAMES[table_name][original_name] = experimental_name
+        synthesized_name = "_".join( original_name.replace( '.', '_' ).replace( ':', '' ).replace( '%', 'pct' ).lower().split() )
+        CONSISTENT_COLUMN_NAMES[table_name][original_name] = synthesized_name
 
 
 # Open the SQLite database
@@ -2151,10 +2196,10 @@ def pdtype_to_sqltype( df, col_name ):
 
 
 # Prepare dataframe for saving to database
-def prepare_for_database( df, table_name, experiment=False ):
+def prepare_for_database( df, table_name, exclude_unmapped=False, synthesize_unmapped=False ):
 
     # Correct misspelled and inconsistent column names
-    df = rename_columns( df, table_name, experiment )
+    df = rename_columns( df, table_name, exclude_unmapped, synthesize_unmapped )
 
     # Fix numeric columns
     df = fix_numeric_columns( df )

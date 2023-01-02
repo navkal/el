@@ -60,17 +60,29 @@ if __name__ == '__main__':
     df_1 = pd.read_sql_table( 'RawResidential_1', engine, index_col=util.ID, parse_dates=True )
     df_2 = pd.read_sql_table( 'RawResidential_2', engine, index_col=util.ID, parse_dates=True )
     df_3 = pd.read_sql_table( 'RawResidential_3', engine, index_col=util.ID, parse_dates=True )
+    df_4 = pd.read_sql_table( 'RawResidential_4', engine, index_col=util.ID, parse_dates=True )
 
     # For duplicated account numbers, retain only last entry
     df_1 = df_1.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
     df_2 = df_2.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
     df_3 = df_3.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
+    df_4 = df_4.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
 
     # Merge on account number
     columns_to_merge = [util.ACCOUNT_NUMBER] + list( df_2.columns.difference( df_1.columns ) )
     df_merge = pd.merge( df_1, df_2[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
     columns_to_merge = [util.ACCOUNT_NUMBER] + list( df_3.columns.difference( df_merge.columns ) )
     df_merge = pd.merge( df_merge, df_3[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
+
+    # Reconcile address representation in df_4
+    df_4[util.LADDR_STREET_NUMBER] = df_4[util.LADDR_STREET_NUMBER].fillna( '' )
+    df_4[util.LADDR_STREET_NAME] = df_4[util.LADDR_STREET_NAME].fillna( '' )
+    df_4[util.LOCATION] = df_4[util.LADDR_STREET_NUMBER] + ' ' + df_4[util.LADDR_STREET_NAME]
+    df_4 = df_4.drop( columns=[util.LADDR_STREET_NUMBER, util.LADDR_STREET_NAME] )
+
+    # Concatenate df_4 to merged dataframe and drop duplicates
+    df_merge = pd.concat( [df_merge, df_4] )
+    df_merge = df_merge.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='first' )
 
     # Sort on account number
     df_merge = df_merge.sort_values( by=[util.ACCOUNT_NUMBER] )

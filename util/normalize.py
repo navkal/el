@@ -52,6 +52,7 @@ STREET_TYPES = \
     'LP': 'LOOP',
     'OWAY': 'OWAY',
     'PATH': 'PATH',
+    'PD': 'PD',
     'PH': 'PATH',
     'PIKE': 'PIKE',
     'PINES': 'PNES',
@@ -60,6 +61,7 @@ STREET_TYPES = \
     'PKWY': 'PKWY',
     'PLACE': 'PL',
     'RIDGE': 'RDG',
+    'RIVER': 'RIV',
     'ROAD': 'RD',
     'RD.': 'RD',
     'RUN': 'RUN',
@@ -70,6 +72,7 @@ STREET_TYPES = \
     'TERRACE': 'TER',
     'TERR': 'TER',
     'TR': 'TER',
+    'TURNPIKE': 'TPKE',
     'VIEW': 'VW',
     'WAY': 'WAY',
     'WAYSIDE': 'WAYSIDE',
@@ -125,6 +128,7 @@ EXPECTED_KEYS = \
     'OccupancyType',
     'StreetNamePreType',
     'StreetNamePreModifier',
+    'LandmarkName',
 }
 
 # Normalize street address

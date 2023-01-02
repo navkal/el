@@ -36,7 +36,8 @@ if __name__ == '__main__':
     parser.add_argument( '-k', dest='keep_columns',  help='Comma-separated list of column labels to keep' )
     parser.add_argument( '-u', dest='uppercase_columns',  help='Comma-separated list of column labels for conversion to uppercase' )
     parser.add_argument( '-s', dest='sort_columns',  help='Comma-separated list of column labels to be used as basis for sort' )
-    parser.add_argument( '-x', dest='experiment', action='store_true', help='Is this operation an experiment?'  )
+    parser.add_argument( '-x', dest='exclude_unmapped', action='store_true', help='Exclude unmapped column names?'  )
+    parser.add_argument( '-z', dest='synthesize_unmapped', action='store_true', help='Synthesize unmapped column names?'  )
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     parser.add_argument( '-t', dest='output_table_name',  help='Output table name - Name of target table in SQLite database file', required=True )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
@@ -120,7 +121,7 @@ if __name__ == '__main__':
         df_xl = df_xl[ args.keep_columns.split( ',' ) ]
 
     # Prepare data for saving to database
-    df_xl = util.prepare_for_database( df_xl, args.output_table_name, experiment=args.experiment )
+    df_xl = util.prepare_for_database( df_xl, args.output_table_name, exclude_unmapped=args.exclude_unmapped, synthesize_unmapped=args.synthesize_unmapped )
 
     # Open output file
     conn, cur, engine = util.open_database( args.output_filename, args.create )
