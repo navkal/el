@@ -308,11 +308,14 @@ RESIDENTIAL_R1_RATE = 'residential_r1_rate'
 RESIDENTIAL_R2_RATE = 'residential_r2_rate'
 COMMERCIAL_RATE = 'commercial_rate'
 
+VISION_ID = 'vision_id'
 GIS_ID = 'gis_id'
 OWNER_NAME = 'owner_name'
 LOCATION = 'location'
 YEAR_BUILT = 'year_built'
 EFFECTIVE_YEAR_BUILT = 'effective_year_built'
+TOTAL_ACRES = 'total_acres'
+GROSS_BUILDING_AREA = 'gross_building_area'
 YEAR_REMODELED = 'year_remodeled'
 BASEMENT = 'basement'
 BATHROOM_STYLE = 'bathroom_style'
@@ -321,6 +324,7 @@ HEATING_TYPE = 'heating_type'
 KITCHEN_STYLE = 'kitchen_style'
 FULL_BATHS = 'number_of_full_baths'
 HALF_BATHS = 'number_of_half_baths'
+KITCHENS = 'number_of_kitchens'
 BATHS = 'number_of_baths'
 BEDROOOMS = 'number_of_bedrooms'
 ROOMS = 'number_of_rooms'
@@ -345,6 +349,9 @@ APPLICATION_DATE = 'application_date'
 OCCUPANCY_TYPE = 'occupancy_type'
 RENTAL_LIVING_UNITS = 'rental_living_units'
 LICENSE_NUMBER = 'license_number'
+EXTERIOR_WALL_TYPE = 'exterior_wall_type'
+BUILDING_GRADE = 'building_grade'
+GRADE = 'grade'
 
 EMPLOYEES = 'number_of_employees'
 APPLICANT = 'applicant'
@@ -444,8 +451,8 @@ CONSISTENT_COLUMN_NAMES = \
         'LUC': LAND_USE_CODE,
         'YearBuilt': YEAR_BUILT,
         'EffYr': EFFECTIVE_YEAR_BUILT,
-        'TotalAcres': 'total_acres',
-        'GrossBldArea': 'gross_building_area',
+        'TotalAcres': TOTAL_ACRES,
+        'GrossBldArea': GROSS_BUILDING_AREA,
         'BuildType': 'building_type_1',
         'BuildType2': 'building_type_2',
         'BuildType3': 'building_type_3',
@@ -459,7 +466,7 @@ CONSISTENT_COLUMN_NAMES = \
         'HalfBaths': HALF_BATHS,
         'OtherFixtures': 'number_of_other_fixtures',
         'BathRating': 'bathroom_rating',
-        'Kitchens': 'number_of_kitchens',
+        'Kitchens': KITCHENS,
         'KitchenRating': 'kitchen_rating',
         'FirePlaces': FIREPLACES,
         'WSFlues': 'number_of_wood_stove_flues',
@@ -472,7 +479,7 @@ CONSISTENT_COLUMN_NAMES = \
         'FinBasementArea': 'finished_basement_area',
         'RoofType': ROOF_TYPE,
         'RoofCover': ROOF_COVER,
-        'ExtWall': 'exterior_wall_type',
+        'ExtWall': EXTERIOR_WALL_TYPE,
         'IntWall': 'interior_wall_type',
         'AttachedGarage': 'attached_garage_area',
         'DetachedGarage': 'detached_garage_size',
@@ -481,7 +488,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Frame': 'building_frame_type',
         'Floor': 'floor_type',
         'BaseYear': 'base_depreciation_year',
-        'Grade': 'building_grade',
+        'Grade': BUILDING_GRADE,
         'Cond': BUILDING_CONDITION,
         'LegalReference': 'legal_reference_number',
         'LegalRefDate': LEGAL_REFERENCE_SALE_DATE,
@@ -1164,6 +1171,34 @@ CONSISTENT_COLUMN_NAMES = \
         'Kitchen Style:': KITCHEN_STYLE,
         'Kitchen Style Desc': KITCHEN_STYLE + _DESC,
     },
+    'RawResidential_5': \
+    {
+        'ACCOUNT NUM': ACCOUNT_NUMBER,
+        'VISION ID': VISION_ID,
+        'TOTAL LAND AREA': TOTAL_ACRES,
+        'PARCEL TTL ASSESSED': 'title_assessed_$',
+        'PARCEL BLDG ASSESSED': 'building_assessed_$',
+        'PARCEL LAND APPRAISED': 'land_assessed_$',
+        'PARCEL OUT BLDG ASSESSED': 'outbuilding_assessed_$',
+        'PARCEL XTRA FEATURE ASSESSED': 'extra_feature_assessed_$',
+        'PARCEL BLDG COUNT': 'building_count',
+        'PARCEL OUTBUILDING COUNT': 'outbuilding_count',
+        'STYLE': STYLE,
+        'GROSS BULDING AREA': GROSS_BUILDING_AREA,
+        'LIVING AREA': 'living_area',
+        'EFFECTIVE AREA': 'effective_area',
+        'Num Kitchens': KITCHENS,
+        'Occupancy': RENTAL_LIVING_UNITS,
+        'Exterior Wall 1': EXTERIOR_WALL_TYPE,
+        'Ext Wall 1 Desc': EXTERIOR_WALL_TYPE + _DESC,
+        'Grade:': GRADE,
+        'Grade Desc': GRADE + _DESC,
+        'Interior Flr 1': 'interior_floor_1',
+        'View Desc': 'interior_floor_1' + _DESC,
+        'Interior Flr 2': 'interior_floor_2',
+        'Bldg Cond': BUILDING_CONDITION,
+        'Usrfld 101 Desc': BUILDING_CONDITION + _DESC,
+    },
     'RawVendors': \
     {
         'VDR NUM': VENDOR_NUMBER,
@@ -1324,6 +1359,7 @@ COLUMN_ORDER = \
     'Assessment_L_Residential':
     [
         ACCOUNT_NUMBER,
+        VISION_ID,
         OWNER_NAME,
         LOCATION,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],

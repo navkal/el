@@ -25,6 +25,8 @@ def document_column_names():
     map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_1'].items() }
     map_2 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_2'].items() }
     map_3 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_3'].items() }
+    map_4 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_4'].items() }
+    map_5 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawResidential_5'].items() }
 
     # Build matrix mapping each database column name to its origins
     names = []
@@ -34,12 +36,14 @@ def document_column_names():
             col,
             map_1[col] if col in map_1 else None,
             map_2[col] if col in map_2 else None,
-            map_3[col] if col in map_3 else None
+            map_3[col] if col in map_3 else None,
+            map_4[col] if col in map_4 else None,
+            map_5[col] if col in map_5 else None,
         ]
         names.append( row )
 
     # Create dataframe
-    df_names = pd.DataFrame( columns = ['database', 'drop_7', 'drop_6', 'drop_2'], data=names )
+    df_names = pd.DataFrame( columns = ['database', 'drop_7', 'drop_6', 'drop_2', 'csv_concat', 'csv_merge'], data=names )
 
     # Save in database
     util.create_table( 'Residential_ColumnNames', conn, cur, df=df_names )
@@ -61,14 +65,16 @@ if __name__ == '__main__':
     df_2 = pd.read_sql_table( 'RawResidential_2', engine, index_col=util.ID, parse_dates=True )
     df_3 = pd.read_sql_table( 'RawResidential_3', engine, index_col=util.ID, parse_dates=True )
     df_4 = pd.read_sql_table( 'RawResidential_4', engine, index_col=util.ID, parse_dates=True )
+    df_5 = pd.read_sql_table( 'RawResidential_5', engine, index_col=util.ID, parse_dates=True )
 
     # For duplicated account numbers, retain only last entry
     df_1 = df_1.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
     df_2 = df_2.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
     df_3 = df_3.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
     df_4 = df_4.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
+    df_5 = df_5.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
 
-    # Merge on account number
+    # Merge df_1, df_2, and df_3 on account number
     columns_to_merge = [util.ACCOUNT_NUMBER] + list( df_2.columns.difference( df_1.columns ) )
     df_merge = pd.merge( df_1, df_2[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
     columns_to_merge = [util.ACCOUNT_NUMBER] + list( df_3.columns.difference( df_merge.columns ) )
@@ -83,6 +89,13 @@ if __name__ == '__main__':
     # Concatenate df_4 to merged dataframe and drop duplicates
     df_merge = pd.concat( [df_merge, df_4] )
     df_merge = df_merge.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='first' )
+
+    # Merge df_5 on account number
+    columns_to_merge = [util.ACCOUNT_NUMBER] + list( df_5.columns.difference( df_merge.columns ) )
+    df_merge = pd.merge( df_merge, df_5[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
+
+    # Convert Vision ID to integer
+    df_merge[util.VISION_ID] = df_merge[util.VISION_ID].fillna( 0 ).astype( int )
 
     # Sort on account number
     df_merge = df_merge.sort_values( by=[util.ACCOUNT_NUMBER] )

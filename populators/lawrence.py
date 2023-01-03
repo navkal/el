@@ -33,7 +33,9 @@ if __name__ == '__main__':
     print( '\n=======> Residential input 3' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential_3.xlsx -t RawResidential_3 -r 1 -o {0}'.format( args.master_filename ) )
     print( '\n=======> Residential input 4' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential.txt -t RawResidential_4 -v -f "|" -x -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential_4_5.txt -t RawResidential_4 -v -f "|" -x -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Residential input 5' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential_4_5.txt -t RawResidential_5 -v -f "|" -x -o {0}'.format( args.master_filename ) )
 
     # Generate table of residential assessments
     print( '\n=======> Residential merge' )
