@@ -315,6 +315,7 @@ LOCATION = 'location'
 YEAR_BUILT = 'year_built'
 EFFECTIVE_YEAR_BUILT = 'effective_year_built'
 TOTAL_ACRES = 'total_acres'
+BUILDING_COUNT = 'building_count'
 GROSS_BUILDING_AREA = 'gross_building_area'
 YEAR_REMODELED = 'year_remodeled'
 BASEMENT = 'basement'
@@ -336,6 +337,7 @@ LAND_USE_CODE = 'primary_land_use_code'
 SALE_PRICE = 'sale_price'
 STORY_HEIGHT = 'story_height'
 AC_TYPE = 'ac_type'
+HEAT_AC = 'heat_ac'
 _CODE = '_code'
 BOOK = 'book'
 PAGE = 'page'
@@ -348,10 +350,12 @@ DATE = 'date'
 APPLICATION_DATE = 'application_date'
 OCCUPANCY_TYPE = 'occupancy_type'
 RENTAL_LIVING_UNITS = 'rental_living_units'
+OCCUPANCY_HOUSEHOLDS = 'occupancy_households'
 LICENSE_NUMBER = 'license_number'
 EXTERIOR_WALL_TYPE = 'exterior_wall_type'
 BUILDING_GRADE = 'building_grade'
 GRADE = 'grade'
+FIRST_FLOOR_USE = 'first_floor_use'
 
 EMPLOYEES = 'number_of_employees'
 APPLICANT = 'applicant'
@@ -1060,7 +1064,7 @@ CONSISTENT_COLUMN_NAMES = \
         'CNS_HEAT_TYPE': HEATING_TYPE,
         'CNS_HEAT_TYPE_DESC': HEATING_TYPE + _DESC,
         'CNS_AC_TYPE': AC_TYPE,
-        'CNS_AC_TYPE_DESC': AC_TYPE + _CODE,
+        'CNS_AC_TYPE_DESC': AC_TYPE + _DESC,
         'CNS_NUM_BEDRM': BEDROOOMS,
         'CNS_NUM_BEDRM_DESC': BEDROOOMS + _DESC,
         'CNS_NUM_BATHRM': FULL_BATHS,
@@ -1181,14 +1185,14 @@ CONSISTENT_COLUMN_NAMES = \
         'PARCEL LAND APPRAISED': 'land_assessed_$',
         'PARCEL OUT BLDG ASSESSED': 'outbuilding_assessed_$',
         'PARCEL XTRA FEATURE ASSESSED': 'extra_feature_assessed_$',
-        'PARCEL BLDG COUNT': 'building_count',
+        'PARCEL BLDG COUNT': BUILDING_COUNT,
         'PARCEL OUTBUILDING COUNT': 'outbuilding_count',
         'STYLE': STYLE,
         'GROSS BULDING AREA': GROSS_BUILDING_AREA,
         'LIVING AREA': 'living_area',
         'EFFECTIVE AREA': 'effective_area',
         'Num Kitchens': KITCHENS,
-        'Occupancy': RENTAL_LIVING_UNITS,
+        'Occupancy': OCCUPANCY_HOUSEHOLDS,
         'Exterior Wall 1': EXTERIOR_WALL_TYPE,
         'Ext Wall 1 Desc': EXTERIOR_WALL_TYPE + _DESC,
         'Grade:': GRADE,
@@ -1391,7 +1395,7 @@ COLUMN_ORDER = \
         HEATING_TYPE,
         HEATING_TYPE + _DESC,
         AC_TYPE,
-        AC_TYPE + _CODE,
+        AC_TYPE + _DESC,
         ROOMS,
         ROOMS + _DESC,
         FULL_BATHS,

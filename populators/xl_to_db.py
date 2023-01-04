@@ -1,7 +1,6 @@
 # Copyright 2022 Energize Andover.  All rights reserved.
 
 import argparse
-import os
 
 import chardet
 
