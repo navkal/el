@@ -22,19 +22,28 @@ import util
 
 def save_and_exit( signum, frame ):
 
-    # Report current status
-    print( 'Stopping at VISION ID: {}'.format( df[util.VISION_ID].max() ) )
+    global df
+    
+    if len( df ):
+        # Prepare to save in database
+        df = df.drop_duplicates( subset=[VSID], keep='last' )
+        df = df.sort_values( by=[VSID] )
+        df[ACCT] = df[ACCT].replace( r'\s+', ' ', regex=True )
+        df[OCCY] = df[OCCY].replace( r'^\s*$', np.nan, regex=True )
+        df[OCCY] = df[OCCY].fillna( '0' ).astype( float ).astype( int )
+        df[VSID] = df[VSID].astype( int )
 
-    # Preserve current progress in database
-    util.create_table( TABLE_NAME, conn, cur, df=df )
+        # Report current status
+        print( 'Stopping at VISION ID: {}'.format( df[util.VISION_ID].max() ) )
+
+        # Preserve current progress in database
+        util.create_table( TABLE_NAME, conn, cur, df=df )
 
     # Report elapsed time
     util.report_elapsed_time()
-    exit()
+    sys.exit()
 
 signal.signal( signal.SIGINT, save_and_exit )
-
-
 
 
 URL_BASE = 'https://gis.vgsi.com/lawrencema/parcel.aspx?pid='
@@ -166,14 +175,5 @@ if __name__ == '__main__':
             sr_row[BLDS] = scrape_element( soup, 'span', 'MainContent_lblBldCount' )
 
             df = df.append( sr_row, ignore_index=True )
-
-            # Prepare to save in database
-            df = df.drop_duplicates( subset=[VSID], keep='last' )
-            df = df.sort_values( by=[VSID] )
-            df[ACCT] = df[ACCT].replace( r'\s+', ' ', regex=True )
-            df[OCCY] = df[OCCY].replace( r'^\s*$', np.nan, regex=True )
-            df[OCCY] = df[OCCY].fillna( '0' ).astype( float ).astype( int )
-            df[VSID] = df[VSID].astype( int )
-
 
     save_and_exit( None, None )
