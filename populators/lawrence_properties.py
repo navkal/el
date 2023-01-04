@@ -20,7 +20,10 @@ sys.path.append('../util')
 import util
 
 
-def handle_ctrl_c( signum, frame ):
+def save_and_exit( signum, frame ):
+
+    # Report current status
+    print( 'Stopping at VISION ID: {}'.format( df[util.VISION_ID].max() ) )
 
     # Preserve current progress in database
     util.create_table( TABLE_NAME, conn, cur, df=df )
@@ -29,7 +32,7 @@ def handle_ctrl_c( signum, frame ):
     util.report_elapsed_time()
     exit()
 
-signal.signal( signal.SIGINT, handle_ctrl_c )
+signal.signal( signal.SIGINT, save_and_exit )
 
 
 
@@ -172,3 +175,5 @@ if __name__ == '__main__':
             df[OCCY] = df[OCCY].fillna( '0' ).astype( float ).astype( int )
             df[VSID] = df[VSID].astype( int )
 
+
+    save_and_exit( None, None )
