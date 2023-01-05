@@ -108,6 +108,8 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
+            'Assessment_L_Commercial_Merged',
+            'Assessment_L_Residential_Merged',
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
             'RawBusinesses_1',
