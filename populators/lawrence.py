@@ -116,6 +116,7 @@ if __name__ == '__main__':
             'RawResidential_2',
             'RawResidential_3',
             'RawResidential_4',
+            'RawResidential_5',
             'RawBuildingPermits_Solar',
             'RawBuildingPermits_Sunrun',
          ],
