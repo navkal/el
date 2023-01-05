@@ -1360,7 +1360,7 @@ COLUMN_ORDER = \
     [
         PARCEL_ID,
     ],
-    'Assessment_L_Residential':
+    'Assessment_L_Residential_Merged':
     [
         ACCOUNT_NUMBER,
         VISION_ID,

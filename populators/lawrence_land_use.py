@@ -10,9 +10,31 @@ import sys
 sys.path.append( '../util' )
 import util
 
-##########################
-
 LUC = util.LAND_USE_CODE
+IS_RES = 'is_res'
+
+def move_properties( df_from, df_to, b_in ):
+    sr_move = df_from.apply( lambda row: ( row[LUC] in ls_res_codes ) if b_in else ( row[LUC] not in ls_res_codes ) , axis=1 )
+    idx_res_to_com = sr_move[sr_move].index
+
+    # Add rows to destination
+    df_to = df_to.append( df_from.loc[idx_res_to_com], ignore_index=True )
+    df_to = df_to.reset_index( drop=True )
+
+    # Remove rows from source
+    df_from = df_from.drop( index=idx_res_to_com )
+    df_from = df_from.reset_index( drop=True )
+
+    # Clean up
+    df_to = df_to.dropna( how='all', axis=1 )
+    df_to[util.VISION_ID] = df_to[util.VISION_ID].fillna( 0 ).astype( int )
+    df_to = df_to.drop_duplicates( subset=[util.ACCOUNT_NUMBER] )
+    df_to = df_to.sort_values( by=[util.ACCOUNT_NUMBER] )
+
+    return df_from, df_to
+
+
+##########################
 
 # Main program
 if __name__ == '__main__':
@@ -27,43 +49,23 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Retrieve tables from database
-    df_res = pd.read_sql_table( 'Assessment_L_Residential', engine, index_col=util.ID )
-    df_com = pd.read_sql_table( 'Assessment_L_Commercial', engine, index_col=util.ID )
+    df_res = pd.read_sql_table( 'Assessment_L_Residential_Merged', engine, index_col=util.ID )
+    df_com = pd.read_sql_table( 'Assessment_L_Commercial_Merged', engine, index_col=util.ID )
     df_res_codes = pd.read_excel( args.luc_filename, dtype=object )
 
-    print( df_res[ [LUC] ] )
-    print( df_com[ [LUC] ] )
-    print( df_res_codes )
-    sr_res_codes = df_res_codes['Use Code'].append( df_res_codes['Alt Use Code'] )
-    print( len( sr_res_codes ) )
-    sr_res_codes = sr_res_codes.drop_duplicates()
-    print( len( sr_res_codes ) )
-    print( sr_res_codes )
+    # Retrieve residential codes and prepare for processing
+    sr_res_codes = df_res_codes['Residential Land Use Code']
     sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
-    print( sr_res_codes )
     ls_res_codes = list( sr_res_codes )
-    print( ls_res_codes )
 
-    df_res['is_res'] = df_res.apply( lambda row: ( util.YES if ( row[LUC] in ls_res_codes ) else util.NO ), axis=1 )
-    df_com['is_res'] = df_com.apply( lambda row: ( util.YES if ( row[LUC] in ls_res_codes ) else util.NO ), axis=1 )
+    # Move properties from residential to commercial table
+    df_res, df_com = move_properties( df_res, df_com, False )
 
-    print( df_res[ [LUC, 'is_res' ] ] )
-    print( df_com[ [LUC, 'is_res' ] ] )
-
-
-
-
-
-
-
-
-
-
-
-
+    # Move properties from commercial to residential table
+    df_com, df_res = move_properties( df_com, df_res, True )
 
     # Save corrected tables
-    # util.create_table( 'Assessment_L_Residential', conn, cur, df=df_res )
-    # util.create_table( 'Assessment_L_Commercial', conn, cur, df=df_com )
+    util.create_table( 'Assessment_L_Residential', conn, cur, df=df_res )
+    util.create_table( 'Assessment_L_Commercial', conn, cur, df=df_com )
 
     util.report_elapsed_time()

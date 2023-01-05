@@ -1,4 +1,4 @@
-# Copyright 2022 Energize Lawrence.  All rights reserved.
+# Copyright 2023 Energize Lawrence.  All rights reserved.
 
 import argparse
 
@@ -111,6 +111,6 @@ if __name__ == '__main__':
     document_column_names()
 
     # Save final table of residential assessments
-    util.create_table( 'Assessment_L_Residential', conn, cur, df=df_merge )
+    util.create_table( 'Assessment_L_Residential_Merged', conn, cur, df=df_merge )
 
     util.report_elapsed_time()
