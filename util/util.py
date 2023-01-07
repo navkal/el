@@ -356,6 +356,7 @@ EXTERIOR_WALL_TYPE = 'exterior_wall_type'
 BUILDING_GRADE = 'building_grade'
 GRADE = 'grade'
 FIRST_FLOOR_USE = 'first_floor_use'
+RESIDENTIAL_UNITS = 'residential_units'
 
 EMPLOYEES = 'number_of_employees'
 APPLICANT = 'applicant'
@@ -370,6 +371,7 @@ CLOSED_DATE = 'closed_date'
 PROPERTY_TYPE = 'property_type'
 COMMERCIAL = 'Commercial'
 RESIDENTIAL = 'Residential'
+IS_RESIDENTIAL = 'is_residential'
 
 OPENED = 'opened'
 
