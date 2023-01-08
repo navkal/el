@@ -13,8 +13,10 @@ pd.set_option( 'display.width', 1000 )
 
 import numpy as np
 import re
-
 import signal
+
+import datetime
+THIS_YEAR = datetime.date.today().year
 
 import sys
 sys.path.append('../util')
@@ -28,10 +30,11 @@ STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
 ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
+AGE = util.AGE
 
 URL_BASE = 'https://gis.vgsi.com/lawrencema/parcel.aspx?pid='
 
-TABLE_NAME = 'LawrenceProperties'
+TABLE_NAME = 'Parcels_L'
 
 # Column labels
 VSID = util.VISION_ID
@@ -99,14 +102,25 @@ COLS = \
     ISRS,
 ]
 
-ID_RANGE_MIN = 250
-ID_RANGE_MAX = 107000
-
+ID_RANGE_MIN = 266
+ID_RANGE_MAX = 105888
 ID_RANGE_STOP = ID_RANGE_MAX + 1
 
 RE_OCCU = r'Occupancy\:?'
 RE_BATH = r'Total Ba?thr?m?s\:?'
 RE_KTCH = r'Num Kitchens\:?'
+
+
+def summarize_and_exit():
+
+    # Report size of output
+    print( '' )
+    print( 'Summarizing {} VISION IDs'.format( len( df ) ) )
+
+
+    # Report elapsed time
+    util.report_elapsed_time()
+    sys.exit()
 
 
 def clean_string( col ):
@@ -123,15 +137,20 @@ def clean_date( col ):
     col = pd.to_datetime( col, infer_datetime_format=True, errors='coerce' )
     return col
 
+def calculate_age( row ):
+    year_built = row[YEAR]
+    age = ( THIS_YEAR - year_built ) if year_built else -1
+    return age
+
 def save_and_exit( signum, frame ):
 
     global df
 
-    if len( df ):
+    # Report current status
+    print( '' )
+    print( 'Stopping at VISION ID {}'.format( vision_id ) )
 
-        # Report current status
-        print( '' )
-        print( 'Stopping at VISION ID {}'.format( vision_id ) )
+    if len( df ):
 
         # Reorganize rows
         df[VSID] = df[VSID].astype( int )
@@ -167,9 +186,16 @@ def save_and_exit( signum, frame ):
         df[TOT_BATH] = clean_integer( df[TOT_BATH] )
         df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
 
+        # Calculate age
+        df[AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
+
         # Normalize addresses.  Use result_type='expand' to load multiple columns!
         df[ADDR] = df[LOCN]
         df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+
+        # Report size of output
+        print( '' )
+        print( 'Saving {} VISION IDs'.format( len( df ) ) )
 
         # Preserve current progress in database
         util.create_table( TABLE_NAME, conn, cur, df=df )
@@ -177,9 +203,6 @@ def save_and_exit( signum, frame ):
     # Report elapsed time
     util.report_elapsed_time()
     sys.exit()
-
-signal.signal( signal.SIGINT, save_and_exit )
-
 
 
 # Scrape HTML element by id
@@ -267,7 +290,18 @@ if __name__ == '__main__':
     parser.add_argument( '-l', dest='luc_filename',  help='Land use codes spreadsheet filename' )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
     parser.add_argument( '-r', dest='refresh', action='store_true', help='Refresh records in existing database?' )
+    parser.add_argument( '-p', dest='post_process', action='store_true', help='Post-process only?' )
+    parser.add_argument( '-s', dest='summarize', action='store_true', help='Summarize only?' )
     args = parser.parse_args()
+
+    # Flag precedence for refresh
+    if args.refresh:
+        args.create = False
+
+    # Flag precedence for post-process
+    if args.post_process:
+        args.create = False
+        args.refresh = True
 
     # Open the database
     conn, cur, engine = util.open_database( args.db_filename, args.create )
@@ -285,6 +319,11 @@ if __name__ == '__main__':
     except:
         df = pd.DataFrame( columns=COLS )
 
+    if args.summarize:
+        summarize_and_exit()
+    else:
+        signal.signal( signal.SIGINT, save_and_exit )
+
     # Determine range of Vision IDs to process
     if len( df ):
         # Table exists
@@ -299,7 +338,7 @@ if __name__ == '__main__':
         id_range = range( ID_RANGE_MIN, ID_RANGE_STOP )
 
     print( '' )
-    s_doing_what = 'Refreshing {}'.format( len( id_range ) ) if ( len( df ) and args.refresh ) else 'Discovering'
+    s_doing_what =  '{} {}'.format( ( 'Post-processing' if args.post_process else 'Refreshing' ), len( id_range ) ) if ( len( df ) and args.refresh ) else 'Discovering'
     print( '{} VISION IDs in range {} to {}'.format( s_doing_what, id_range[0], id_range[-1] ) )
     print( '' )
 
@@ -308,6 +347,9 @@ if __name__ == '__main__':
     n_last_reported = -1
 
     for vision_id in id_range:
+
+        if args.post_process:
+            break
 
         if ( n_processed % 50 == 0 ) and ( n_processed != n_last_reported ):
             n_last_reported = n_processed

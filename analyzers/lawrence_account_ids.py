@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     # Open the scraped database
     conn, cur, engine = util.open_database( args.scraped_filename, False )
-    df_scr = pd.read_sql_table( 'LawrenceProperties', engine, index_col=util.ID )
+    df_scr = pd.read_sql_table( 'Parcels_L', engine, index_col=util.ID )
     
     # Report initial conditions
     print( '' )
