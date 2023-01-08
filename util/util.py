@@ -200,6 +200,7 @@ PREVIOUS_GRANTOR = 'previous_grantor'
 OWNER_OCCUPIED = 'owner_occupied'
 ZONING_CODE_1 = 'zoning_code_1'
 TOTAL_ASSESSED_VALUE = 'total_assessed_value'
+ZONE = 'zone'
 
 DEPARTMENT = 'department'
 POSITION = 'position'
@@ -317,6 +318,7 @@ EFFECTIVE_YEAR_BUILT = 'effective_year_built'
 TOTAL_ACRES = 'total_acres'
 BUILDING_COUNT = 'building_count'
 GROSS_BUILDING_AREA = 'gross_building_area'
+LIVING_AREA = 'living_area'
 YEAR_REMODELED = 'year_remodeled'
 BASEMENT = 'basement'
 BATHROOM_STYLE = 'bathroom_style'
@@ -357,6 +359,9 @@ BUILDING_GRADE = 'building_grade'
 GRADE = 'grade'
 FIRST_FLOOR_USE = 'first_floor_use'
 RESIDENTIAL_UNITS = 'residential_units'
+TOTAL_OCCUPANCY = 'total_occupancy'
+TOTAL_BATHS = 'total_baths'
+TOTAL_KITCHENS = 'total_kitchens'
 
 EMPLOYEES = 'number_of_employees'
 APPLICANT = 'applicant'
@@ -1191,7 +1196,7 @@ CONSISTENT_COLUMN_NAMES = \
         'PARCEL OUTBUILDING COUNT': 'outbuilding_count',
         'STYLE': STYLE,
         'GROSS BULDING AREA': GROSS_BUILDING_AREA,
-        'LIVING AREA': 'living_area',
+        'LIVING AREA': LIVING_AREA,
         'EFFECTIVE AREA': 'effective_area',
         'Num Kitchens': KITCHENS,
         'Occupancy': OCCUPANCY_HOUSEHOLDS,

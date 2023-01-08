@@ -19,6 +19,14 @@ import signal
 import sys
 sys.path.append('../util')
 import util
+import normalize
+
+
+ADDR = util.NORMALIZED_ADDRESS
+STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
+STREET_NAME = util.NORMALIZED_STREET_NAME
+OCCUPANCY = util.NORMALIZED_OCCUPANCY
+ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 
 URL_BASE = 'https://gis.vgsi.com/lawrencema/parcel.aspx?pid='
@@ -33,18 +41,29 @@ OWN1 = util.OWNER_1_NAME
 OWN2 = util.OWNER_2_NAME
 ASMT = util.TOTAL_ASSESSED_VALUE
 STYL = util.STYLE
-OCCY = util.OCCUPANCY_HOUSEHOLDS
+OCCU = util.OCCUPANCY_HOUSEHOLDS
 HEAT = util.HEATING_TYPE + util._DESC
 FUEL = util.HEATING_FUEL + util._DESC
 AIRC = util.AC_TYPE + util._DESC
 HTAC = util.HEAT_AC
 FLR1 = util.FIRST_FLOOR_USE
 RESU = util.RESIDENTIAL_UNITS
+KTCH = util.KITCHENS
+BATH = util.BATHS
 LAND = util.LAND_USE_CODE
 DESC = util.LAND_USE_CODE + util._DESC
 ACRE = util.TOTAL_ACRES
+SLPR = util.SALE_PRICE
+SLDT = util.LEGAL_REFERENCE_SALE_DATE
+ZONE = util.ZONE
+YEAR = util.YEAR_BUILT
+AREA = util.LIVING_AREA
 BLDS = util.BUILDING_COUNT
+TOT_OCCU = util.TOTAL_OCCUPANCY
+TOT_BATH = util.TOTAL_BATHS
+TOT_KTCH = util.TOTAL_KITCHENS
 ISRS = util.IS_RESIDENTIAL
+
 
 # Column order
 COLS = \
@@ -56,25 +75,53 @@ COLS = \
     OWN2,
     ASMT,
     STYL,
-    OCCY,
+    OCCU,
     HEAT,
     FUEL,
     AIRC,
     HTAC,
     FLR1,
     RESU,
+    KTCH,
+    BATH,
     LAND,
     DESC,
     ACRE,
+    SLPR,
+    SLDT,
+    ZONE,
+    YEAR,
+    AREA,
     BLDS,
+    TOT_OCCU,
+    TOT_BATH,
+    TOT_KTCH,
     ISRS,
 ]
 
 ID_RANGE_MIN = 250
 ID_RANGE_MAX = 107000
+
 ID_RANGE_STOP = ID_RANGE_MAX + 1
 
+RE_OCCU = r'Occupancy\:?'
+RE_BATH = r'Total Ba?thr?m?s\:?'
+RE_KTCH = r'Num Kitchens\:?'
 
+
+def clean_string( col ):
+    col = col.str.strip().replace( r'\s+', ' ', regex=True )
+    return col
+
+def clean_integer( col ):
+    col = col.replace( '[\$,]', '', regex=True )
+    col = col.replace( r'^\s*$', np.nan, regex=True )
+    col = col.fillna( '0' ).astype( float ).astype( int )
+    return col
+
+def clean_date( col ):
+    col = pd.to_datetime( col, infer_datetime_format=True, errors='coerce' )
+    return col
 
 def save_and_exit( signum, frame ):
 
@@ -82,35 +129,47 @@ def save_and_exit( signum, frame ):
 
     if len( df ):
 
-        # Prepare to save in database
-        df[VSID] = df[VSID].astype( int )
-        df[ACCT] = df[ACCT].str.strip().replace( r'\s+', ' ', regex=True )
-        df[LOCN] = df[LOCN].str.strip().replace( r'\s+', ' ', regex=True )
-        df[OWN1] = df[OWN1].str.strip().replace( r'\s+', ' ', regex=True )
-        df[OWN2] = df[OWN2].str.strip().replace( r'\s+', ' ', regex=True )
-
-        df[ASMT] = df[ASMT].replace( '[\$,]', '', regex=True )
-        df[ASMT] = df[ASMT].fillna( '0' ).astype( int )
-
-        df[OCCY] = df[OCCY].replace( r'^\s*$', np.nan, regex=True )
-        df[OCCY] = df[OCCY].fillna( '0' ).astype( float ).astype( int )
-
-        df[HEAT] = df[HEAT].str.strip().replace( r'\s+', ' ', regex=True )
-        df[FUEL] = df[FUEL].str.strip().replace( r'\s+', ' ', regex=True )
-        df[AIRC] = df[AIRC].str.strip().replace( r'\s+', ' ', regex=True )
-
-        df[RESU] = df[RESU].replace( r'^\s*$', np.nan, regex=True )
-        df[RESU] = df[RESU].fillna( '0' ).astype( float ).astype( int )
-
-        df[DESC] = df[DESC].str.strip().replace( r'\s+', ' ', regex=True )
-        df[ACRE] = df[ACRE].astype( float )
+        # Report current status
+        print( '' )
+        print( 'Stopping at VISION ID {}'.format( vision_id ) )
 
         # Reorganize rows
+        df[VSID] = df[VSID].astype( int )
         df = df.drop_duplicates( subset=[VSID], keep='last' )
         df = df.sort_values( by=[VSID] )
 
-        # Report current status
-        print( 'Stopping at VISION ID: {}'.format( vision_id ) )
+        # Clean up data
+        df[ACCT] = clean_string( df[ACCT] )
+        df[LOCN] = clean_string( df[LOCN] )
+        df[OWN1] = clean_string( df[OWN1] )
+        df[OWN2] = clean_string( df[OWN2] )
+        df[ASMT] = clean_integer( df[ASMT] )
+        df[STYL] = clean_string( df[STYL] )
+        df[OCCU] = clean_integer( df[OCCU] )
+        df[HEAT] = clean_string( df[HEAT] )
+        df[FUEL] = clean_string( df[FUEL] )
+        df[AIRC] = clean_string( df[AIRC] )
+        df[HTAC] = clean_string( df[HTAC] )
+        df[FLR1] = clean_string( df[FLR1] )
+        df[RESU] = clean_integer( df[RESU] )
+        df[KTCH] = clean_integer( df[KTCH] )
+        df[BATH] = clean_integer( df[BATH] )
+        df[LAND] = clean_string( df[LAND] )
+        df[DESC] = clean_string( df[DESC] )
+        df[ACRE] = df[ACRE].astype( float )
+        df[SLPR] = clean_integer( df[SLPR] )
+        df[SLDT] = clean_date( df[SLDT] )
+        df[ZONE] = clean_string( df[ZONE] )
+        df[YEAR] = clean_integer( df[YEAR] )
+        df[AREA] = clean_integer( df[AREA] )
+        df[BLDS] = clean_integer( df[BLDS] )
+        df[TOT_OCCU] = clean_integer( df[TOT_OCCU] )
+        df[TOT_BATH] = clean_integer( df[TOT_BATH] )
+        df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
+
+        # Normalize addresses.  Use result_type='expand' to load multiple columns!
+        df[ADDR] = df[LOCN]
+        df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
         # Preserve current progress in database
         util.create_table( TABLE_NAME, conn, cur, df=df )
@@ -131,22 +190,71 @@ def scrape_element( soup, tag, id ):
 
 
 # Scrape cell of Building Attributes table, identified by label regex
-def scrape_building_attribute( soup, re_label ):
-
-    table = soup.find( 'table', id='MainContent_ctl01_grdCns' )
+def scrape_building_attribute( soup, re_label, building=1 ):
 
     b_found = False
-    s_result = ''
+    s_attribute = ''
 
-    for tr in table:
-        if not tr.string:
-            for td in tr:
-                if b_found:
-                    s_result = td.string
-                b_found = re.match( re_label, td.string )
+    table = soup.find( 'table', id='MainContent_ctl{:02d}_grdCns'.format( building ) )
 
-    return s_result
+    if table:
+        for tr in table:
+            if not tr.string:
+                for td in tr:
+                    if b_found:
+                        s_attribute = td.string
+                    b_found = re.match( re_label, td.string )
 
+    return s_attribute
+
+
+# Scrape and summarize building values
+def scrape_buildings( soup, sr_row ):
+
+    # Initialize tallies
+    n_occu = 0
+    n_bath = 0
+    n_ktch = 0
+
+    # Initialize counter
+    n_building = 0
+
+    while True:
+
+        # Increment counter
+        n_building += 1
+
+        # Attempt to extract field value and add to total
+        scr_occu = scrape_building_attribute( soup, RE_OCCU, building=n_building )
+        if scr_occu:
+            s = str( scr_occu.string.strip() )
+            if len( s ):
+                n_occu += int( float( s ) )
+
+        # Attempt to extract field value and add to total
+        scr_bath = scrape_building_attribute( soup, RE_BATH, building=n_building )
+        if scr_bath:
+            s = str( scr_bath.string.strip() )
+            if len( s ):
+                n_bath += int( float( s ) )
+
+        # Attempt to extract field value and add to total
+        scr_ktch = scrape_building_attribute( soup, RE_KTCH, building=n_building )
+        if scr_ktch:
+            s = str( scr_ktch.string.strip() )
+            if len( s ):
+                n_ktch += int( float( s ) )
+
+        # If we didn't get any field values, quit
+        if not ( scr_occu or scr_bath or scr_ktch ):
+            break
+
+    # Insert totals in row
+    sr_row[TOT_OCCU] = n_occu
+    sr_row[TOT_BATH] = n_bath
+    sr_row[TOT_KTCH] = n_ktch
+
+    return sr_row
 
 
 ######################
@@ -172,7 +280,8 @@ if __name__ == '__main__':
 
     # Read pre-existing table from database
     try:
-        df = pd.read_sql_table( TABLE_NAME, engine, index_col=util.ID )
+        df = pd.read_sql_table( TABLE_NAME, engine, index_col=util.ID, parse_dates=True )
+        df[SLDT] = pd.to_datetime( df[SLDT] ).dt.strftime( '%m/%d/%Y' )
     except:
         df = pd.DataFrame( columns=COLS )
 
@@ -191,12 +300,20 @@ if __name__ == '__main__':
 
     print( '' )
     s_doing_what = 'Refreshing {}'.format( len( id_range ) ) if ( len( df ) and args.refresh ) else 'Discovering'
-    print( '{} VISION IDs in range: {} to {}'.format( s_doing_what, id_range[0], id_range[-1] ) )
+    print( '{} VISION IDs in range {} to {}'.format( s_doing_what, id_range[0], id_range[-1] ) )
+    print( '' )
+
+    # Initialize counter
+    n_processed = 0
+    n_last_reported = -1
 
     for vision_id in id_range:
 
-        if vision_id % 50 == 0:
-            print( 'Processing VISION ID: {}'.format( vision_id ) )
+        if ( n_processed % 50 == 0 ) and ( n_processed != n_last_reported ):
+            n_last_reported = n_processed
+            util.report_elapsed_time( prefix='' )
+            s_status = ' Processed {} ({}%) of {}, requesting VISION ID {}'.format( n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
+            print( s_status )
 
         url = URL_BASE + str( vision_id )
         rsp = requests.get( url, verify=False )
@@ -207,6 +324,7 @@ if __name__ == '__main__':
             sr_row = pd.Series( index=COLS )
             sr_row[VSID] = vision_id
 
+            # Extract values
             soup = BeautifulSoup( rsp.text, 'html.parser' )
             sr_row[ACCT] = scrape_element( soup, 'span', 'MainContent_lblAcctNum' )
             sr_row[LOCN] = scrape_element( soup, 'span', 'MainContent_lblTab1Title' )
@@ -214,19 +332,35 @@ if __name__ == '__main__':
             sr_row[OWN2] = scrape_element( soup, 'span', 'MainContent_lblCoOwner' )
             sr_row[ASMT] = scrape_element( soup, 'span', 'MainContent_lblGenAssessment' )
             sr_row[STYL] = scrape_building_attribute( soup, r'Style\:?' )
-            sr_row[OCCY] = scrape_building_attribute( soup, r'Occupancy\:?' )
+            sr_row[OCCU] = scrape_building_attribute( soup, RE_OCCU )
             sr_row[HEAT] = scrape_building_attribute( soup, r'Heat(ing)? Type\:?' )
             sr_row[FUEL] = scrape_building_attribute( soup, r'Heat(ing)? Fuel\:?' )
             sr_row[AIRC] = scrape_building_attribute( soup, r'AC Type\:?' )
             sr_row[HTAC] = scrape_building_attribute( soup, r'Heat\/AC\:?' )
             sr_row[FLR1] = scrape_building_attribute( soup, r'1st Floor Use\:?' )
             sr_row[RESU] = scrape_building_attribute( soup, r'Residential Units\:?' )
+            sr_row[KTCH] = scrape_building_attribute( soup, RE_KTCH )
+            sr_row[BATH] = scrape_building_attribute( soup, RE_BATH )
             sr_row[LAND] = scrape_element( soup, 'span', 'MainContent_lblUseCode' )
             sr_row[DESC] = scrape_element( soup, 'span', 'MainContent_lblUseCodeDescription' )
             sr_row[ACRE] = scrape_element( soup, 'span', 'MainContent_lblLndAcres' )
+            sr_row[SLPR] = scrape_element( soup, 'span', 'MainContent_lblPrice' )
+            sr_row[SLDT] = scrape_element( soup, 'span', 'MainContent_lblSaleDate' )
+            sr_row[ZONE] = scrape_element( soup, 'span', 'MainContent_lblZone' )
+            sr_row[YEAR] = scrape_element( soup, 'span', 'MainContent_ctl01_lblYearBuilt' )
+            sr_row[AREA] = scrape_element( soup, 'span', 'MainContent_ctl01_lblBldArea' )
             sr_row[BLDS] = scrape_element( soup, 'span', 'MainContent_lblBldCount' )
+
+            # Extract summary building values
+            sr_row = scrape_buildings( soup, sr_row )
+
+            # Set residential flag
             sr_row[ISRS] = util.YES if sr_row[LAND] in ls_res_codes else util.NO
 
+            # Load new row into dataframe
             df = df.append( sr_row, ignore_index=True )
+
+            # Increment count
+            n_processed += 1
 
     save_and_exit( None, None )
