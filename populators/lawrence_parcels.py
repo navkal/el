@@ -110,13 +110,67 @@ RE_OCCU = r'Occupancy\:?'
 RE_BATH = r'Total Ba?thr?m?s\:?'
 RE_KTCH = r'Num Kitchens\:?'
 
+SUMMARY_FUEL_TYPES = ['Oil', 'Gas', 'Electric']
 
-def summarize_and_exit():
+def make_summary_row( idx, df_group ):
+    sr_summary = pd.Series()
+    sr_summary[STREET_NAME] = idx
 
-    # Report size of output
+    sr_summary['street_' + KTCH] = df_group[KTCH].sum()
+    sr_summary['street_' + BATH] = df_group[BATH].sum()
+    sr_summary['street_' + OCCU] = df_group[OCCU].sum()
+
+    for s_fuel_type in SUMMARY_FUEL_TYPES:
+
+        df_fuel = df_group[ df_group[FUEL]==s_fuel_type ]
+        s_prefix =  s_fuel_type.lower()
+
+        if len( df_fuel ):
+            sr_summary[s_prefix + '_' + KTCH] = df_fuel[KTCH].sum()
+            sr_summary[s_prefix + '_' + BATH] = df_fuel[BATH].sum()
+            sr_summary[s_prefix + '_' + OCCU] = df_fuel[OCCU].sum()
+
+    return sr_summary
+
+
+def make_summary( s_res, df ):
+
     print( '' )
-    print( 'Summarizing {} VISION IDs'.format( len( df ) ) )
+    print( 'Summarizing {} {} VISION IDs'.format( len( df ), s_res ) )
 
+    # Drop empty street names
+    df = df[ df[STREET_NAME].str.len() > 0 ]
+
+    # Initialize summary dataframe
+    df_summary = pd.DataFrame()
+
+    # Iterate through street groups
+    for idx, df_group in df.groupby( by=[STREET_NAME] ):
+
+        # Summarize current street
+        sr_summary = make_summary_row( idx, df_group )
+
+        # Append row to summary dataframe
+        if df_summary.empty:
+            df_summary = pd.DataFrame( columns=sr_summary.index )
+        df_summary = df_summary.append( sr_summary, ignore_index=True )
+
+    # Convert float to integer
+    for col_name in df_summary.columns[1:]:
+        df_summary[col_name] = clean_integer( df_summary[col_name] )
+
+    return df_summary
+
+
+def summarize_and_exit( df ):
+
+    # Summarize and save residential parcels
+    df_summary = make_summary( 'Residential', df[ df[ISRS]==util.YES ] )
+    util.create_table( 'StreetsResidential', conn, cur, df=df_summary )
+
+    # Summarize and save commercial parcels
+    df_summary = make_summary( 'Commercial', df[ df[ISRS]==util.NO ] )
+    util.create_table( 'StreetsCommercial', conn, cur, df=df_summary )
 
     # Report elapsed time
     util.report_elapsed_time()
@@ -285,7 +339,7 @@ def scrape_buildings( soup, sr_row ):
 # Main program
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser( description='Scrape property assessment data from Vision Government Solutions website' )
+    parser = argparse.ArgumentParser( description='Scrape parcel assessment data from Vision Government Solutions website' )
     parser.add_argument( '-d', dest='db_filename', help='Database filename' )
     parser.add_argument( '-l', dest='luc_filename',  help='Land use codes spreadsheet filename' )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
@@ -320,7 +374,7 @@ if __name__ == '__main__':
         df = pd.DataFrame( columns=COLS )
 
     if args.summarize:
-        summarize_and_exit()
+        summarize_and_exit( df )
     else:
         signal.signal( signal.SIGINT, save_and_exit )
 
