@@ -24,17 +24,23 @@ import util
 import normalize
 
 
+URL_BASE = 'https://gis.vgsi.com/lawrencema/parcel.aspx?pid='
+
+ID_RANGE_MIN = 266
+ID_RANGE_MAX = 105888
+ID_RANGE_STOP = ID_RANGE_MAX + 1
+
+PARCELS_TABLE = 'Parcels_L'
+
 ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
 STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
 ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
-AGE = util.AGE
-
-URL_BASE = 'https://gis.vgsi.com/lawrencema/parcel.aspx?pid='
-
-TABLE_NAME = 'Parcels_L'
+RE_OCCU = r'Occupancy\:?'
+RE_BATH = r'Total Ba?thr?m?s\:?'
+RE_KTCH = r'Num Kitchens\:?'
 
 # Column labels
 VSID = util.VISION_ID
@@ -102,40 +108,45 @@ COLS = \
     ISRS,
 ]
 
-ID_RANGE_MIN = 266
-ID_RANGE_MAX = 105888
-ID_RANGE_STOP = ID_RANGE_MAX + 1
-
-RE_OCCU = r'Occupancy\:?'
-RE_BATH = r'Total Ba?thr?m?s\:?'
-RE_KTCH = r'Num Kitchens\:?'
-
-SUMMARY_FUEL_TYPES = ['Oil', 'Gas', 'Electric']
+# Column name fragments for summary table
+SUMMARY_FUEL_TYPES = \
+{
+    'Oil': util.OIL_,
+    'Gas': util.GAS_,
+    'Electric': util.ELEC_,
+}
+KTCH_TOT = util.KITCHENS_ + util.TOTAL
+BATH_TOT = util.BATHS_ + util.TOTAL
+OCCU_TOT = util.OCCUPANCY_ + util.TOTAL
 
 def make_summary_row( idx, df_group ):
     sr_summary = pd.Series()
     sr_summary[STREET_NAME] = idx
 
-    sr_summary['street_' + KTCH] = df_group[KTCH].sum()
-    sr_summary['street_' + BATH] = df_group[BATH].sum()
-    sr_summary['street_' + OCCU] = df_group[OCCU].sum()
+    # Street features
+    sr_summary[util.PARCEL_COUNT] = len( df_group )
+    sr_summary[BLDS] = df_group[BLDS].sum()
 
-    for s_fuel_type in SUMMARY_FUEL_TYPES:
+    # Building features
+    sr_summary[KTCH_TOT] = df_group[KTCH].sum()
+    sr_summary[BATH_TOT] = df_group[BATH].sum()
+    sr_summary[OCCU_TOT] = df_group[OCCU].sum()
 
-        df_fuel = df_group[ df_group[FUEL]==s_fuel_type ]
-        s_prefix =  s_fuel_type.lower()
+    # Building features by fuel type
+    for fuel_type in SUMMARY_FUEL_TYPES.items():
+
+        df_fuel = df_group[ df_group[FUEL]==fuel_type[0] ]
 
         if len( df_fuel ):
-            sr_summary[s_prefix + '_' + KTCH] = df_fuel[KTCH].sum()
-            sr_summary[s_prefix + '_' + BATH] = df_fuel[BATH].sum()
-            sr_summary[s_prefix + '_' + OCCU] = df_fuel[OCCU].sum()
+            sr_summary[fuel_type[1] + KTCH_TOT] = df_fuel[KTCH].sum()
+            sr_summary[fuel_type[1] + BATH_TOT] = df_fuel[BATH].sum()
+            sr_summary[fuel_type[1] + OCCU_TOT] = df_fuel[OCCU].sum()
 
     return sr_summary
 
 
 def make_summary( s_res, df ):
 
-    print( '' )
     print( 'Summarizing {} {} VISION IDs'.format( len( df ), s_res ) )
 
     # Drop empty street names
@@ -164,13 +175,22 @@ def make_summary( s_res, df ):
 
 def summarize_and_exit( df ):
 
-    # Summarize and save residential parcels
-    df_summary = make_summary( 'Residential', df[ df[ISRS]==util.YES ] )
-    util.create_table( 'StreetsResidential', conn, cur, df=df_summary )
+    print( '' )
 
-    # Summarize and save commercial parcels
-    df_summary = make_summary( 'Commercial', df[ df[ISRS]==util.NO ] )
-    util.create_table( 'StreetsCommercial', conn, cur, df=df_summary )
+    # Summarize residential parcels
+    df_res = make_summary( 'Residential', df[ df[ISRS]==util.YES ] )
+    df_res[ISRS] = util.YES
+
+    # Summarize commercial parcels
+    df_com = make_summary( 'Commercial', df[ df[ISRS]==util.NO ] )
+    df_com[ISRS] = util.NO
+
+    # Combine and sort
+    df_summary = pd.concat( [df_res, df_com ] )
+    df_summary = df_summary.sort_values( by=[STREET_NAME, ISRS], ascending=[True, False] )
+
+    # Save to database
+    util.create_table( 'ParcelSummary', conn, cur, df=df_summary )
 
     # Report elapsed time
     util.report_elapsed_time()
@@ -241,18 +261,23 @@ def save_and_exit( signum, frame ):
         df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
 
         # Calculate age
-        df[AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
+        df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
 
         # Normalize addresses.  Use result_type='expand' to load multiple columns!
         df[ADDR] = df[LOCN]
         df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+
+        # Kludge: Backfill empty street names (not found by normalization) with full normalized address
+        idx_no_streets = df[df[STREET_NAME] == ''].index
+        print( 'Backfilling {} empty street names with normalized address'.format( len( idx_no_streets ) ) )
+        df[STREET_NAME].loc[idx_no_streets] = df[LOCN].loc[idx_no_streets]
 
         # Report size of output
         print( '' )
         print( 'Saving {} VISION IDs'.format( len( df ) ) )
 
         # Preserve current progress in database
-        util.create_table( TABLE_NAME, conn, cur, df=df )
+        util.create_table( PARCELS_TABLE, conn, cur, df=df )
 
     # Report elapsed time
     util.report_elapsed_time()
@@ -368,7 +393,7 @@ if __name__ == '__main__':
 
     # Read pre-existing table from database
     try:
-        df = pd.read_sql_table( TABLE_NAME, engine, index_col=util.ID, parse_dates=True )
+        df = pd.read_sql_table( PARCELS_TABLE, engine, index_col=util.ID, parse_dates=True )
         df[SLDT] = pd.to_datetime( df[SLDT] ).dt.strftime( '%m/%d/%Y' )
     except:
         df = pd.DataFrame( columns=COLS )
@@ -412,7 +437,10 @@ if __name__ == '__main__':
             print( s_status )
 
         url = URL_BASE + str( vision_id )
-        rsp = requests.get( url, verify=False )
+        try:
+            rsp = requests.get( url, verify=False )
+        except:
+            save_and_exit( None, None )
 
         if ( rsp.url == url ):
 

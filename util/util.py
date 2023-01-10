@@ -317,6 +317,7 @@ YEAR_BUILT = 'year_built'
 EFFECTIVE_YEAR_BUILT = 'effective_year_built'
 TOTAL_ACRES = 'total_acres'
 BUILDING_COUNT = 'building_count'
+PARCEL_COUNT = 'parcel_count'
 GROSS_BUILDING_AREA = 'gross_building_area'
 LIVING_AREA = 'living_area'
 YEAR_REMODELED = 'year_remodeled'
@@ -429,6 +430,16 @@ ADDR_1 = 'address_1'
 ADDR_2 = 'address_2'
 CONTACT_EMAIL = 'contact_email'
 JOB_NUMBER = 'job_number'
+
+# Name fragments for Lawrence parcel summary
+OIL_ = 'oil_'
+GAS_ = 'gas_'
+ELEC_ = 'elec_'
+KITCHENS_ = 'kitchens_'
+BATHS_ = 'baths_'
+OCCUPANCY_ = 'occupancy_'
+
+
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1574,6 +1585,25 @@ COLUMN_ORDER = \
     [
         JOB_NUMBER,
         PERMIT_NUMBER,
+    ],
+    'ParcelSummary':
+    [
+        IS_RESIDENTIAL,
+        NORMALIZED_STREET_NAME,
+        PARCEL_COUNT,
+        BUILDING_COUNT,
+        ELEC_ + BATHS_ + TOTAL,
+        ELEC_ + KITCHENS_ + TOTAL,
+        ELEC_ + OCCUPANCY_ + TOTAL,
+        OIL_ + BATHS_ + TOTAL,
+        OIL_ + KITCHENS_ + TOTAL,
+        OIL_ + OCCUPANCY_ + TOTAL,
+        GAS_ + BATHS_ + TOTAL,
+        GAS_ + KITCHENS_ + TOTAL,
+        GAS_ + OCCUPANCY_ + TOTAL,
+        BATHS_ + TOTAL,
+        KITCHENS_ + TOTAL,
+        OCCUPANCY_ + TOTAL,
     ],
     'Parcels_L':
     [

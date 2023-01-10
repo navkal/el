@@ -247,6 +247,18 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
                         print( 'POST DIRECTIONAL NOT FOUND', post_dir )
                         exit()
 
+                # Handle highway location, such as 'I 495', that has been designated as PO Box
+                if ( 'USPSBoxType' in keys ) and ( 'StreetName' not in keys ) and not re.match( r'^P\.?O\.? ', parts['USPSBoxType'] ) and ( 'USPSBoxID' in keys ):
+                    if verbose:
+                        print( 'Bf moving USPSBox* fields to StreetName', parts )
+                    parts['StreetName'] = ' '.join( [ parts['USPSBoxType'], parts['USPSBoxID'] ] )
+                    del parts['USPSBoxType']
+                    del parts['USPSBoxID']
+                    parts.move_to_end( 'StreetName', last=False )
+                    if verbose:
+                        print( 'Af moving USPSBox* fields to StreetName', parts )
+
+
             a_org = []
             for key in norm[0].keys():
                 a_org.append( norm[0][key] )
