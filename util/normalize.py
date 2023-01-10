@@ -258,6 +258,32 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
                     if verbose:
                         print( 'Af moving USPSBox* fields to StreetName', parts )
 
+                # Handle post-directional-like name, such as 'SOUTH ST', that has been designated as post-directional
+                if ( 'StreetNamePostDirectional' in keys ) and ( 'PlaceName' in keys ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ):
+                    if verbose:
+                        print( 'Bf moving StreetNamePostDirectional to StreetName', parts )
+                    if ( len( keys ) == 4 ) or ( ( len( keys ) == 5 ) and ( 'AddressNumber' in keys ) ):
+                        parts['StreetName'] = parts['StreetNamePostDirectional']
+                        del parts['StreetNamePostDirectional']
+                        parts.move_to_end( 'StreetName', last=False )
+                        if re.match( r'^[A-Z]+ +{}$'.format( city ), parts['PlaceName'] ):
+                            parts['StreetName'] = ' '.join( [parts['StreetName'], parts['PlaceName'].split()[0] ] )
+                            parts['PlaceName'] = city
+                        if 'AddressNumber' in keys:
+                            parts.move_to_end( 'AddressNumber', last=False )
+                    if verbose:
+                        print( 'Af moving StreetNamePostDirectional to StreetName', parts )
+
+                # Handle street name, such as 'BROADWAY', that has been prepended to PlaceName field
+                if ( 'PlaceName' in keys ) and re.match( r'^[A-Z]+ +{}$'.format( city ), parts['PlaceName'] ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ) and ( len( keys ) == 3 ):
+                    if verbose:
+                        print( 'Bf moving PlaceName fragment to StreetName', parts )
+                    parts['StreetName'] = parts['PlaceName'].split()[0]
+                    parts['PlaceName'] = city
+                    parts.move_to_end( 'StreetName', last=False )
+                    if verbose:
+                        print( 'Af moving PlaceName fragment to StreetName', parts )
+
 
             a_org = []
             for key in norm[0].keys():
