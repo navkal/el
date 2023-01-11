@@ -131,24 +131,9 @@ EXPECTED_KEYS = \
     'LandmarkName',
 }
 
-# Normalize street address
-def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbose=False ):
 
-    # Create original copy of the address
-    original = row[col_name]
-
-    # Initialize return value
-    address = original.strip().upper()
-
-    #
-    # Help usaddress parsing algorithm with these troublesome cases
-    #
-
-    # Optionally extract and remove parenthesized text
-    if return_parts:
-        address_parts = address.split( '(', 1 )
-        address = address_parts[0]
-        additional_info = '(' + address_parts[1] if len( address_parts ) == 2 else None
+# Help usaddress parsing algorithm with troublesome address inputs
+def fix_inputs_we_dont_like( address ):
 
     # Miscellaneous typos
     address = re.sub( r' CI$', ' CIR', address )
@@ -168,6 +153,107 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
     else:
         address = address.replace( '-', ' ' )
 
+    return address
+
+
+# Modify parsing results according to our liking
+def fix_outputs_we_dont_like( parts, city, verbose ):
+
+    # Correct parsing mistakes that occur, for example, with 'GRANDVIEW TR'
+    keys = parts.keys()
+    if ( 'Recipient' in parts ) and ( 'StreetName' not in parts ) and ( 'StreetNamePostType' not in parts ):
+        if verbose:
+            print( 'Bf replacing Recipient', parts )
+        od = collections.OrderedDict()
+        for key in keys:
+            if key == 'Recipient':
+                words = parts['Recipient'].split()
+                od['StreetName'] = ' '.join( words[:-1] )
+                od['StreetNamePostType'] = words[-1]
+            else:
+                od[key] = parts[key]
+        parts = od
+        if verbose:
+            print( 'Af replacing Recipient', parts )
+
+    # Handle highway location, such as 'I 495', that has been designated as PO Box
+    elif ( 'USPSBoxType' in keys ) and ( 'StreetName' not in keys ) and not re.match( r'^P\.?O\.? ', parts['USPSBoxType'] ) and ( 'USPSBoxID' in keys ):
+        if verbose:
+            print( 'Bf moving USPSBox* fields to StreetName', parts )
+        parts['StreetName'] = ' '.join( [ parts['USPSBoxType'], parts['USPSBoxID'] ] )
+        del parts['USPSBoxType']
+        del parts['USPSBoxID']
+        parts.move_to_end( 'StreetName', last=False )
+        if verbose:
+            print( 'Af moving USPSBox* fields to StreetName', parts )
+
+    # Handle post-directional-like name, such as 'SOUTH ST', that has been designated as post-directional
+    elif ( 'StreetNamePostDirectional' in keys ) and ( 'PlaceName' in keys ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ):
+        if verbose:
+            print( 'Bf moving StreetNamePostDirectional to StreetName', parts )
+        if ( len( keys ) == 4 ) or ( ( len( keys ) == 5 ) and ( 'AddressNumber' in keys ) ):
+            parts['StreetName'] = parts['StreetNamePostDirectional']
+            del parts['StreetNamePostDirectional']
+            parts.move_to_end( 'StreetName', last=False )
+            if re.match( r'^[A-Z]+ +{}$'.format( city ), parts['PlaceName'] ):
+                parts['StreetName'] = ' '.join( [parts['StreetName'], parts['PlaceName'].split()[0] ] )
+                parts['PlaceName'] = city
+            if 'AddressNumber' in keys:
+                parts.move_to_end( 'AddressNumber', last=False )
+        if verbose:
+            print( 'Af moving StreetNamePostDirectional to StreetName', parts )
+
+    # Handle street name, such as 'BROADWAY', that has been prepended to PlaceName field
+    elif ( 'PlaceName' in keys ) and re.match( r'^[A-Z]+ +{}$'.format( city ), parts['PlaceName'] ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ) and ( len( keys ) == 3 ):
+        if verbose:
+            print( 'Bf moving PlaceName fragment to StreetName', parts )
+        parts['StreetName'] = parts['PlaceName'].split()[0]
+        parts['PlaceName'] = city
+        parts.move_to_end( 'StreetName', last=False )
+        if verbose:
+            print( 'Af moving PlaceName fragment to StreetName', parts )
+
+    # Handle street name and type, such as 'MELROSE TERR', that has been designated as landmark
+    elif ( 'LandmarkName' in keys ) and ( 'PlaceName' in keys ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ) and ( len( keys ) == 4 ) and ( len( parts['LandmarkName'].split() ) > 1 ):
+        if verbose:
+            print( 'Bf moving LandmarkName fragments to StreetName and StreetNamePostType', parts )
+        words = parts['LandmarkName'].split()
+        parts['StreetNamePostType'] = words.pop()
+        parts['StreetName'] = ' '.join( words )
+        del parts['LandmarkName']
+        parts.move_to_end( 'StreetNamePostType', last=False )
+        parts.move_to_end( 'StreetName', last=False )
+
+        if verbose:
+            for key in keys:
+                print( '- {0} "{1}"'.format( key, parts[key] ) )
+        if verbose:
+            print( 'Af moving LandmarkName fragments to StreetName and StreetNamePostType', parts )
+
+
+    return parts
+
+
+# Normalize street address
+def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbose=False ):
+
+    # Create original copy of the address
+    original = row[col_name]
+
+    # Initialize return value
+    address = original.strip().upper()
+
+    # Optionally extract and remove parenthesized text
+    if return_parts:
+        address_parts = address.split( '(', 1 )
+        address = address_parts[0]
+        additional_info = '(' + address_parts[1] if len( address_parts ) == 2 else None
+    else:
+        additional_info = None
+
+    # Help usaddress parsing algorithm with troublesome address inputs
+    address = fix_inputs_we_dont_like( address )
+
     if verbose:
         print( '' )
         print( 'Normalizing address in column "{0}": "{1}"'.format( col_name, address ) )
@@ -184,25 +270,13 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
 
                 parts = copy.deepcopy( norm[0] )
 
-                # Correct parsing mistakes that occur, for example, with 'GRANDVIEW TR'
-                if ( 'Recipient' in parts ) and ( 'StreetName' not in parts ) and ( 'StreetNamePostType' not in parts ):
-                    if verbose:
-                        print( 'Bf replacing Recipient', parts )
-                    od = collections.OrderedDict()
-                    for key in parts.keys():
-                        if key == 'Recipient':
-                            split = parts['Recipient'].split()
-                            od['StreetName'] = ' '.join( split[:-1] )
-                            od['StreetNamePostType'] = split[-1]
-                        else:
-                            od[key] = parts[key]
-                    parts = od
-                    if verbose:
-                        print( 'Af replacing Recipient', parts )
-
+                # Fix parsing results we don't like
+                parts = fix_outputs_we_dont_like( parts, city, verbose )
 
                 keys = parts.keys()
 
+                if verbose:
+                    print( 'Parser output:' )
                 for key in keys:
                     if verbose:
                         print( '- {0} "{1}"'.format( key, parts[key] ) )
@@ -247,66 +321,29 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
                         print( 'POST DIRECTIONAL NOT FOUND', post_dir )
                         exit()
 
-                # Handle highway location, such as 'I 495', that has been designated as PO Box
-                if ( 'USPSBoxType' in keys ) and ( 'StreetName' not in keys ) and not re.match( r'^P\.?O\.? ', parts['USPSBoxType'] ) and ( 'USPSBoxID' in keys ):
-                    if verbose:
-                        print( 'Bf moving USPSBox* fields to StreetName', parts )
-                    parts['StreetName'] = ' '.join( [ parts['USPSBoxType'], parts['USPSBoxID'] ] )
-                    del parts['USPSBoxType']
-                    del parts['USPSBoxID']
-                    parts.move_to_end( 'StreetName', last=False )
-                    if verbose:
-                        print( 'Af moving USPSBox* fields to StreetName', parts )
+                # Package final results
+                a_org = []
+                for key in norm[0].keys():
+                    a_org.append( norm[0][key] )
+                s_org = ' '.join( a_org )
+                a_new = []
+                for key in parts.keys():
+                    a_new.append( parts[key] )
+                s_new = ' '.join( a_new )
 
-                # Handle post-directional-like name, such as 'SOUTH ST', that has been designated as post-directional
-                if ( 'StreetNamePostDirectional' in keys ) and ( 'PlaceName' in keys ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ):
-                    if verbose:
-                        print( 'Bf moving StreetNamePostDirectional to StreetName', parts )
-                    if ( len( keys ) == 4 ) or ( ( len( keys ) == 5 ) and ( 'AddressNumber' in keys ) ):
-                        parts['StreetName'] = parts['StreetNamePostDirectional']
-                        del parts['StreetNamePostDirectional']
-                        parts.move_to_end( 'StreetName', last=False )
-                        if re.match( r'^[A-Z]+ +{}$'.format( city ), parts['PlaceName'] ):
-                            parts['StreetName'] = ' '.join( [parts['StreetName'], parts['PlaceName'].split()[0] ] )
-                            parts['PlaceName'] = city
-                        if 'AddressNumber' in keys:
-                            parts.move_to_end( 'AddressNumber', last=False )
-                    if verbose:
-                        print( 'Af moving StreetNamePostDirectional to StreetName', parts )
+                if verbose:
+                    print( '' )
+                    print( 'Reconstituted address:' )
+                    print( '- unmapped: "{0}"'.format( s_org ) )
+                    print( '-   mapped: "{0}"'.format( s_new ) )
+                    print( '' )
 
-                # Handle street name, such as 'BROADWAY', that has been prepended to PlaceName field
-                if ( 'PlaceName' in keys ) and re.match( r'^[A-Z]+ +{}$'.format( city ), parts['PlaceName'] ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ) and ( len( keys ) == 3 ):
-                    if verbose:
-                        print( 'Bf moving PlaceName fragment to StreetName', parts )
-                    parts['StreetName'] = parts['PlaceName'].split()[0]
-                    parts['PlaceName'] = city
-                    parts.move_to_end( 'StreetName', last=False )
-                    if verbose:
-                        print( 'Af moving PlaceName fragment to StreetName', parts )
-
-
-            a_org = []
-            for key in norm[0].keys():
-                a_org.append( norm[0][key] )
-            s_org = ' '.join( a_org )
-            a_new = []
-            for key in parts.keys():
-                a_new.append( parts[key] )
-            s_new = ' '.join( a_new )
-
-            if verbose:
-                print( '' )
-                print( 'Reconstituted address:' )
-                print( '- unmapped: "{0}"'.format( s_org ) )
-                print( '-   mapped: "{0}"'.format( s_new ) )
-                print( '' )
-
-            if s_new.endswith( trailing_address_parts ):
-                address = s_new[ :-len( trailing_address_parts ) ]
-            else:
-                print( '<{}> expected to end with <{}>'.format( s_new, trailing_address_parts ) )
-                print( 'BAD ENDING!!!' )
-                exit()
+                if s_new.endswith( trailing_address_parts ):
+                    address = s_new[ :-len( trailing_address_parts ) ]
+                else:
+                    print( '<{}> expected to end with <{}>'.format( s_new, trailing_address_parts ) )
+                    print( 'BAD ENDING!!!' )
+                    exit()
 
         except usaddress.RepeatedLabelError:
 
@@ -363,3 +400,4 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
         return_value = address
 
     return return_value
+
