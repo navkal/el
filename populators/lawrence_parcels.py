@@ -267,11 +267,6 @@ def save_and_exit( signum, frame ):
         df[ADDR] = df[LOCN]
         df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
-        # Kludge: Backfill empty street names (not found by normalization) with full normalized address
-        idx_no_streets = df[df[STREET_NAME] == ''].index
-        print( 'Backfilling {} empty street names with normalized address'.format( len( idx_no_streets ) ) )
-        df[STREET_NAME].loc[idx_no_streets] = df[LOCN].loc[idx_no_streets]
-
         # Report size of output
         print( '' )
         print( 'Saving {} VISION IDs'.format( len( df ) ) )

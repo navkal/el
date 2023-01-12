@@ -133,7 +133,7 @@ EXPECTED_KEYS = \
 
 
 # Help usaddress parsing algorithm with troublesome address inputs
-def fix_inputs_we_dont_like( address ):
+def fix_inputs_we_dont_like( address, return_parts ):
 
     # Miscellaneous typos
     address = re.sub( r' CI$', ' CIR', address )
@@ -143,24 +143,54 @@ def fix_inputs_we_dont_like( address ):
     address = re.sub( r' T$', ' ST', address )
     address = re.sub( r' APT FRT ', ' ', address )
     address = re.sub( r' BROADWAY ST[A-Z]*$', ' BROADWAY ', address )
+    address = re.sub( r' AB FARNHAM ', ' A-B FARNHAM ', address )
 
-    # Handle hyphens
+    # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )
-    if re.search( '^\d+[A-Z]? ?- ?\d+[A-Z]? ', address ):
+
+    # Move nonconforming informational text to trailing, parenthesized string
+    if ' AKA ' in address:
+        address_parts = address.split( ' AKA ', 1 )
+        address = address_parts[0].strip()
+        address = address + ' (AKA ' + address_parts[1].strip() + ')'
+    if address.startswith( 'REAR ' ):
+        address = re.sub( r'^REAR ', '', address )
+        address = address.strip() + ' (REAR)'
+
+    # Optionally extract and remove parenthesized text
+    if return_parts:
+        address_parts = address.split( '(', 1 )
+        address = address_parts[0]
+        additional_info = '(' + address_parts[1] if len( address_parts ) == 2 else None
+    else:
+        additional_info = None
+
+    # Handle hyphenated address numbers
+    if re.search( '^\d+[A-Z]?\d*(-\d+[A-Z]?\d*)+ ', address ):
+        # Replace dashes following hyphenated address number
         address_parts = address.split( ' ', 1 )
         address_parts[1] = address_parts[1].replace( '-', ' ' )
         address = ' '.join( address_parts )
+    elif re.search( '^\d+ [A-Z]-[A-Z] ', address ):
+        # Replace dashes following hyphenated unit letters
+        address_parts = address.split( ' ', 2 )
+        address_parts[2] = address_parts[2].replace( '-', ' ' )
+        address = ' '.join( address_parts )
     else:
+        # Replace dashes in entire address
         address = address.replace( '-', ' ' )
 
-    return address
+    address = address.strip()
+
+    return address, additional_info
 
 
 # Modify parsing results according to our liking
 def fix_outputs_we_dont_like( parts, city, verbose ):
 
-    # Correct parsing mistakes that occur, for example, with 'GRANDVIEW TR'
     keys = parts.keys()
+
+    # Correct parsing mistakes that occur, for example, with 'GRANDVIEW TR'
     if ( 'Recipient' in parts ) and ( 'StreetName' not in parts ) and ( 'StreetNamePostType' not in parts ):
         if verbose:
             print( 'Bf replacing Recipient', parts )
@@ -223,13 +253,19 @@ def fix_outputs_we_dont_like( parts, city, verbose ):
         del parts['LandmarkName']
         parts.move_to_end( 'StreetNamePostType', last=False )
         parts.move_to_end( 'StreetName', last=False )
-
-        if verbose:
-            for key in keys:
-                print( '- {0} "{1}"'.format( key, parts[key] ) )
         if verbose:
             print( 'Af moving LandmarkName fragments to StreetName and StreetNamePostType', parts )
 
+    # Handle address number followed by hyphenated letters, such as '206 A-B PARK ST'
+    elif ( 'AddressNumber' in  keys ) and ( 'StreetName' in keys ) and ( 'StreetNamePostType' in keys ) and ( 'PlaceName' in keys ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ) and ( len( keys ) == 6 ):
+        if verbose:
+            print( 'Bf moving hyphenated letters from StateName to AddressNumber', parts )
+        if re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z]-[A-Z] ', parts['StreetName'] ):
+            words = parts['StreetName'].split()
+            parts['AddressNumber'] = ' '.join( [parts['AddressNumber'], words.pop(0)] )
+            parts['StreetName'] = ' '.join( words )
+        if verbose:
+            print( 'Af moving hyphenated letters from StateName to AddressNumber', parts )
 
     return parts
 
@@ -243,16 +279,8 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
     # Initialize return value
     address = original.strip().upper()
 
-    # Optionally extract and remove parenthesized text
-    if return_parts:
-        address_parts = address.split( '(', 1 )
-        address = address_parts[0]
-        additional_info = '(' + address_parts[1] if len( address_parts ) == 2 else None
-    else:
-        additional_info = None
-
     # Help usaddress parsing algorithm with troublesome address inputs
-    address = fix_inputs_we_dont_like( address )
+    address, additional_info = fix_inputs_we_dont_like( address, return_parts )
 
     if verbose:
         print( '' )
