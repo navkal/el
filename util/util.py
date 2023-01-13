@@ -1920,10 +1920,19 @@ def isolate_unmatched( df_merge, left_columns, df_result, property_type ):
     return df_result, df_unmatched
 
 
+# Add row to expanded address range
+def add_address_row( address_number, street, row, df_expanded ):
+    new_address = str( address_number ) + ' ' + street
+    new_row = row.copy()
+    new_row[NORMALIZED_ADDRESS] = new_address
+    df_expanded = df_expanded.append( new_row, ignore_index=True )
+    return( df_expanded )
+
+
 # Expand dataframe such that each address range entry is replaced by a series of entries representing the range
 def expand_address_ranges( df ):
 
-    # Extract entries that represent address ranges
+    # Extract entries that represent implied address ranges, expressed as '<number>[letter]-<number>[letter]'
     df_ranges = df.copy()
     df_ranges = df_ranges[ df_ranges[NORMALIZED_ADDRESS].str.match( '^\d+[A-Z]*-\d+[A-Z]* .*$' ) ]
 
@@ -1934,18 +1943,70 @@ def expand_address_ranges( df ):
 
         # Extract numeric address range
         address_range = row[NORMALIZED_ADDRESS].split()[0].split( '-' )
-        range_start = int( re.search( '^\d*', address_range[0] ).group(0) )
-        range_end = int( re.search( '^\d*', address_range[1] ).group(0) ) + 1
+        range_first = int( re.search( '^\d*', address_range[0] ).group(0) )
+        range_last = int( re.search( '^\d*', address_range[1] ).group(0) )
 
         # Extract street
         street = ' '.join( row[NORMALIZED_ADDRESS].split()[1:] )
 
-        # Iterate over all numbers in the address range
-        for num in range( range_start, range_end, 2 ):
-            new_address = str( num ) + ' ' + street
-            new_row = row.copy()
-            new_row[NORMALIZED_ADDRESS] = new_address
-            df_expanded = df_expanded.append( new_row, ignore_index=True )
+        # Iterate over all numbers in the address range, incrementing by 2
+        for num in range( range_first, range_last + 1, 2 ):
+            df_expanded = add_address_row( num, street, row, df_expanded )
+
+        # Determine whether either range specifier contains a letter
+        letter_in_range_first = re.search( '[A-Z]', address_range[0] )
+        letter_in_range_last = re.search( '[A-Z]', address_range[1] )
+
+        # Include row representing second of two consecutive integer range specifiers
+        if ( range_last == range_first + 1 ) and not ( letter_in_range_first or letter_in_range_last ):
+            df_expanded = add_address_row( range_last, street, row, df_expanded )
+
+        # Include literal range specifier containing letter, but only if numbers are equal
+        if ( range_first == range_last ):
+            if letter_in_range_first:
+                df_expanded = add_address_row( address_range[0], street, row, df_expanded )
+            if letter_in_range_last:
+                df_expanded = add_address_row( address_range[1], street, row, df_expanded )
+
+    # Extract entries that represent explicit address ranges, expressed as '<number>[letter]-<number>[letter]-<number>[letter]...'
+    df_ranges = df.copy()
+    df_ranges = df_ranges[ df_ranges[NORMALIZED_ADDRESS].str.match( '^\d+[A-Z]*-\d+[A-Z]*(-\d+[A-Z]*)+ .*$' ) ]
+
+    # Iterate over explicit attress ranges
+    for index, row in df_ranges.iterrows():
+
+        # Extract street
+        street = ' '.join( row[NORMALIZED_ADDRESS].split()[1:] )
+
+        # Extract range parts
+        address_range = row[NORMALIZED_ADDRESS].split()[0].split( '-' )
+
+        # Iterate over range parts, adding a row for each
+        for range_part in address_range:
+            df_expanded = add_address_row( range_part, street, row, df_expanded )
+
+    # Extract entries that represent ranges of occupancy identifiers, such as '95 A-B NEWTON ST'
+    df_ranges = df.copy()
+    df_ranges = df_ranges[ df_ranges[NORMALIZED_ADDRESS].str.match( '^\d+ [A-Z]-[A-Z] .*$' ) ]
+
+    # Iterate over addresses with alphabetical ranges
+    for index, row in df_ranges.iterrows():
+
+        # Extract parts: address number, alphabetical range, and street name
+        parts = row[NORMALIZED_ADDRESS].split()
+        number = parts[0]
+        alpha_range = parts[1].split( '-' )
+        street = ' '.join( parts[2:] )
+
+        # Construct list of letters in range
+        letters_in_range = [chr(i) for i in range( ord( alpha_range[0] ), ord( alpha_range[1] ) + 1 )]
+
+        # Iterate over letters, adding two entries for each: '<number> <letter>' and '<number><letter>'
+        for letter in letters_in_range:
+            address_number = ' '.join( [number, letter] )
+            df_expanded = add_address_row( address_number, street, row, df_expanded )
+            address_number = ''.join( [number, letter] )
+            df_expanded = add_address_row( address_number, street, row, df_expanded )
 
     df_no_ranges = df.loc[ df.index.difference( df_ranges.index ) ]
     df_expanded = df_expanded.append( df_no_ranges, ignore_index=True )

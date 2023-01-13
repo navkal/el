@@ -144,6 +144,7 @@ def fix_inputs_we_dont_like( address, return_parts ):
     address = re.sub( r' APT FRT ', ' ', address )
     address = re.sub( r' BROADWAY ST[A-Z]*$', ' BROADWAY ', address )
     address = re.sub( r' AB FARNHAM ', ' A-B FARNHAM ', address )
+    address = re.sub( r'18 FRANKLIN-45 BROADWAY', '18 FRANKLIN ST (45 BROADWAY)', address )
 
     # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )
@@ -256,16 +257,27 @@ def fix_outputs_we_dont_like( parts, city, verbose ):
         if verbose:
             print( 'Af moving LandmarkName fragments to StreetName and StreetNamePostType', parts )
 
-    # Handle address number followed by hyphenated letters, such as '206 A-B PARK ST'
-    elif ( 'AddressNumber' in  keys ) and ( 'StreetName' in keys ) and ( 'StreetNamePostType' in keys ) and ( 'PlaceName' in keys ) and ( 'StateName' in keys ) and ( 'ZipCode' in keys ) and ( len( keys ) == 6 ):
+    # Handle hyphenated letter range following address number, such as '206 A-B PARK ST'
+    elif ( 'AddressNumber' in  keys ) and ( 'StreetName' in keys ) and re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z]-[A-Z] ', parts['StreetName'] ):
         if verbose:
-            print( 'Bf moving hyphenated letters from StateName to AddressNumber', parts )
-        if re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z]-[A-Z] ', parts['StreetName'] ):
-            words = parts['StreetName'].split()
+            print( 'Bf moving occupancy letters from StateName to AddressNumber', parts )
+        words = parts['StreetName'].split()
+        parts['AddressNumber'] = ' '.join( [parts['AddressNumber'], words.pop(0)] )
+        parts['StreetName'] = ' '.join( words )
+        if verbose:
+            print( 'Af moving occupancy letters from StateName to AddressNumber', parts )
+
+    # Handle single letter following address number, such as '2 D WOODLAND ST'
+    elif ( 'AddressNumber' in  keys ) and ( 'StreetName' in keys ) and re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z] ', parts['StreetName'] ):
+        words = parts['StreetName'].split()
+        # Make sure it's not a misplaced pre-directional
+        if words[0] not in DIRS.values():
+            if verbose:
+                print( 'Bf moving occupancy letter from StateName to AddressNumber', parts )
             parts['AddressNumber'] = ' '.join( [parts['AddressNumber'], words.pop(0)] )
             parts['StreetName'] = ' '.join( words )
-        if verbose:
-            print( 'Af moving hyphenated letters from StateName to AddressNumber', parts )
+            if verbose:
+                print( 'Af moving occupancy letter from StateName to AddressNumber', parts )
 
     return parts
 
