@@ -216,13 +216,22 @@ def calculate_age( row ):
     age = ( THIS_YEAR - year_built ) if year_built else -1
     return age
 
+b_save_and_exit_done = False
 def save_and_exit( signum, frame ):
+
+    # Suppress repeat execution of handler
+    global b_save_and_exit_done
+    if b_save_and_exit_done:
+        sys.exit()
+    else:
+        b_save_and_exit_done = True
 
     global df
 
     # Report current status
-    print( '' )
-    print( 'Stopping at VISION ID {}'.format( vision_id ) )
+    if not args.post_process:
+        print( '' )
+        print( 'Stopping at VISION ID {}'.format( vision_id ) )
 
     if len( df ):
 
@@ -380,12 +389,6 @@ if __name__ == '__main__':
     # Open the database
     conn, cur, engine = util.open_database( args.db_filename, args.create )
 
-    # Retrieve residential codes and prepare for processing
-    df_res_codes = pd.read_excel( args.luc_filename, dtype=object )
-    sr_res_codes = df_res_codes['Residential Land Use Code']
-    sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
-    ls_res_codes = list( sr_res_codes )
-
     # Read pre-existing table from database
     try:
         df = pd.read_sql_table( PARCELS_TABLE, engine, index_col=util.ID, parse_dates=True )
@@ -393,10 +396,9 @@ if __name__ == '__main__':
     except:
         df = pd.DataFrame( columns=COLS )
 
+    # Take early exit with summarize option
     if args.summarize:
         summarize_and_exit( df )
-    else:
-        signal.signal( signal.SIGINT, save_and_exit )
 
     # Determine range of Vision IDs to process
     if len( df ):
@@ -416,14 +418,23 @@ if __name__ == '__main__':
     print( '{} VISION IDs in range {} to {}'.format( s_doing_what, id_range[0], id_range[-1] ) )
     print( '' )
 
+    # Take early exit with post-process option
+    if args.post_process:
+        save_and_exit( None, None )
+    else:
+        signal.signal( signal.SIGINT, save_and_exit )
+
+    # Retrieve residential codes
+    df_res_codes = pd.read_excel( args.luc_filename, dtype=object )
+    sr_res_codes = df_res_codes['Residential Land Use Code']
+    sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
+    ls_res_codes = list( sr_res_codes )
+
     # Initialize counter
     n_processed = 0
     n_last_reported = -1
 
     for vision_id in id_range:
-
-        if args.post_process:
-            break
 
         if ( n_processed % 50 == 0 ) and ( n_processed != n_last_reported ):
             n_last_reported = n_processed

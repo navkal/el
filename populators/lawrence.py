@@ -26,8 +26,10 @@ if __name__ == '__main__':
     os.system( 'python lawrence_census.py -m {0}'.format( args.master_filename ) )
 
     # Read parcels data
-    print( '\n=======> Parcels table' )
+    print( '\n=======> Parcels tables' )
+    os.system( 'python lawrence_parcels_finish.py -d ../db/lawrence_parcels.sqlite'.format( args.master_filename ) )
     os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f "Parcels_L" -t "Assessment_L_Parcels" -o {0}'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f "ParcelSummary" -t "ParcelSummary" -o {0}'.format( args.master_filename ) )
 
     # Read residential assessment data
     print( '\n=======> Residential input 1' )
@@ -102,7 +104,7 @@ if __name__ == '__main__':
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
-    df_about = pd.DataFrame( columns=['copyright'], data=['© 2022 Energize Lawrence.  All rights reserved.'] )
+    df_about = pd.DataFrame( columns=['copyright'], data=['© 2023 Energize Lawrence.  All rights reserved.'] )
     util.create_about_table( 'Lawrence', df_about, args.master_filename )
 
     # Publish research copy of database
