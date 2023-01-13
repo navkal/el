@@ -25,6 +25,10 @@ if __name__ == '__main__':
     print( '\n=======> Census table' )
     os.system( 'python lawrence_census.py -m {0}'.format( args.master_filename ) )
 
+    # Read parcels data
+    print( '\n=======> Parcels table' )
+    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f "Parcels_L" -t "Assessment_L_Parcels" -o {0}'.format( args.master_filename ) )
+
     # Read residential assessment data
     print( '\n=======> Residential input 1' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/assessment/residential_1.xlsx -t RawResidential_1 -r 1 -o {0}'.format( args.master_filename ) )
