@@ -20,7 +20,7 @@ ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 
 # Create database table documenting column name mappings
-def document_column_names():
+def document_column_names( df ):
 
     # Invert column name mappings
     map_1 = { v: k for k, v in util.CONSISTENT_COLUMN_NAMES['RawCommercial_1'].items() }
@@ -28,7 +28,7 @@ def document_column_names():
 
     # Build matrix mapping each database column name to its origins
     names = []
-    for col in df_merge.columns:
+    for col in df.columns:
         row = \
         [
             col,
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     df_result = vision.incorporate_vision_assessment_data( engine, df_merge )
 
     # Document column names in database
-    document_column_names()
+    document_column_names( df_result )
 
     # Save final table of commercial assessments
     util.create_table( 'Assessment_L_Commercial_Merged', conn, cur, df=df_result )

@@ -49,7 +49,7 @@ if __name__ == '__main__':
         util.MADDR_CITY,
         util.MADDR_STATE,
         util.MADDR_ZIP_CODE,
-        util.LEGAL_REFERENCE_SALE_DATE,
+        util.SALE_DATE,
         util.STORY_HEIGHT,
         util.RENTAL_LIVING_UNITS,
         util.ROOF_STRUCTURE,

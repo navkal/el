@@ -12,49 +12,49 @@ import util
 def incorporate_vision_assessment_data( engine, df_assessment, verbose=False ):
 
     # Read parcel records scraped from Vision database
-    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
+    df_vision = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
 
     # Partition columns into three groups: intersection and two differences
-    p_inter_m = df_parcels.columns.intersection( df_assessment.columns )
-    p_minus_m = df_parcels.columns.difference( df_assessment.columns )
-    m_minus_p = df_assessment.columns.difference( df_parcels.columns )
+    v_inter_a = df_vision.columns.intersection( df_assessment.columns )
+    v_minus_a = df_vision.columns.difference( df_assessment.columns )
+    a_minus_v = df_assessment.columns.difference( df_vision.columns )
 
     if verbose:
         print( '' )
         print( 'Partitioned columns into three groups:' )
         print( '' )
         print( '> Intersection' )
-        print( len( p_inter_m ), 'columns' )
-        print( list( p_inter_m ) )
+        print( len( v_inter_a ), 'columns' )
+        print( list( v_inter_a ) )
         print( '' )
         print( '> Difference: Vision minus assessment' )
-        print( len( p_minus_m ), 'columns' )
-        print( list( p_minus_m ) )
+        print( len( v_minus_a ), 'columns' )
+        print( list( v_minus_a ) )
         print( '' )
         print( '> Difference: Assessment minus Vision' )
-        print( len( m_minus_p ), 'columns' )
-        print( list( m_minus_p ) )
+        print( len( a_minus_v ), 'columns' )
+        print( list( a_minus_v ) )
         print( '' )
 
     # Concatenate common columns and drop duplicates, preferring Vision records
-    df_assessment_common = df_assessment[p_inter_m]
-    df_parcels_common = df_parcels[p_inter_m]
-    df_result = pd.concat( [df_assessment_common, df_parcels_common] )
+    df_vision_common = df_vision[v_inter_a]
+    df_assessment_common = df_assessment[v_inter_a]
+    df_result = pd.concat( [df_vision_common, df_assessment_common] )
 
     if verbose:
         print( '' )
-        print( 'Concatenated common columns of assessment and Vision tables' )
+        print( 'Concatenated common columns of Vision and assessment tables' )
+        print( '' )
+        print( 'Vision common columns' )
+        print( df_vision_common.shape )
         print( '' )
         print( 'Asessment common columns' )
         print( df_assessment_common.shape )
         print( '' )
-        print( 'Vision common columns' )
-        print( df_parcels_common.shape )
-        print( '' )
         print( 'Concatenation result' )
         print( df_result.shape )
 
-    df_result = df_result.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='last' )
+    df_result = df_result.drop_duplicates( subset=[util.ACCOUNT_NUMBER], keep='first' )
 
     if verbose:
         print( '' )
@@ -62,9 +62,9 @@ def incorporate_vision_assessment_data( engine, df_assessment, verbose=False ):
         print( df_result.shape )
 
     # Merge remaining columns from Vision data
-    columns_to_merge = [util.ACCOUNT_NUMBER] + list( p_minus_m )
+    columns_to_merge = [util.ACCOUNT_NUMBER] + list( v_minus_a )
     columns_to_merge.remove( util.IS_RESIDENTIAL )
-    df_result = pd.merge( df_result, df_parcels[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
+    df_result = pd.merge( df_result, df_vision[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
 
     if verbose:
         print( '' )
@@ -79,7 +79,7 @@ def incorporate_vision_assessment_data( engine, df_assessment, verbose=False ):
         print( df_result.shape )
 
     # Merge remaining columns from previously merged commercial data
-    columns_to_merge = [util.ACCOUNT_NUMBER] + list( m_minus_p )
+    columns_to_merge = [util.ACCOUNT_NUMBER] + list( a_minus_v )
     df_result = pd.merge( df_result, df_assessment[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
 
     if verbose:
