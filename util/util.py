@@ -1378,10 +1378,26 @@ COLUMN_ORDER = \
     [
         PARCEL_ID,
     ],
+    'Assessment_L_Commercial':
+    [
+        VISION_ID,
+        ACCOUNT_NUMBER,
+        OWNER_NAME,
+        GIS_ID,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+    ],
+    'Assessment_L_Residential':
+    [
+        VISION_ID,
+        ACCOUNT_NUMBER,
+        OWNER_NAME,
+        GIS_ID,
+        * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+    ],
     'Assessment_L_Residential_Merged':
     [
-        ACCOUNT_NUMBER,
         VISION_ID,
+        ACCOUNT_NUMBER,
         OWNER_NAME,
         LOCATION,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],

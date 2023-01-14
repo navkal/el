@@ -10,6 +10,7 @@ import sys
 sys.path.append( '../util' )
 import util
 import normalize
+import vision
 
 ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
@@ -94,12 +95,6 @@ if __name__ == '__main__':
     columns_to_merge = [util.ACCOUNT_NUMBER] + list( df_5.columns.difference( df_merge.columns ) )
     df_merge = pd.merge( df_merge, df_5[columns_to_merge], how='left', on=[util.ACCOUNT_NUMBER] )
 
-    # Convert Vision ID to integer
-    df_merge[util.VISION_ID] = df_merge[util.VISION_ID].fillna( 0 ).astype( int )
-
-    # Sort on account number
-    df_merge = df_merge.sort_values( by=[util.ACCOUNT_NUMBER] )
-
     # Drop empty columns
     df_merge = df_merge.dropna( how='all', axis=1 )
 
@@ -107,10 +102,13 @@ if __name__ == '__main__':
     df_merge[ADDR] = df_merge[util.LOCATION]
     df_merge[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_merge.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
+    # Incorporate scraped data from online Vision database
+    df_result = vision.incorporate_vision_assessment_data( engine, df_merge )
+
     # Document column names in database
     document_column_names()
 
     # Save final table of residential assessments
-    util.create_table( 'Assessment_L_Residential_Merged', conn, cur, df=df_merge )
+    util.create_table( 'Assessment_L_Residential_Merged', conn, cur, df=df_result )
 
     util.report_elapsed_time()

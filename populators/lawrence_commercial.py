@@ -10,6 +10,7 @@ import sys
 sys.path.append( '../util' )
 import util
 import normalize
+import vision
 
 ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
@@ -76,10 +77,13 @@ if __name__ == '__main__':
     df_merge[ADDR] = df_merge[util.LOCATION]
     df_merge[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_merge.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
+    # Incorporate scraped data from online Vision database
+    df_result = vision.incorporate_vision_assessment_data( engine, df_merge )
+
     # Document column names in database
     document_column_names()
 
     # Save final table of commercial assessments
-    util.create_table( 'Assessment_L_Commercial_Merged', conn, cur, df=df_merge )
+    util.create_table( 'Assessment_L_Commercial_Merged', conn, cur, df=df_result )
 
     util.report_elapsed_time()
