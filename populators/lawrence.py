@@ -102,6 +102,11 @@ if __name__ == '__main__':
     print( '\n=======> Sunrun Building Permits table' )
     os.system( 'python lawrence_building_permits_sunrun.py -m {0}'.format( args.master_filename ) )
 
+    # Weatherization tables
+    print( '\n=======> Weatherization tables' )
+    os.system( 'python wx.py -m {0}'.format( args.master_filename ) )
+
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     df_about = pd.DataFrame( columns=['copyright'], data=['© 2023 Energize Lawrence.  All rights reserved.'] )
@@ -117,12 +122,16 @@ if __name__ == '__main__':
             'Assessment_L_Commercial_Merged',
             'Assessment_L_Residential_Merged',
             'RawBuildingPermits',
+            'RawBuildingPermits_2023_Wx',
             'RawBuildingPermits_Cga',
+            'RawBuildingPermits_Past_Wx',
+            'RawBuildingPermits_Wx',
             'RawBusinesses_1',
             'RawBusinesses_2',
             'RawCensus',
             'RawCommercial_1',
             'RawCommercial_2',
+            'RawGlcacJobs',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',

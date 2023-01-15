@@ -799,6 +799,30 @@ CONSISTENT_COLUMN_NAMES = \
         'OPENED': OPENED,
         'CLOSED': CLOSED_DATE,
     },
+    'RawBuildingPermits_2023_Wx': \
+    {
+        'Permit#': PERMIT_NUMBER,
+        'File#': FILE_NUMBER,
+        'Address': ADDRESS,
+        'Zip': ZIP,
+        'Permit Type': PERMIT_TYPE,
+        'Subtype': PERMIT_SUBTYPE,
+        'Work Description': WORK_DESCRIPTION,
+        'Applicant': APPLICANT,
+        'Business Name': BUSINESS_NAME,
+        'Mailing Address': MADDR_STREET,
+        'Mailing CSZ': MADDR_CSZ,
+        'Permit Status': PERMIT_STATUS,
+        'Permit Fees': TOTAL_FEE,
+        'Application Date': APPLICATION_DATE,
+        'Approval Date': APPROVAL_DATE,
+        'Issue Date': DATE_ISSUED,
+        'Expiration Date': EXPIRATION_DATE,
+        'Close Date': CLOSED_DATE,
+        'Property Owner': OWNER_NAME,
+        'Use Group': PROPERTY_USE_GROUP,
+        'Total Project Cost': PROJECT_COST,
+    },
     'RawBuildingPermits_Past_Wx': \
     {
         'Info_1': FILE_NUMBER,
@@ -1472,55 +1496,6 @@ COLUMN_ORDER = \
     [
         # Same as Assessment_L_Commercial
     ],
-    'Assessment_L_Residential_Merged':
-    [
-        # VISION_ID,
-        # ACCOUNT_NUMBER,
-        # OWNER_NAME,
-        # LOCATION,
-        # * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
-        # TOTAL_ASSESSED_VALUE,
-        # OWNER_1_NAME,
-        # OWNER_2_NAME,
-        # MADDR_LINE.format( 1 ),
-        # MADDR_LINE.format( 2 ),
-        # MADDR_CITY,
-        # MADDR_STATE,
-        # MADDR_ZIP_CODE,
-        # SALE_PRICE,
-        # SALE_DATE,
-        # BOOK,
-        # PAGE,
-        # STORY_HEIGHT,
-        # STORY_HEIGHT + _DESC,
-        # YEAR_BUILT,
-        # EFFECTIVE_YEAR_BUILT,
-        # BUILDING_CONDITION,
-        # STATUS,
-        # STYLE,
-        # ROOF_COVER,
-        # ROOF_COVER + _DESC,
-        # ROOF_STRUCTURE,
-        # ROOF_STRUCTURE + _DESC,
-        # HEATING_FUEL + _CODE,
-        # HEATING_FUEL,
-        # HEATING_TYPE,
-        # HEATING_TYPE + _DESC,
-        # AC_TYPE,
-        # AC_TYPE + _DESC,
-        # ROOMS,
-        # ROOMS + _DESC,
-        # FULL_BATHS,
-        # HALF_BATHS,
-        # BATHROOM_STYLE,
-        # BATHROOM_STYLE + _DESC,
-        # BEDROOOMS,
-        # BEDROOOMS + _DESC,
-        # KITCHEN_STYLE,
-        # KITCHEN_STYLE + _DESC,
-        # LAND_USE_CODE,
-        # GIS_ID,
-    ],
     'BuildingPermits_L':
     [
         PERMIT_NUMBER,
@@ -1581,6 +1556,16 @@ COLUMN_ORDER = \
         FILE_NUMBER_LINK,
         CLOSED_DATE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+    ],
+    'BuildingPermits_L_Wx':
+    [
+        PERMIT_NUMBER,
+        FILE_NUMBER,
+        NORMALIZED_STREET_NAME,
+        NORMALIZED_STREET_NUMBER,
+        PERMIT_TYPE,
+        PERMIT_SUBTYPE,
+        WORK_DESCRIPTION,
     ],
     'Businesses_L':
     [
@@ -1957,6 +1942,30 @@ PUBLISH_INFO = \
         ]
     },
 }
+
+
+# Combine two dataframes by concatenating common columns and merging unique columns
+def combine_dataframes( df_1, df_2, subset, keep, on ):
+
+    common = df_1.columns.intersection( df_2.columns )
+    diff_1_2 = df_1.columns.difference( df_2.columns )
+    diff_2_1 = df_2.columns.difference( df_1.columns )
+
+    # Concatenate common columns of two dataframes
+    df_1_common = df_1[common]
+    df_2_common = df_2[common]
+    df_result = pd.concat( [df_1_common, df_2_common], ignore_index=True )
+    df_result = df_result.drop_duplicates( subset=subset, keep=keep )
+
+    # Merge in columns unique to df_1
+    columns_to_merge = on + list( diff_1_2 )
+    df_result = pd.merge( df_result, df_1[columns_to_merge], how='left', on=on )
+
+    # Merge in columns unique to df_2
+    columns_to_merge = on + list( diff_2_1 )
+    df_result = pd.merge( df_result, df_2[columns_to_merge], how='left', on=on )
+
+    return df_result
 
 
 # Return column with no zero values, or all zero values
