@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     # Correlate parcels and building permits
     print( '\n=======> Parcels building permit history' )
-    os.system( 'python lawrence_parcels_permit_history.py -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_permit_history.py -m {0}'.format( args.master_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )

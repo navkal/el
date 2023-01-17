@@ -71,6 +71,7 @@ BLDS = util.BUILDING_COUNT
 TOT_OCCU = util.TOTAL_OCCUPANCY
 TOT_BATH = util.TOTAL_BATHS
 TOT_KTCH = util.TOTAL_KITCHENS
+TOT_AREA = util.TOTAL_AREA
 ISRS = util.IS_RESIDENTIAL
 
 
@@ -105,6 +106,7 @@ COLS = \
     TOT_OCCU,
     TOT_BATH,
     TOT_KTCH,
+    TOT_AREA,
     ISRS,
 ]
 
@@ -268,6 +270,7 @@ def save_and_exit( signum, frame ):
         df[TOT_OCCU] = clean_integer( df[TOT_OCCU] )
         df[TOT_BATH] = clean_integer( df[TOT_BATH] )
         df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
+        df[TOT_AREA] = clean_integer( df[TOT_AREA] )
 
         # Calculate age
         df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
@@ -321,6 +324,7 @@ def scrape_buildings( soup, sr_row ):
     n_occu = 0
     n_bath = 0
     n_ktch = 0
+    n_area = 0
 
     # Initialize counter
     n_building = 0
@@ -351,14 +355,22 @@ def scrape_buildings( soup, sr_row ):
             if len( s ):
                 n_ktch += int( float( s ) )
 
+        # Attempt to extract field value and add to total
+        scr_area = scrape_element( soup, 'span', 'MainContent_ctl{:02d}_lblBldArea'.format( n_building ) )
+        if scr_area:
+            s = str( scr_area.string.strip().replace( ',', '' ) )
+            if len( s ):
+                n_area += int( float( s ) )
+
         # If we didn't get any field values, quit
-        if not ( scr_occu or scr_bath or scr_ktch ):
+        if not ( scr_occu or scr_bath or scr_ktch or scr_area ):
             break
 
     # Insert totals in row
     sr_row[TOT_OCCU] = n_occu
     sr_row[TOT_BATH] = n_bath
     sr_row[TOT_KTCH] = n_ktch
+    sr_row[TOT_AREA] = n_area
 
     return sr_row
 

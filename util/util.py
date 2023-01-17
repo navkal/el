@@ -364,6 +364,7 @@ RESIDENTIAL_UNITS = 'residential_units'
 TOTAL_OCCUPANCY = 'total_occupancy'
 TOTAL_BATHS = 'total_baths'
 TOTAL_KITCHENS = 'total_kitchens'
+TOTAL_AREA = 'total_area'
 
 EMPLOYEES = 'number_of_employees'
 APPLICANT = 'applicant'
@@ -1710,6 +1711,7 @@ COLUMN_ORDER = \
         TOTAL_OCCUPANCY,
         TOTAL_BATHS,
         TOTAL_KITCHENS,
+        TOTAL_AREA,
         LIVING_AREA,
         TOTAL_ACRES,
         SALE_PRICE,
