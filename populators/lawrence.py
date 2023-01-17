@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # Read parcels data
     print( '\n=======> Parcels tables' )
     os.system( 'python lawrence_parcels_finish.py -d ../db/lawrence_parcels.sqlite'.format( args.master_filename ) )
-    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f Parcels_L -t Assessment_L_Parcels -o {0}'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f Parcels_L -t RawParcels -o {0}'.format( args.master_filename ) )
     os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f ParcelSummary -t ParcelSummary -o {0}'.format( args.master_filename ) )
 
     # Read residential assessment data
@@ -106,6 +106,9 @@ if __name__ == '__main__':
     print( '\n=======> Weatherization tables' )
     os.system( 'python wx.py -m {0}'.format( args.master_filename ) )
 
+    # Correlate parcels and building permits
+    print( '\n=======> Parcels building permit history' )
+    os.system( 'python lawrence_parcels_permit_history.py -m {0}'.format( args.master_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
@@ -132,6 +135,7 @@ if __name__ == '__main__':
             'RawCommercial_1',
             'RawCommercial_2',
             'RawGlcacJobs',
+            'RawParcels',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',

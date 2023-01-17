@@ -8,11 +8,11 @@ pd.set_option( 'display.width', 1000 )
 
 import util
 
-# Incorporate scraped data from online Vision database into previously merge assessment data
+# Incorporate scraped data from online Vision database into previously merged assessment data
 def incorporate_vision_assessment_data( engine, df_assessment, verbose=False ):
 
     # Read parcel records scraped from Vision database
-    df_vision = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
+    df_vision = pd.read_sql_table( 'RawParcels', engine, index_col=util.ID, parse_dates=True )
 
     # Partition columns into three groups: intersection and two differences
     v_inter_a = df_vision.columns.intersection( df_assessment.columns )
