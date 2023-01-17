@@ -26,8 +26,8 @@ import normalize
 
 URL_BASE = 'https://gis.vgsi.com/lawrencema/parcel.aspx?pid='
 
-ID_RANGE_MIN = 266
-ID_RANGE_MAX = 105888
+ID_RANGE_MIN = 200
+ID_RANGE_MAX = 106000
 ID_RANGE_STOP = ID_RANGE_MAX + 1
 
 PARCELS_TABLE = 'Parcels_L'
@@ -445,10 +445,11 @@ if __name__ == '__main__':
     # Initialize counter
     n_processed = 0
     n_last_reported = -1
+    n_tried = 0
 
     for vision_id in id_range:
 
-        if ( n_processed % 50 == 0 ) and ( n_processed != n_last_reported ):
+        if ( ( n_processed % 50 == 0 ) and ( n_processed != n_last_reported ) ) or ( n_tried % 100 == 0 ):
             n_last_reported = n_processed
             util.report_elapsed_time( prefix='' )
             s_status = ' Processed {} ({}%) of {}, requesting VISION ID {}'.format( n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
@@ -504,5 +505,8 @@ if __name__ == '__main__':
 
             # Increment count
             n_processed += 1
+
+        # Increment count
+        n_tried += 1
 
     save_and_exit( None, None )

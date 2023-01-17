@@ -1336,8 +1336,8 @@ def populate_mei_column_names( dict, start_year, end_year ):
 
                 dict[month_name] = str( n_year ) + '_' + month_number.zfill( 2 )
 
-populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A'], 2011, 2025 )
-populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'], 2011, 2025 )
+populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A'], 2011, 2030 )
+populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'], 2011, 2030 )
 
 # <-- Generate column name mappings for Mass Energy Insight tables <--
 

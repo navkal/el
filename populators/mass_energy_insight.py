@@ -1,4 +1,4 @@
-# Copyright 2022 Energize Lawrence.  All rights reserved.
+# Copyright 2023 Energize Lawrence.  All rights reserved.
 
 import argparse
 import os
@@ -7,6 +7,14 @@ import pandas as pd
 import sys
 sys.path.append( '../util' )
 import util
+
+
+#################################################
+# When downloading fresh data from MEI website:
+# . Start with FY 2012
+# . Exclude empty column names
+# . Save in CSV format
+#################################################
 
 
 # Main program
@@ -19,8 +27,8 @@ if __name__ == '__main__':
 
     # Read Mass Energy Insight data
     print( '\n=======> Mass Energy Insight input' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/mass_energy_insight_a.csv -t RawMassEnergyInsight_A -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0} -c'.format( args.master_filename ) )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/mass_energy_insight_l.csv -t RawMassEnergyInsight_L -v -f "\t" -r 1 -e -p "Unnamed: 9" -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/mass_energy_insight_a.csv -t RawMassEnergyInsight_A -v -f "\t" -r 1 -e -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/mass_energy_insight_l.csv -t RawMassEnergyInsight_L -v -f "\t" -r 1 -e -o {0}'.format( args.master_filename ) )
 
     # Read external suppliers data
     print( '\n=======> External suppliers input' )
