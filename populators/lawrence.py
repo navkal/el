@@ -3,6 +3,7 @@
 import argparse
 import os
 import pandas as pd
+import datetime
 
 import sys
 sys.path.append( '../util' )
@@ -122,13 +123,14 @@ if __name__ == '__main__':
     print( '\n=======> Weatherization tables' )
     os.system( 'python wx.py -m {0}'.format( args.master_filename ) )
 
-    # Correlate parcels and building permits
-    print( '\n=======> Parcels building permit history' )
-    os.system( 'python lawrence_permit_history.py -m {0}'.format( args.master_filename ) )
+    # Correlate parcels with building permits and GLCAC jobs
+    print( '\n=======> Parcel history' )
+    os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
-    df_about = pd.DataFrame( columns=['copyright'], data=['© 2023 Energize Lawrence.  All rights reserved.'] )
+    copyright_notice = '© {} Energize Lawrence.  All rights reserved.'.format( datetime.date.today().year )
+    df_about = pd.DataFrame( columns=['copyright'], data=[copyright_notice] )
     util.create_about_table( 'Lawrence', df_about, args.master_filename )
 
     # Publish research copy of database

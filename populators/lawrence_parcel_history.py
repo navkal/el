@@ -1,5 +1,4 @@
 # Copyright 2023 Energize Lawrence.  All rights reserved.
-# Copyright 2023 Energize Lawrence.  All rights reserved.
 
 import argparse
 
@@ -16,6 +15,7 @@ import vision
 ADDR = util.NORMALIZED_ADDRESS
 ACCT = util.ACCOUNT_NUMBER
 
+
 PERMIT_TYPES = \
 [
     'cga',
@@ -25,17 +25,47 @@ PERMIT_TYPES = \
     'wx',
 ]
 
+
+# Merge permit numbers of specified type to parcels dataframe
 def merge_permit_numbers( df_parcels, permit_type ):
 
     # Read specified table of building permits
     df_permits = pd.read_sql_table( 'BuildingPermits_L' + '_' + permit_type.capitalize(), engine, index_col=util.ID, parse_dates=True )
 
-    # Format column name for permits of current table
-    perm_col_name = permit_type + '_permit'
+    # Determine names of old, source column and new, output column
+    old_col_name = util.PERMIT_NUMBER
+    new_col_name = permit_type + '_permit'
+
+    # Do the merge
+    df_parcels = merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name )
+
+    # Return result
+    return df_parcels
+
+
+# Merge GLCAC job numbers to parcels dataframe
+def merge_glcac_job_numbers( df_parcels ):
+
+    # Read specified table of building permits
+    df_jobs = pd.read_sql_table( 'GlcacJobs_L', engine, index_col=util.ID, parse_dates=True )
+
+    # Determine names of old, source column and new, output column
+    old_col_name = util.JOB_NUMBER
+    new_col_name = 'glcac_job'
+
+    # Do the merge
+    df_parcels = merge_to_parcels_table( df_parcels, df_jobs, old_col_name, new_col_name )
+
+    # Return result
+    return df_parcels
+
+
+# Perform specified merge to parcels table
+def merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name ):
 
     # Isolate columns of permit table to be merged
-    df_permits = df_permits.rename( columns={ util.PERMIT_NUMBER: perm_col_name } )
-    df_permits = df_permits[ [ADDR, perm_col_name] ]
+    df_permits = df_permits.rename( columns={ old_col_name: new_col_name } )
+    df_permits = df_permits[ [ADDR, new_col_name] ]
 
     # Merge permits to parcels
     df_parcels = pd.merge( df_parcels, df_permits, on=[ADDR], how='left' )
@@ -48,7 +78,7 @@ def merge_permit_numbers( df_parcels, permit_type ):
 
             # List all permit numbers associated with current account number
             ls_permits = []
-            for s_permit in df_group[perm_col_name]:
+            for s_permit in df_group[new_col_name]:
                 if pd.notnull( s_permit ) and s_permit not in ls_permits:
                     ls_permits.append( s_permit )
             s_permits = ', '.join( ls_permits )
@@ -58,7 +88,7 @@ def merge_permit_numbers( df_parcels, permit_type ):
             drop_index = df_group.index[1:]
 
             # Save permit number list in row to be kept; and drop other rows
-            df_parcels.at[keep_index, perm_col_name] = s_permits
+            df_parcels.at[keep_index, new_col_name] = s_permits
             df_parcels = df_parcels.drop( index=drop_index )
 
     return df_parcels
@@ -86,6 +116,9 @@ if __name__ == '__main__':
     # Merge permit numbers from specified permit tables
     for s_type in PERMIT_TYPES:
         df_parcels = merge_permit_numbers( df_parcels, s_type )
+
+    # Merge GLCAC job numbers
+    df_parcels = merge_glcac_job_numbers( df_parcels )
 
     # Sort on account number
     df_parcels = df_parcels.sort_values( by=[ACCT] )
