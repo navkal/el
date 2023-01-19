@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
     # Retrieve city permits tables - official, past, and latest - from database
     df_permits = pd.read_sql_table( 'RawBuildingPermits_Wx', engine, index_col=util.ID, parse_dates=True )
-    df_past = pd.read_sql_table( 'RawBuildingPermits_Past_Wx', engine, index_col=util.ID, parse_dates=True )
-    df_2023 = pd.read_sql_table( 'RawBuildingPermits_2023_Wx', engine, index_col=util.ID, parse_dates=True )
+    df_past = pd.read_sql_table( 'RawBuildingPermits_Wx_Past', engine, index_col=util.ID, parse_dates=True )
+    df_2023 = pd.read_sql_table( 'RawBuildingPermits_Wx_2023', engine, index_col=util.ID, parse_dates=True )
 
     # Combine official and past permits in one dataframe, preserving source information
     df_permits = util.combine_dataframes( df_permits, df_past, [util.PERMIT_NUMBER], 'first', [util.PERMIT_NUMBER] )

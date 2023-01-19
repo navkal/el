@@ -86,6 +86,22 @@ if __name__ == '__main__':
     print( '\n=======> Columbia Gas Building Permits table' )
     os.system( 'python lawrence_building_permits_cga.py -m {0}'.format( args.master_filename ) )
 
+    # Read roof building permit data
+    print( '\n=======> Roof Building Permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_roof.xlsx -p "Site Contact,Use of Property,Use Group" -t RawBuildingPermits_Roof -o {0}'.format( args.master_filename ) )
+
+    # Generate Roof Building Permits table
+    print( '\n=======> Roof Building Permits table' )
+    os.system( 'python lawrence_building_permits.py -p Roof -m {0}'.format( args.master_filename ) )
+
+    # Read siding building permit data
+    print( '\n=======> Siding Building Permit input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_siding.xlsx -p "Site Contact,Use of Property,Use Group" -t RawBuildingPermits_Siding -o {0}'.format( args.master_filename ) )
+
+    # Generate Siding Building Permits table
+    print( '\n=======> Siding Building Permits table' )
+    os.system( 'python lawrence_building_permits.py -p Siding -m {0}'.format( args.master_filename ) )
+
     # Read solar building permit data
     print( '\n=======> Solar Building Permit input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_solar.xlsx -p "Permit Type,Subtype,Use of Property" -t RawBuildingPermits_Solar -o {0}'.format( args.master_filename ) )
@@ -94,8 +110,8 @@ if __name__ == '__main__':
     print( '\n=======> Solar Building Permits table' )
     os.system( 'python lawrence_building_permits_solar.py -m {0}'.format( args.master_filename ) )
 
-    # Read Sunrun data
-    print( '\n=======> Sunrun Building Permits input' )
+    # Read Sunrun building permit data
+    print( '\n=======> Sunrun Building Permit input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_sunrun.xlsx -y -t RawBuildingPermits_Sunrun -o {0}'.format( args.master_filename ) )
 
     # Generate Sunrun Building Permits table
@@ -125,10 +141,13 @@ if __name__ == '__main__':
             'Assessment_L_Commercial_Merged',
             'Assessment_L_Residential_Merged',
             'RawBuildingPermits',
-            'RawBuildingPermits_2023_Wx',
             'RawBuildingPermits_Cga',
-            'RawBuildingPermits_Past_Wx',
+            'RawBuildingPermits_Roof',
+            'RawBuildingPermits_Solar',
+            'RawBuildingPermits_Sunrun',
             'RawBuildingPermits_Wx',
+            'RawBuildingPermits_Wx_2023',
+            'RawBuildingPermits_Wx_Past',
             'RawBusinesses_1',
             'RawBusinesses_2',
             'RawCensus',
@@ -141,8 +160,6 @@ if __name__ == '__main__':
             'RawResidential_3',
             'RawResidential_4',
             'RawResidential_5',
-            'RawBuildingPermits_Solar',
-            'RawBuildingPermits_Sunrun',
          ],
         'encipher_column_names':
         [

@@ -14,25 +14,27 @@ import normalize
 import vision
 
 ADDR = util.NORMALIZED_ADDRESS
-PERM = util.PERMIT_NUMBER
 ACCT = util.ACCOUNT_NUMBER
 
-PERMIT_SUFFIXES = \
+PERMIT_TYPES = \
 [
-    '_Wx',
-    '_Solar',
+    'cga',
+    'roof',
+    'siding',
+    'solar',
+    'wx',
 ]
 
-def merge_permit_numbers( df_parcels, permit_suffix ):
+def merge_permit_numbers( df_parcels, permit_type ):
 
     # Read specified table of building permits
-    df_permits = pd.read_sql_table( 'BuildingPermits_L' + permit_suffix, engine, index_col=util.ID, parse_dates=True )
+    df_permits = pd.read_sql_table( 'BuildingPermits_L' + '_' + permit_type.capitalize(), engine, index_col=util.ID, parse_dates=True )
 
     # Format column name for permits of current table
-    perm_col_name = PERM + permit_suffix.lower()
+    perm_col_name = permit_type + '_permit'
 
     # Isolate columns of permit table to be merged
-    df_permits = df_permits.rename( columns={ PERM: perm_col_name } )
+    df_permits = df_permits.rename( columns={ util.PERMIT_NUMBER: perm_col_name } )
     df_permits = df_permits[ [ADDR, perm_col_name] ]
 
     # Merge permits to parcels
@@ -82,8 +84,8 @@ if __name__ == '__main__':
     df_parcels = df_parcels.drop_duplicates( subset=[ACCT], keep='last' )
 
     # Merge permit numbers from specified permit tables
-    for s_suffix in PERMIT_SUFFIXES:
-        df_parcels = merge_permit_numbers( df_parcels, s_suffix )
+    for s_type in PERMIT_TYPES:
+        df_parcels = merge_permit_numbers( df_parcels, s_type )
 
     # Sort on account number
     df_parcels = df_parcels.sort_values( by=[ACCT] )

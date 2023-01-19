@@ -28,11 +28,11 @@ if __name__ == '__main__':
 
     # Read past weatherization permit data
     print( '\n=======> Past weatherization permits input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_past_wx.xlsx -p "id" -t RawBuildingPermits_Past_Wx -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_past.xlsx -p "id" -t RawBuildingPermits_Wx_Past -o {0}'.format( args.master_filename ) )
 
     # Read 2023 weatherization permit data
     print( '\n=======> 2023 weatherization permits input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_2023_wx.xlsx -p "Project Description,Use of Property" -t RawBuildingPermits_2023_Wx -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_2023.xlsx -p "Project Description,Use of Property" -t RawBuildingPermits_Wx_2023 -o {0}'.format( args.master_filename ) )
 
     # Clean weatherization data
     print( '\n=======> Clean weatherization data' )
@@ -56,9 +56,9 @@ if __name__ == '__main__':
             'number_columns': True,
             'drop_table_names':
             [
-                'RawBuildingPermits_2023_Wx',
-                'RawBuildingPermits_Past_Wx',
                 'RawBuildingPermits_Wx',
+                'RawBuildingPermits_Wx_2023',
+                'RawBuildingPermits_Wx_Past',
                 'RawGlcacJobs',
              ],
             'encipher_column_names':

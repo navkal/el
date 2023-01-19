@@ -3,6 +3,7 @@
 import argparse
 import os
 import pandas as pd
+import chardet
 
 import sys
 sys.path.append( '../util' )
@@ -11,10 +12,27 @@ import util
 
 #################################################
 # When downloading fresh data from MEI website:
-# . Start with FY 2012
-# . Exclude empty column names
+# . Select desired years, must be consecutive
+# . Uncheck 'null' to exclude empty column names
 # . Save in CSV format
 #################################################
+
+
+# Peek into CSV input file to find the start year
+def find_start_year( csv_filename ):
+
+    with open( csv_filename, 'rb' ) as rawdata:
+
+        # Read first line of CSV file
+        encoding_info = chardet.detect( rawdata.read( 10000 ) )
+        sep = bytes( '\t', 'utf-8' ).decode( 'unicode_escape' )
+        df = pd.read_csv( csv_filename, encoding=encoding_info['encoding'], sep=sep, dtype=object, nrows=0 )
+
+        # Extract starting year from first named column
+        df = df.drop( columns=[col for col in df.columns if 'Unnamed' in col] )
+        start_year = int( df.columns[0].split()[1] ) - 1
+
+        return start_year
 
 
 # Main program
@@ -25,10 +43,26 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
-    # Read Mass Energy Insight data
-    print( '\n=======> Mass Energy Insight input' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/mass_energy_insight_a.csv -t RawMassEnergyInsight_A -v -f "\t" -r 1 -e -o {0} -c'.format( args.master_filename ) )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/mass_energy_insight_l.csv -t RawMassEnergyInsight_L -v -f "\t" -r 1 -e -o {0}'.format( args.master_filename ) )
+    # Read Mass Energy Insight data - Andover
+    print( '\n=======> Mass Energy Insight input - Andover' )
+    # Generate code to initialize column name mappings
+    csv_filename = '../xl/mass_energy_insight/mass_energy_insight_a.csv'
+    table_name = 'RawMassEnergyInsight_A'
+    start_year = find_start_year( csv_filename )
+    b = "util.populate_mei_column_names(util.CONSISTENT_COLUMN_NAMES['{}'],{},2030)".format( table_name, start_year )
+    # Pass initialization code to xl-to-db script
+    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -b {} -o {} -c'.format( csv_filename, table_name, b, args.master_filename ) )
+
+    # Read Mass Energy Insight data - Lawrence
+    print( '\n=======> Mass Energy Insight input - Lawrence' )
+    # Generate code to initialize column name mappings
+    csv_filename = '../xl/mass_energy_insight/mass_energy_insight_l.csv'
+    table_name = 'RawMassEnergyInsight_L'
+    start_year = find_start_year( csv_filename )
+    b = "util.populate_mei_column_names(util.CONSISTENT_COLUMN_NAMES['{}'],{},2030)".format( table_name, start_year )
+    # Pass initialization code to xl-to-db script
+    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -b {} -o {}'.format( csv_filename, table_name, b, args.master_filename ) )
+
 
     # Read external suppliers data
     print( '\n=======> External suppliers input' )

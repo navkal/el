@@ -1,4 +1,4 @@
-# Copyright 2022 Energize Lawrence.  All rights reserved.
+# Copyright 2023 Energize Lawrence.  All rights reserved.
 
 import argparse
 
@@ -23,13 +23,19 @@ if __name__ == '__main__':
     # Retrieve and validate arguments
     parser = argparse.ArgumentParser( description='Generate Building Permits table' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
+    parser.add_argument( '-p', dest='permit_type',  help='Permit type fragment in the raw table name' )
     args = parser.parse_args()
 
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
+    if args.permit_type is not None:
+        suffix = '_' + args.permit_type
+    else:
+        suffix = ''
+
     # Retrieve table from database
-    df_left = pd.read_sql_table( 'RawBuildingPermits', engine, index_col=util.ID, parse_dates=True )
+    df_left = pd.read_sql_table( 'RawBuildingPermits' + suffix, engine, index_col=util.ID, parse_dates=True )
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_left[ADDR] = df_left[util.ADDRESS]
@@ -60,6 +66,6 @@ if __name__ == '__main__':
     df_result = util.merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, [util.PERMIT_NUMBER, util.ACCOUNT_NUMBER] )
 
     # Create table in database
-    util.create_table( 'BuildingPermits_L', conn, cur, df=df_result )
+    util.create_table( 'BuildingPermits_L' + suffix, conn, cur, df=df_result )
 
     util.report_elapsed_time()

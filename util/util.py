@@ -334,6 +334,7 @@ BATHS = 'number_of_baths'
 BEDROOOMS = 'number_of_bedrooms'
 ROOMS = 'number_of_rooms'
 ROOF_TYPE = 'roof_type'
+SIDING_TYPE = 'siding_type'
 ROOF_COVER = 'roof_cover'
 ROOF_STRUCTURE = 'roof_structure'
 HEATING_FUEL = 'heating_fuel'
@@ -350,6 +351,10 @@ BUILDING_CONDITION = 'building_condition'
 STYLE = 'style'
 WORK_DESCRIPTION = 'work_description'
 PERMIT_NUMBER = 'permit_number'
+CONTRACTOR_NAME = 'contractor_name'
+CONTRACTOR_NAME_1 = ( CONTRACTOR_NAME + '_{}' ).format( 1 )
+CONTRACTOR_NAME_2 = ( CONTRACTOR_NAME + '_{}' ).format( 2 )
+CONTRACTOR_NAME_3 = ( CONTRACTOR_NAME + '_{}' ).format( 3 )
 DATE = 'date'
 APPLICATION_DATE = 'application_date'
 OCCUPANCY_TYPE = 'occupancy_type'
@@ -408,6 +413,12 @@ INSPECTION_TYPE = 'inspection_type'
 ASSIGNED_TO = 'assigned_to'
 DATE_DUE_FOR_INSPECTION = 'date_due_for_inspection'
 INSPECTION_STATUS = 'inspection_status'
+PROPERTY_MANAGER = 'property_manager'
+
+ENTIRE_ROOF = 'entire_roof'
+STRIPPING = 'stripping'
+ROOF_LAYERS = 'roof_layers'
+SUBMITTAL_DOCUMENTS = 'submittal_documents'
 
 USAGE_END_NULL = 'usage_end_null'
 ONE = 'one'
@@ -430,6 +441,7 @@ VENDOR_NAME = 'vendor_name'
 AMOUNT = 'amount_$'
 ADDR_1 = 'address_1'
 ADDR_2 = 'address_2'
+CONTACT_NAME = 'contact_name'
 CONTACT_EMAIL = 'contact_email'
 JOB_NUMBER = 'job_number'
 
@@ -560,7 +572,7 @@ CONSISTENT_COLUMN_NAMES = \
         'BuildingType': 'building_type',
         'BldgType': 'building_type',
         'WorkDescription': WORK_DESCRIPTION,
-        'ContractorName': 'contractor_name',
+        'ContractorName': CONTRACTOR_NAME,
         PROJECTCOST: PROJECT_COST,
         COST: PROJECT_COST,
         TOTALFEE: TOTAL_FEE,
@@ -763,6 +775,71 @@ CONSISTENT_COLUMN_NAMES = \
         'General Notes': 'general_notes',
         'Insp Notes': INSPECTION_NOTES,
     },
+    'RawBuildingPermits_Roof': \
+    {
+        'File#': FILE_NUMBER,
+        'Permit#': PERMIT_NUMBER,
+        'Applicant': APPLICANT,
+        'Street Address': ADDRESS,
+        'Street Zip': ZIP,
+        'Descritpion': WORK_DESCRIPTION,
+        'Status': PERMIT_STATUS,
+        'Company Name': BUSINESS_NAME,
+        'Comtact Name': CONTACT_NAME,
+        'Personal Mailing Address': MAILING_ADDRESS,
+        'State': MADDR_STATE,
+        'Zip': MADDR_ZIP_CODE,
+        'Email Address': CONTACT_EMAIL,
+        'Phone #': PHONE,
+        'Property Owner': OWNER_NAME,
+        'Property Manager': PROPERTY_MANAGER,
+        'Contractor 1': CONTRACTOR_NAME_1,
+        'Contractor 2': CONTRACTOR_NAME_2,
+        'Contractor 3': CONTRACTOR_NAME_3,
+        'Total Project Cost': PROJECT_COST,
+        'Permit Fees': TOTAL_FEE,
+        'Type of Roof': ROOF_TYPE,
+        'Is the entire roof being roofed?': ENTIRE_ROOF,
+        'Stripping roof?': STRIPPING,
+        'How many layers are currently on the roof?': ROOF_LAYERS,
+        'Submittal Documents': SUBMITTAL_DOCUMENTS,
+        'Application Date': APPLICATION_DATE,
+        'Approval Date': APPROVAL_DATE,
+        'Issue Date': DATE_ISSUED,
+        'Expiration Date': EXPIRATION_DATE,
+        'Close Date': CLOSED_DATE,
+    },
+    'RawBuildingPermits_Siding': \
+    {
+        'File#': FILE_NUMBER,
+        'Permit#': PERMIT_NUMBER,
+        'Applicant': APPLICANT,
+        'Street Address': ADDRESS,
+        'Street Zip': ZIP,
+        'Descritpion': WORK_DESCRIPTION,
+        'Status': PERMIT_STATUS,
+        'Company Name': BUSINESS_NAME,
+        'Comtact Name': CONTACT_NAME,
+        'Personal Mailing Address': MAILING_ADDRESS,
+        'State': MADDR_STATE,
+        'Zip': MADDR_ZIP_CODE,
+        'Email Address': CONTACT_EMAIL,
+        'Phone #': PHONE,
+        'Property Owner': OWNER_NAME,
+        'Property Manager': PROPERTY_MANAGER,
+        'Contractor 1': CONTRACTOR_NAME_1,
+        'Contractor 2': CONTRACTOR_NAME_2,
+        'Contractor 3': CONTRACTOR_NAME_3,
+        'Total Project Cost': PROJECT_COST,
+        'Permit Fees': TOTAL_FEE,
+        'Type of Siding': SIDING_TYPE,
+        'Submittal Documents': SUBMITTAL_DOCUMENTS,
+        'Application Date': APPLICATION_DATE,
+        'Approval Date': APPROVAL_DATE,
+        'Issue Date': DATE_ISSUED,
+        'Expiration Date': EXPIRATION_DATE,
+        'Close Date': CLOSED_DATE,
+    },
     'RawBuildingPermits_Solar': \
     {
         'PERMIT#': PERMIT_NUMBER,
@@ -800,7 +877,30 @@ CONSISTENT_COLUMN_NAMES = \
         'OPENED': OPENED,
         'CLOSED': CLOSED_DATE,
     },
-    'RawBuildingPermits_2023_Wx': \
+    'RawBuildingPermits_Wx': \
+    {
+        'File#': FILE_NUMBER,
+        'Address': ADDRESS,
+        'Project Description': WORK_DESCRIPTION,
+        'Permit#': PERMIT_NUMBER,
+        'Permit Type': PERMIT_TYPE,
+        'Subtype': PERMIT_SUBTYPE,
+        'Applicant': APPLICANT,
+        'Business Name': BUSINESS_NAME,
+        'Mailing Address': MADDR_STREET,
+        'Mailing CSZ': MADDR_CSZ,
+        'Permit Status': PERMIT_STATUS,
+        'Permit Fees': TOTAL_FEE,
+        'Application Date': APPLICATION_DATE,
+        'Approval Date': APPROVAL_DATE,
+        'Issue Date': DATE_ISSUED,
+        'Expiration Date': EXPIRATION_DATE,
+        'Close Date': CLOSED_DATE,
+        'Property Owner': OWNER_NAME,
+        'Use Group': PROPERTY_USE_GROUP,
+        'Total Project Cost': PROJECT_COST,
+    },
+    'RawBuildingPermits_Wx_2023': \
     {
         'Permit#': PERMIT_NUMBER,
         'File#': FILE_NUMBER,
@@ -824,7 +924,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Use Group': PROPERTY_USE_GROUP,
         'Total Project Cost': PROJECT_COST,
     },
-    'RawBuildingPermits_Past_Wx': \
+    'RawBuildingPermits_Wx_Past': \
     {
         'Info_1': FILE_NUMBER,
         'Permit#': PERMIT_NUMBER,
@@ -835,29 +935,6 @@ CONSISTENT_COLUMN_NAMES = \
         'Permit#2': PERMIT_NUMBER + '_2',
         'Permit#3': PERMIT_NUMBER + '_3',
         'Description': WORK_DESCRIPTION,
-    },
-    'RawBuildingPermits_Wx': \
-    {
-        'File#': FILE_NUMBER,
-        'Address': ADDRESS,
-        'Project Description': WORK_DESCRIPTION,
-        'Permit#': PERMIT_NUMBER,
-        'Permit Type': PERMIT_TYPE,
-        'Subtype': PERMIT_SUBTYPE,
-        'Applicant': APPLICANT,
-        'Business Name': BUSINESS_NAME,
-        'Mailing Address': MADDR_STREET,
-        'Mailing CSZ': MADDR_CSZ,
-        'Permit Status': PERMIT_STATUS,
-        'Permit Fees': TOTAL_FEE,
-        'Application Date': APPLICATION_DATE,
-        'Approval Date': APPROVAL_DATE,
-        'Issue Date': DATE_ISSUED,
-        'Expiration Date': EXPIRATION_DATE,
-        'Close Date': CLOSED_DATE,
-        'Property Owner': OWNER_NAME,
-        'Use Group': PROPERTY_USE_GROUP,
-        'Total Project Cost': PROJECT_COST,
     },
     'RawBusinesses_1': \
     {
@@ -1259,7 +1336,7 @@ CONSISTENT_COLUMN_NAMES = \
         'ZIP': ZIP,
         'ALPHA': 'alpha',
         'EMAIL': EMAIL,
-        'CONTACT1 NAME': 'contact_name',
+        'CONTACT1 NAME': CONTACT_NAME,
         'CONTACT1 EMAIL': CONTACT_EMAIL,
         'CONTACT1 PHONE': PHONE,
     },
@@ -1336,8 +1413,11 @@ def populate_mei_column_names( dict, start_year, end_year ):
 
                 dict[month_name] = str( n_year ) + '_' + month_number.zfill( 2 )
 
-populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A'], 2011, 2030 )
-populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'], 2011, 2030 )
+######
+# Hard-coded calls, no longer needed because mass_energy_insight.by generates calls dynamically:
+# populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A'], 2011, 2030 )
+# populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'], 2011, 2030 )
+######
 
 # <-- Generate column name mappings for Mass Energy Insight tables <--
 
