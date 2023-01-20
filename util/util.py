@@ -2232,7 +2232,7 @@ def merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, s
     df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[NORMALIZED_ADDRESS] )
     df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, RESIDENTIAL )
 
-    # Expand addresses in unmatched business data
+    # Expand addresses in unmatched dataframe
     df_unmatched = expand_address_ranges( df_unmatched )
 
     # Merge unmatched with commercial

@@ -6,6 +6,7 @@ pd.options.display.width = 0
 import numpy as np
 import sqlite3
 import sqlalchemy
+import datetime
 
 
 ######################
@@ -24,6 +25,7 @@ import sqlalchemy
 TABLE_NAME = 'table_name'
 TAB_NAME = 'tab_name'
 WORKBOOK_STRUCTURE = 'Workbook Structure'
+COPYRIGHT = 'Copyright'
 
 EXCEL_TAB_NAME_MAX_LEN = 31
 
@@ -61,30 +63,32 @@ def read_database():
     for row in rows:
         table_name = row[0]
 
-        # Set default tab name and sort position
-        tab_name = table_name
-        tab_position = len( tab_order.keys() )
+        if not table_name.startswith( '_About' ):
 
-        # Look for mapping from table name to tab name
-        if df_tabs is not None:
+            # Set default tab name and sort position
+            tab_name = table_name
+            tab_position = len( tab_order.keys() )
 
-            # Select the row for current table name
-            table_row = df_tabs[df_tabs[TABLE_NAME] == table_name]
+            # Look for mapping from table name to tab name
+            if df_tabs is not None:
 
-            if len( table_row ):
-                # Row found; get position and optional tab name
-                tab_position = table_row.index[0]
-                tab_name = table_row[TAB_NAME].values[0] or tab_name
+                # Select the row for current table name
+                table_row = df_tabs[df_tabs[TABLE_NAME] == table_name]
+
+                if len( table_row ):
+                    # Row found; get position and optional tab name
+                    tab_position = table_row.index[0]
+                    tab_name = table_row[TAB_NAME].values[0] or tab_name
+                else:
+                    # Row not found for this table; exclude from output
+                    tab_name = ''
+
+            if tab_name:
+                print( 'Reading table "{}" for worksheet "{}" at position {}'.format( table_name, tab_name, tab_position ) )
+                input_db[tab_name] = pd.read_sql_table( table_name, engine, parse_dates=True )
+                tab_order[tab_position] = tab_name
             else:
-                # Row not found for this table; exclude from output
-                tab_name = ''
-
-        if tab_name:
-            print( 'Reading table "{}" for worksheet "{}" at position {}'.format( table_name, tab_name, tab_position ) )
-            input_db[tab_name] = pd.read_sql_table( table_name, engine, parse_dates=True )
-            tab_order[tab_position] = tab_name
-        else:
-            print( 'Excluding table "{}"'.format( table_name ) )
+                print( 'Excluding table "{}"'.format( table_name ) )
 
     tab_keys = sorted( tab_order )
 
@@ -111,6 +115,12 @@ def build_structure():
     return df_structure
 
 
+def make_copyright():
+    copyright_notice = '© {} Energize Lawrence.  All rights reserved.'.format( datetime.date.today().year )
+    df_copyright = pd.DataFrame( columns=['copyright'], data=[copyright_notice] )
+    return df_copyright
+
+
 def write_workbook():
 
     # Open output Excel file
@@ -130,6 +140,10 @@ def write_workbook():
             # Write the dataframe with specified tab name
             print( 'Creating worksheet "{}"'.format( tab_name ) )
             df.to_excel( writer, sheet_name=tab_name, index=False )
+
+        # Write copyright table to Excel
+        print( 'Creating worksheet "{}"'.format( COPYRIGHT ) )
+        df_copyright.to_excel( writer, sheet_name=COPYRIGHT, index=False )
 
 
 # Generate a tab name, adhering to MS Excel's length restriction
@@ -191,6 +205,9 @@ if __name__ == '__main__':
 
     # Build self-describing dataframe
     df_structure = build_structure()
+
+    # Create copyright dataframe
+    df_copyright = make_copyright()
 
     # Write Excel workboook
     write_workbook()

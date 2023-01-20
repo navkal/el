@@ -140,11 +140,11 @@ if __name__ == '__main__':
 
     # Clean weatherization data
     print( '\n=======> Clean weatherization data' )
-    os.system( 'python wx_clean.py -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_wx_clean.py -m {0}'.format( args.master_filename ) )
 
     # Combine weatherization data
     print( '\n=======> Combine weatherization data' )
-    os.system( 'python wx_combine.py -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_wx_combine.py -m {0}'.format( args.master_filename ) )
 
     #
     # <- GLCAC and weatherization <-
