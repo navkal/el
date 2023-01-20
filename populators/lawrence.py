@@ -17,19 +17,19 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
+    # Read parcels data
+    print( '\n=======> Parcels tables' )
+    os.system( 'python lawrence_parcels_finish.py -d ../db/lawrence_parcels.sqlite'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f Parcels_L -t RawParcels -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f ParcelSummary -t ParcelSummary -o {0}'.format( args.master_filename ) )
+
     # Read census data
     print( '\n=======> Census input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/census.xlsx -n "Res. ID" -s "Res. ID" -t RawCensus -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/census.xlsx -n "Res. ID" -s "Res. ID" -t RawCensus -o {0}'.format( args.master_filename ) )
 
     # Generate Census table
     print( '\n=======> Census table' )
     os.system( 'python lawrence_census.py -m {0}'.format( args.master_filename ) )
-
-    # Read parcels data
-    print( '\n=======> Parcels tables' )
-    os.system( 'python lawrence_parcels_finish.py -d ../db/lawrence_parcels.sqlite'.format( args.master_filename ) )
-    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f Parcels_L -t RawParcels -o {0}'.format( args.master_filename ) )
-    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f ParcelSummary -t ParcelSummary -o {0}'.format( args.master_filename ) )
 
     # Read residential assessment data
     print( '\n=======> Residential input 1' )
@@ -118,37 +118,29 @@ if __name__ == '__main__':
     print( '\n=======> Sunrun Building Permits table' )
     os.system( 'python lawrence_building_permits_sunrun.py -m {0}'.format( args.master_filename ) )
 
-    #
-    # -> GLCAC and weatherization ->
-    #
+    # Read weatherization building permit data
+    print( '\n=======> Weatherization building permits input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Past weatherization building permits input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_past.xlsx -p "id" -t RawBuildingPermits_Wx_Past -o {0}'.format( args.master_filename ) )
+    print( '\n=======> 2023 weatherization building permits input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_2023.xlsx -p "Project Description,Use of Property" -t RawBuildingPermits_Wx_2023 -o {0}'.format( args.master_filename ) )
 
-    # Read GLCAC weatherization jobs data
+    # Generate weatherization Building Permits table
+    print( '\n=======> Weatherization Building Permits table' )
+    os.system( 'python lawrence_building_permits_wx.py -m {0}'.format( args.master_filename ) )
+
+    # Read GLCAC jobs data
     print( '\n=======> GLCAC weatherization jobs input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/glcac_jobs.xlsx -t RawGlcacJobs -o {0}'.format( args.master_filename ) )
 
-    # Read weatherization permit data
-    print( '\n=======> Weatherization permits input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0}'.format( args.master_filename ) )
+    # Generate GLCAC jobs table
+    print( '\n=======> GLCAC weatherization jobs table' )
+    os.system( 'python lawrence_glcac_jobs.py -m {0}'.format( args.master_filename ) )
 
-    # Read past weatherization permit data
-    print( '\n=======> Past weatherization permits input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_past.xlsx -p "id" -t RawBuildingPermits_Wx_Past -o {0}'.format( args.master_filename ) )
-
-    # Read 2023 weatherization permit data
-    print( '\n=======> 2023 weatherization permits input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_2023.xlsx -p "Project Description,Use of Property" -t RawBuildingPermits_Wx_2023 -o {0}'.format( args.master_filename ) )
-
-    # Clean weatherization data
-    print( '\n=======> Clean weatherization data' )
-    os.system( 'python lawrence_wx_clean.py -m {0}'.format( args.master_filename ) )
-
-    # Combine weatherization data
-    print( '\n=======> Combine weatherization data' )
-    os.system( 'python lawrence_wx_combine.py -m {0}'.format( args.master_filename ) )
-
-    #
-    # <- GLCAC and weatherization <-
-    #
+    # Combine GLCAC and weatherization permit data
+    print( '\n=======> Combine GLCAC and weatherization permit data' )
+    os.system( 'python lawrence_glcac_with_wx.py -m {0}'.format( args.master_filename ) )
 
     # Correlate parcels with building permits and GLCAC jobs
     print( '\n=======> Parcel history' )
@@ -170,6 +162,7 @@ if __name__ == '__main__':
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
             'RawBuildingPermits_Roof',
+            'RawBuildingPermits_Siding',
             'RawBuildingPermits_Solar',
             'RawBuildingPermits_Sunrun',
             'RawBuildingPermits_Wx',

@@ -53,32 +53,8 @@ if __name__ == '__main__':
     df_left[ADDR] = df_left[util.ADDRESS]
     df_left[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_left.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
-    # Retrieve assessment tables from database
-    commercial_columns = \
-    [
-        ADDR,
-        util.ACCOUNT_NUMBER,
-        util.HEATING_FUEL,
-        util.HEATING_FUEL + util._DESC,
-        util.HEATING_TYPE,
-        util.HEATING_TYPE + util._DESC,
-        util.AC_TYPE,
-        util.AC_TYPE + util._DESC,
-    ]
-    not_in_residential = \
-    [
-        util.HEATING_FUEL + util._DESC,
-        util.AC_TYPE + util._DESC,
-    ]
-    residential_columns = list( set( commercial_columns ) - set( not_in_residential ) )
-    df_assessment_com = pd.read_sql_table( 'Assessment_L_Commercial', engine, index_col=util.ID, columns=commercial_columns, parse_dates=True )
-    df_assessment_res = pd.read_sql_table( 'Assessment_L_Residential', engine, index_col=util.ID, columns=residential_columns, parse_dates=True )
-
     # Merge left dataframe with assessment data
-    df_result = util.merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, [util.PERMIT_NUMBER, util.ACCOUNT_NUMBER] )
-
-    # Sort
-    df_result = df_result.sort_values( by=[util.PERMIT_NUMBER, util.FILE_NUMBER, util.DATE_DUE_FOR_INSPECTION] )
+    df_result = util.merge_with_assessment_data( df_left, engine=engine, sort_by=[util.PERMIT_NUMBER, util.FILE_NUMBER, util.DATE_DUE_FOR_INSPECTION] )
 
     # Create table in database
     util.create_table( 'BuildingPermits_L_Solar', conn, cur, df=df_result )

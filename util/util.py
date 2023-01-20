@@ -381,9 +381,6 @@ LICENSE_SUBTYPE = 'license_subtype'
 LICENSE_TYPE = 'license_type'
 CLOSED_DATE = 'closed_date'
 
-PROPERTY_TYPE = 'property_type'
-COMMERCIAL = 'Commercial'
-RESIDENTIAL = 'Residential'
 IS_RESIDENTIAL = 'is_residential'
 
 OPENED = 'opened'
@@ -1621,13 +1618,6 @@ COLUMN_ORDER = \
         INSPECTION_STATUS,
         WORK_DESCRIPTION,
         ACCOUNT_NUMBER,
-        HEATING_FUEL,
-        HEATING_FUEL + _DESC,
-        HEATING_TYPE,
-        HEATING_TYPE + _DESC,
-        AC_TYPE,
-        AC_TYPE + _DESC,
-        PROPERTY_TYPE,
     ],
     'BuildingPermits_L_Sunrun':
     [
@@ -1662,33 +1652,32 @@ COLUMN_ORDER = \
         APPLICANT_ADDRESS,
         APPLICATION_DATE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
-        RENTAL_LIVING_UNITS,
-        EMPLOYEES,
-        OWNER_NAME,
-        BUSINESS_MANAGER,
-        MADDR_LINE.format( 1 ),
-        MADDR_CITY,
-        MADDR_STATE,
-        MADDR_ZIP_CODE,
-        HEATING_FUEL,
-        HEATING_FUEL + _DESC,
-        HEATING_TYPE,
-        HEATING_TYPE + _DESC,
-        AC_TYPE,
-        AC_TYPE + _DESC,
-        TOTAL_ASSESSED_VALUE,
-        LAND_USE_CODE,
-        LAND_USE_CODE + '_1',
-        LAND_USE_CODE + _DESC,
-        PROPERTY_TYPE,
-        STORY_HEIGHT,
-        ROOF_STRUCTURE,
-        ROOF_STRUCTURE + _DESC,
-        ROOF_COVER,
-        ROOF_COVER + _DESC,
-        SALE_DATE,
-        LICENSE_TYPE,
-        CLOSED_DATE,
+        # RENTAL_LIVING_UNITS,
+        # EMPLOYEES,
+        # OWNER_NAME,
+        # BUSINESS_MANAGER,
+        # MADDR_LINE.format( 1 ),
+        # MADDR_CITY,
+        # MADDR_STATE,
+        # MADDR_ZIP_CODE,
+        # HEATING_FUEL,
+        # HEATING_FUEL + _DESC,
+        # HEATING_TYPE,
+        # HEATING_TYPE + _DESC,
+        # AC_TYPE,
+        # AC_TYPE + _DESC,
+        # TOTAL_ASSESSED_VALUE,
+        # LAND_USE_CODE,
+        # LAND_USE_CODE + '_1',
+        # LAND_USE_CODE + _DESC,
+        # STORY_HEIGHT,
+        # ROOF_STRUCTURE,
+        # ROOF_STRUCTURE + _DESC,
+        # ROOF_COVER,
+        # ROOF_COVER + _DESC,
+        # SALE_DATE,
+        # LICENSE_TYPE,
+        # CLOSED_DATE,
     ],
     'Census':
     [
@@ -2081,8 +2070,14 @@ def likely_dem_to_party_preference_score( dem_score ):
     return pref_score
 
 
+# Read parcels assessment table columns needed for merge
+def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_NUMBER] ):
+    df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=ID, columns=columns, parse_dates=True )
+    return df_parcels
+
+
 # Isolate entries that did not find matches when merged with assessment data
-def isolate_unmatched( df_merge, left_columns, df_result, property_type ):
+def isolate_unmatched( df_merge, left_columns, df_result ):
 
     # Create dataframe of unmatched entries
     df_unmatched = df_merge.copy()
@@ -2094,12 +2089,10 @@ def isolate_unmatched( df_merge, left_columns, df_result, property_type ):
     df_matched = df_matched.dropna( subset=[ACCOUNT_NUMBER] )
 
     # Append matched entries to the result
-    df_matched[PROPERTY_TYPE] = property_type
     df_result = df_result.append( df_matched, ignore_index=True )
 
     # Report progress
     print( '---' )
-    print( property_type )
     print( 'Matched: {}, Unmatched: {}'.format( df_matched.shape, df_unmatched.shape ) )
     print( 'Result: {}'.format( df_result.shape ) )
 
@@ -2201,7 +2194,12 @@ def expand_address_ranges( df ):
 
 
 # Merge dataframe with commercial and residential assessment data based on normalized addresses
-def merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, sort_by ):
+def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER], drop_subset=None, engine=None, df_parcels=None ):
+
+    # If we have engine, retrieve the parcels table
+    if engine != None:
+        df_parcels = read_parcels_table_for_merge( engine )
+    # else caller must supply the dataframe
 
     print( '---' )
     print( 'Left: {}'.format( df_left.shape ) )
@@ -2212,43 +2210,29 @@ def merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, s
     left_columns = df_left.columns
     df_unmatched = df_left.copy()
 
-    # Merge unmatched with commercial
-    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[NORMALIZED_ADDRESS] )
-    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, COMMERCIAL )
-
-    # Merge unmatched with residential
-    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[NORMALIZED_ADDRESS] )
-    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, RESIDENTIAL )
+    # Merge unmatched with parcels table
+    df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
 
     # Expand addresses in assessment data
-    df_assessment_com = expand_address_ranges( df_assessment_com )
-    df_assessment_res = expand_address_ranges( df_assessment_res )
+    df_parcels = expand_address_ranges( df_parcels )
 
-    # Merge unmatched with commercial
-    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[NORMALIZED_ADDRESS] )
-    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, COMMERCIAL )
-
-    # Merge unmatched with residential
-    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[NORMALIZED_ADDRESS] )
-    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, RESIDENTIAL )
+    # Merge unmatched with parcels table
+    df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
 
     # Expand addresses in unmatched dataframe
     df_unmatched = expand_address_ranges( df_unmatched )
 
-    # Merge unmatched with commercial
-    df_merge = pd.merge( df_unmatched, df_assessment_com, how='left', on=[NORMALIZED_ADDRESS] )
+    # Merge unmatched with parcels table
+    df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
     df_merge[NORMALIZED_ADDRESS] = df_merge[SAVE_NORMALIZED_ADDR]
-    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, COMMERCIAL )
-
-    # Merge unmatched with residential
-    df_merge = pd.merge( df_unmatched, df_assessment_res, how='left', on=[NORMALIZED_ADDRESS] )
-    df_merge[NORMALIZED_ADDRESS] = df_merge[SAVE_NORMALIZED_ADDR]
-    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, RESIDENTIAL )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
 
     # Finish up
     df_result = df_result.append( df_unmatched, ignore_index=True )
     df_result = df_result.drop( columns=[SAVE_NORMALIZED_ADDR] )
-    df_result = df_result.drop_duplicates()
+    df_result = df_result.drop_duplicates( subset=drop_subset )
     df_result = df_result.sort_values( by=sort_by )
 
     # Report final statistics

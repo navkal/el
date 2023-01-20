@@ -51,7 +51,10 @@ if __name__ == '__main__':
     df[ADDR] = df[util.RADDR_STREET_NUMBER] + df[util.RADDR_STREET_NUMBER_SUFFIX] + ' ' + df[util.RADDR_STREET_NAME] + ' ' + df[util.RADDR_APARTMENT_NUMBER]
     df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
-    # Overwrite table in database
+    # Merge census dataframe with assessment data
+    df = util.merge_with_assessment_data( df, engine=engine, sort_by=[util.RESIDENT_ID, util.ACCOUNT_NUMBER], drop_subset=[util.RESIDENT_ID] )
+
+    # Save table in database
     util.create_table( 'Census_L', conn, cur, df=df )
 
     util.report_elapsed_time()

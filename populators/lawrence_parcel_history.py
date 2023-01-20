@@ -110,9 +110,6 @@ if __name__ == '__main__':
     # Retrieve raw parcels table from database
     df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=util.ID, parse_dates=True )
 
-    # Drop duplicate account numbers
-    df_parcels = df_parcels.drop_duplicates( subset=[ACCT], keep='last' )
-
     # Merge permit numbers from specified permit tables
     for s_type in PERMIT_TYPES:
         df_parcels = merge_permit_numbers( df_parcels, s_type )

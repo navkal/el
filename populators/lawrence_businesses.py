@@ -39,48 +39,12 @@ if __name__ == '__main__':
     df_left[ADDR] = df_left[util.LOCATION]
     df_left[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_left.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
-    # Retrieve assessment tables from database
-    commercial_columns = \
-    [
-        ADDR,
-        util.ACCOUNT_NUMBER,
-        util.OWNER_NAME,
-        util.MADDR_LINE.format( 1 ),
-        util.MADDR_CITY,
-        util.MADDR_STATE,
-        util.MADDR_ZIP_CODE,
-        util.SALE_DATE,
-        util.STORY_HEIGHT,
-        util.RENTAL_LIVING_UNITS,
-        util.ROOF_STRUCTURE,
-        util.ROOF_STRUCTURE + util._DESC,
-        util.ROOF_COVER,
-        util.ROOF_COVER + util._DESC,
-        util.HEATING_FUEL,
-        util.HEATING_FUEL + util._DESC,
-        util.HEATING_TYPE,
-        util.HEATING_TYPE + util._DESC,
-        util.AC_TYPE,
-        util.AC_TYPE + util._DESC,
-        util.TOTAL_ASSESSED_VALUE,
-        util.LAND_USE_CODE,
-        util.LAND_USE_CODE + '_1',
-        util.LAND_USE_CODE + util._DESC,
-    ]
-    not_in_residential = \
-    [
-        util.RENTAL_LIVING_UNITS,
-        util.HEATING_FUEL + util._DESC,
-        util.AC_TYPE + util._DESC,
-        util.LAND_USE_CODE + '_1',
-        util.LAND_USE_CODE + util._DESC,
-    ]
-    residential_columns = list( set( commercial_columns ) - set( not_in_residential ) )
-    df_assessment_com = pd.read_sql_table( 'Assessment_L_Commercial', engine, index_col=util.ID, columns=commercial_columns, parse_dates=True )
-    df_assessment_res = pd.read_sql_table( 'Assessment_L_Residential', engine, index_col=util.ID, columns=residential_columns, parse_dates=True )
+    # Read parcels assessment data and select columns for merge
+    df_parcels = util.read_parcels_table_for_merge( engine, columns=None )
+    df_parcels = df_parcels[ [ADDR] + list( df_parcels[df_parcels.columns.difference( df_left.columns )] ) ]
 
     # Merge left dataframe with assessment data
-    df_result = util.merge_with_assessment_data( df_left, df_assessment_com, df_assessment_res, [util.LICENSE_NUMBER, util.ACCOUNT_NUMBER] )
+    df_result = util.merge_with_assessment_data( df_left, df_parcels=df_parcels, sort_by=[util.LICENSE_NUMBER, util.ACCOUNT_NUMBER] )
 
     # Save final table of businesses
     util.create_table( 'Businesses_L', conn, cur, df=df_result )

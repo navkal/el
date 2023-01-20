@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument( '-f', dest='from_table_name',  help='Name of source table', required=True )
     parser.add_argument( '-t', dest='to_table_name',  help='Name of destination table', required=True )
     parser.add_argument( '-o', dest='output_filename',  help='Output database filename' )
+    parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
     args = parser.parse_args()
 
     # Open the input database
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     df = pd.read_sql_table( args.from_table_name, engine, index_col=util.ID )
 
     # Open the output database
-    conn, cur, engine = util.open_database( args.output_filename, False )
+    conn, cur, engine = util.open_database( args.output_filename, args.create )
 
     # Save table to output database
     util.create_table( args.to_table_name, conn, cur, df=df )

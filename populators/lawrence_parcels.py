@@ -272,6 +272,9 @@ def save_and_exit( signum, frame ):
         df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
         df[TOT_AREA] = clean_integer( df[TOT_AREA] )
 
+        # Ensure account numbers are unique
+        df = df.drop_duplicates( subset=[ACCT], keep='last' )
+
         # Calculate age
         df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
 
