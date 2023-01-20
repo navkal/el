@@ -26,8 +26,7 @@ if __name__ == '__main__':
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
-    df_about = pd.DataFrame( columns=['copyright'], data=['© 2023 Energize Lawrence.  All rights reserved.'] )
-    util.create_about_table( 'LawrenceParcels', df_about, args.database_filename )
+    util.create_about_table( 'LawrenceParcels', util.make_df_about_energize_lawrence(), args.database_filename )
 
     # Report elapsed time
     util.report_elapsed_time()

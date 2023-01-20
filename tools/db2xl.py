@@ -25,6 +25,8 @@ TABLE_NAME = 'table_name'
 TAB_NAME = 'tab_name'
 WORKBOOK_STRUCTURE = 'Workbook Structure'
 
+EXCEL_TAB_NAME_MAX_LEN = 31
+
 
 # Open the SQLite database
 def open_database():
@@ -109,7 +111,6 @@ def build_structure():
     return df_structure
 
 
-
 def write_workbook():
 
     # Open output Excel file
@@ -131,9 +132,12 @@ def write_workbook():
             df.to_excel( writer, sheet_name=tab_name, index=False )
 
 
+# Generate a tab name, adhering to MS Excel's length restriction
 def make_tab_name( tab_key ):
     num_width = len( str( len( tab_order ) ) )
-    return '{} {}'.format( str( tab_key + 1 ).zfill( num_width ), tab_order[tab_key] )
+    tab_name = '{} {}'.format( str( tab_key + 1 ).zfill( num_width ), tab_order[tab_key] )
+    truncated_tab_name = tab_name[:EXCEL_TAB_NAME_MAX_LEN]
+    return truncated_tab_name
 
 
 # Main program

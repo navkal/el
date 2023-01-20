@@ -3,7 +3,6 @@
 import argparse
 import os
 import pandas as pd
-import datetime
 
 import sys
 sys.path.append( '../util' )
@@ -119,9 +118,37 @@ if __name__ == '__main__':
     print( '\n=======> Sunrun Building Permits table' )
     os.system( 'python lawrence_building_permits_sunrun.py -m {0}'.format( args.master_filename ) )
 
-    # Weatherization tables
-    print( '\n=======> Weatherization tables' )
-    os.system( 'python wx.py -m {0}'.format( args.master_filename ) )
+    #
+    # -> GLCAC and weatherization ->
+    #
+
+    # Read GLCAC weatherization jobs data
+    print( '\n=======> GLCAC weatherization jobs input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/glcac_jobs.xlsx -t RawGlcacJobs -o {0}'.format( args.master_filename ) )
+
+    # Read weatherization permit data
+    print( '\n=======> Weatherization permits input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0}'.format( args.master_filename ) )
+
+    # Read past weatherization permit data
+    print( '\n=======> Past weatherization permits input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_past.xlsx -p "id" -t RawBuildingPermits_Wx_Past -o {0}'.format( args.master_filename ) )
+
+    # Read 2023 weatherization permit data
+    print( '\n=======> 2023 weatherization permits input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_2023.xlsx -p "Project Description,Use of Property" -t RawBuildingPermits_Wx_2023 -o {0}'.format( args.master_filename ) )
+
+    # Clean weatherization data
+    print( '\n=======> Clean weatherization data' )
+    os.system( 'python wx_clean.py -m {0}'.format( args.master_filename ) )
+
+    # Combine weatherization data
+    print( '\n=======> Combine weatherization data' )
+    os.system( 'python wx_combine.py -m {0}'.format( args.master_filename ) )
+
+    #
+    # <- GLCAC and weatherization <-
+    #
 
     # Correlate parcels with building permits and GLCAC jobs
     print( '\n=======> Parcel history' )
@@ -129,9 +156,7 @@ if __name__ == '__main__':
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
-    copyright_notice = '© {} Energize Lawrence.  All rights reserved.'.format( datetime.date.today().year )
-    df_about = pd.DataFrame( columns=['copyright'], data=[copyright_notice] )
-    util.create_about_table( 'Lawrence', df_about, args.master_filename )
+    util.create_about_table( 'Lawrence', util.make_df_about_energize_lawrence(), args.master_filename )
 
     # Publish research copy of database
     input_db = util.read_database( args.master_filename )

@@ -2781,6 +2781,12 @@ def transform( text, direction ):
     return trans
 
 
+def make_df_about_energize_lawrence():
+    copyright_notice = '© {} Energize Lawrence.  All rights reserved.'.format( datetime.date.today().year )
+    df_about = pd.DataFrame( columns=['copyright'], data=[copyright_notice] )
+    return df_about
+
+
 def create_about_table( about_what, df_about, output_filename ):
     conn, cur, engine = open_database( output_filename, False )
     create_table( '_About' + about_what + 'Database', conn, cur, df=df_about )

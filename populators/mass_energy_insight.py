@@ -86,8 +86,7 @@ if __name__ == '__main__':
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
-    df_about = pd.DataFrame( columns=['copyright'], data=['© 2023 Energize Lawrence.  All rights reserved.'] )
-    util.create_about_table( 'MassEnergyInsight', df_about, args.master_filename )
+    util.create_about_table( 'MassEnergyInsight', util.make_df_about_energize_lawrence(), args.master_filename )
 
     # Publish research copy of database
     input_db = util.read_database( args.master_filename )

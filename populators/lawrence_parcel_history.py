@@ -12,7 +12,6 @@ import util
 import normalize
 import vision
 
-ADDR = util.NORMALIZED_ADDRESS
 ACCT = util.ACCOUNT_NUMBER
 
 
@@ -65,10 +64,10 @@ def merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name )
 
     # Isolate columns of permit table to be merged
     df_permits = df_permits.rename( columns={ old_col_name: new_col_name } )
-    df_permits = df_permits[ [ADDR, new_col_name] ]
+    df_permits = df_permits[ [ACCT, new_col_name] ]
 
     # Merge permits to parcels
-    df_parcels = pd.merge( df_parcels, df_permits, on=[ADDR], how='left' )
+    df_parcels = pd.merge( df_parcels, df_permits, on=[ACCT], how='left' )
 
     # Iterate over parcel account number groups
     for idx, df_group in df_parcels.groupby( by=[ACCT] ):
@@ -81,6 +80,7 @@ def merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name )
             for s_permit in df_group[new_col_name]:
                 if pd.notnull( s_permit ) and s_permit not in ls_permits:
                     ls_permits.append( s_permit )
+            ls_permits.sort()
             s_permits = ', '.join( ls_permits )
 
             # Determine which rows to keep and drop
