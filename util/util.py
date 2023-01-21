@@ -121,6 +121,7 @@ NORMALIZED_STREET_NAME = 'street_name'
 NORMALIZED_OCCUPANCY = 'occupancy'
 NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
 SAVE_NORMALIZED_ADDR = 'save_normalized_address'
+SAVE_NORMALIZED_NUM_NAME = 'save_normalized_num_name'
 
 ADDRESS = 'address'
 ADDR_STREET_NUMBER = STREET_NUMBER.format( ADDRESS )
@@ -2193,22 +2194,8 @@ def expand_address_ranges( df ):
     return( df_expanded )
 
 
-# Merge dataframe with commercial and residential assessment data based on normalized addresses
-def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER], drop_subset=None, engine=None, df_parcels=None ):
-
-    # If we have engine, retrieve the parcels table
-    if engine != None:
-        df_parcels = read_parcels_table_for_merge( engine )
-    # else caller must supply the dataframe
-
-    print( '---' )
-    print( 'Left: {}'.format( df_left.shape ) )
-
-    # Initialize empty result
-    df_result = pd.DataFrame()
-    df_left[SAVE_NORMALIZED_ADDR] = df_left[NORMALIZED_ADDRESS]
-    left_columns = df_left.columns
-    df_unmatched = df_left.copy()
+# Merge repeatedly on original and reformatted addresses
+def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels ):
 
     # Merge unmatched with parcels table
     df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
@@ -2226,20 +2213,62 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
 
     # Merge unmatched with parcels table
     df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
-    df_merge[NORMALIZED_ADDRESS] = df_merge[SAVE_NORMALIZED_ADDR]
     df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
+
+    # Simplify address numbers expressed as <number><letter>, such as '6B SALEM ST', in unmatched dataframe
+    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORMALIZED_ADDRESS].replace( { r'(^\d+)([A-Z]+ )' : r'\1 ' }, regex=True )
+
+    # Merge unmatched with parcels table
+    df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
+
+    return df_result, df_unmatched
+
+
+# Merge dataframe with commercial and residential assessment data based on normalized addresses
+def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER], drop_subset=None, engine=None, df_parcels=None ):
+
+    # If we have engine, retrieve the parcels table
+    if engine != None:
+        df_parcels = read_parcels_table_for_merge( engine )
+    # else caller must supply the dataframe
+
+    print( '---' )
+    print( 'Left dataframe before merge: {}'.format( df_left.shape ) )
+
+    # Save structures that we will need again later
+    df_left[SAVE_NORMALIZED_ADDR] = df_left[NORMALIZED_ADDRESS]
+    df_parcels_save = df_parcels.copy()
+
+    # Initialize empty result and table of unmatched rows
+    df_result = pd.DataFrame()
+    left_columns = df_left.columns
+    df_unmatched = df_left.copy()
+
+    # Match using full normalized address
+    print( '---' )
+    print( '-- Matching on normalized address --' )
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels )
+
+    # Retry using normalized fragments (street number + street name) in place of normalized address
+    print( '---' )
+    print( '-- Matching on street number + street name --' )
+    df_parcels = df_parcels_save
+    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORMALIZED_STREET_NUMBER] + ' ' + df_unmatched[NORMALIZED_STREET_NAME]
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels )
 
     # Finish up
     df_result = df_result.append( df_unmatched, ignore_index=True )
+    df_result[NORMALIZED_ADDRESS] = df_result[SAVE_NORMALIZED_ADDR]
     df_result = df_result.drop( columns=[SAVE_NORMALIZED_ADDR] )
     df_result = df_result.drop_duplicates( subset=drop_subset )
     df_result = df_result.sort_values( by=sort_by )
 
     # Report final statistics
-    print( '---' )
-    len_result = len( df_result )
     len_unmatched = len( df_result[df_result[ACCOUNT_NUMBER].isna() ] )
+    len_result = len( df_result )
     len_matched = len_result - len_unmatched
+    print( '---' )
     print( 'FINAL Matched: {}'.format( len_matched ) )
     print( 'FINAL Unmatched: {}'.format( len_unmatched ) )
     print( 'FINAL Result: {}'.format( len_result ) )

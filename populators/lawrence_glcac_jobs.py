@@ -17,8 +17,6 @@ STREET_NAME = util.NORMALIZED_STREET_NAME
 OCCUPANCY = util.NORMALIZED_OCCUPANCY
 ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
-TEMP = 'temp'
-
 
 # Main program
 if __name__ == '__main__':
@@ -42,11 +40,7 @@ if __name__ == '__main__':
     df_jobs[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_jobs.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Merge jobs dataframe with assessment data
-    df_jobs[TEMP] = df_jobs[ADDR]
-    df_jobs[ADDR] = df_jobs[STREET_NUMBER] + ' ' + df_jobs[STREET_NAME]
     df_jobs = util.merge_with_assessment_data( df_jobs, engine=engine, sort_by=[util.ACCOUNT_NUMBER] )
-    df_jobs[ADDR] = df_jobs[TEMP]
-    df_jobs = df_jobs.drop( columns=[TEMP] )
 
     # Clean up
     df_jobs = df_jobs.dropna( axis='columns', how='all' )
