@@ -124,6 +124,7 @@ SAVE_NORMALIZED_ADDR = 'save_normalized_address'
 SAVE_NORMALIZED_NUM_NAME = 'save_normalized_num_name'
 NORM_ADDR_STRIP = NORMALIZED_ADDRESS + '_strip'
 NORM_ADDR_STRIP_NOT = NORM_ADDR_STRIP + '_not'
+TRUNCATED_ADDRESS = 'truncated_address'
 
 ADDRESS = 'address'
 ADDR_STREET_NUMBER = STREET_NUMBER.format( ADDRESS )
@@ -2074,8 +2075,10 @@ def likely_dem_to_party_preference_score( dem_score ):
 
 
 # Read parcels assessment table columns needed for merge
-def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_NUMBER] ):
+def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_NUMBER, NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] ):
     df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=ID, columns=columns, parse_dates=True )
+    df_parcels[TRUNCATED_ADDRESS] = df_parcels[NORMALIZED_STREET_NUMBER] + ' ' + df_parcels[NORMALIZED_STREET_NAME]
+    df_parcels = df_parcels.drop( columns=[NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] )
     return df_parcels
 
 
@@ -2271,7 +2274,6 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
 
     # Save structures that we will need again later
     df_left[SAVE_NORMALIZED_ADDR] = df_left[NORMALIZED_ADDRESS]
-    df_parcels_save = df_parcels.copy()
 
     # Initialize empty result and table of unmatched rows
     df_result = pd.DataFrame()
@@ -2286,14 +2288,14 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     # Retry using normalized fragments (street number + street name) in place of normalized address
     print( '---' )
     print( '-- Matching on street number + street name --' )
-    df_parcels = df_parcels_save
     df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORMALIZED_STREET_NUMBER] + ' ' + df_unmatched[NORMALIZED_STREET_NAME]
+    # df_parcels[NORMALIZED_ADDRESS] = df_parcels[TRUNCATED_ADDRESS]
     df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, True )
 
     # Finish up
     df_result = df_result.append( df_unmatched, ignore_index=True )
     df_result[NORMALIZED_ADDRESS] = df_result[SAVE_NORMALIZED_ADDR]
-    df_result = df_result.drop( columns=[SAVE_NORMALIZED_ADDR] )
+    df_result = df_result.drop( columns=[SAVE_NORMALIZED_ADDR, TRUNCATED_ADDRESS] )
     df_result = df_result.drop_duplicates( subset=drop_subset )
     df_result = df_result.sort_values( by=sort_by )
 

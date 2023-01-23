@@ -205,6 +205,15 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
         if bf_address != address:
             print( 'Hyphen handling, before and after: <{}>, <{}>'.format( bf_address, address ) )
 
+    # Simplify trailing occupancy specifier
+    if re.search( r' (UNIT ?)?#? ?\d+\w?$', address ):
+        if verbose:
+            print( 'Bf removing UNIT # <{}>'.format( address ) )
+        address = ' '.join( address.split( ' UNIT ' ) )
+        address = ''.join( address.split( '#' ) )
+        if verbose:
+            print( 'Af removing UNIT # <{}>'.format( address ) )
+
     address = address.strip()
 
     return address, additional_info
