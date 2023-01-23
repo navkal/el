@@ -133,7 +133,7 @@ EXPECTED_KEYS = \
 
 
 # Help usaddress parsing algorithm with troublesome address inputs
-def fix_inputs_we_dont_like( address, return_parts ):
+def fix_inputs_we_dont_like( address, return_parts, verbose ):
 
     # Miscellaneous typos
     address = re.sub( r' CI$', ' CIR', address )
@@ -148,6 +148,8 @@ def fix_inputs_we_dont_like( address, return_parts ):
     address = re.sub( r' \d+([A-Z][A-Z])? FL(OOR)? ', ' ', address )
     address = address.replace( ' BERNNINGTON ', ' BENNINGTON ' )
     address = re.sub( r'22 ?- ?24 PLEASANT$', '22-24 PLEASANT TER', address )
+    address = re.sub( r'^5-7- ARLINGTON TERR$', '5-7 ARLINGTON TER', address )
+    address = re.sub( r'(\d+) W ST', r'\1 WEST ST', address )
 
     # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )
@@ -169,7 +171,8 @@ def fix_inputs_we_dont_like( address, return_parts ):
     else:
         additional_info = None
 
-    # Handle hyphenated address numbers
+    # Handle hyphens
+    bf_address = address
     if re.search( '^\d+[A-Z]?\d*(-\d+[A-Z]?\d*)+ ', address ):
         # Replace dashes following hyphenated address number
         address_parts = address.split( ' ', 1 )
@@ -180,9 +183,27 @@ def fix_inputs_we_dont_like( address, return_parts ):
         address_parts = address.split( ' ', 2 )
         address_parts[2] = address_parts[2].replace( '-', ' ' )
         address = ' '.join( address_parts )
-    else:
-        # Replace dashes in entire address
+    elif re.search( '^\d+-[A-Z] ', address ):
+        # Remove dash between initial number and single letter
+        address_parts = address.split( '-', 1 )
+        address = ''.join( address_parts )
+    elif re.search( '^\d+-[A-Z]', address ):
+        # Replace dash following initial number
+        address_parts = address.split( '-', 1 )
+        address = ' '.join( address_parts )
+    elif re.search( '^\d+[A-Z]-[A-Z] ', address ):
+        # Add space to unit letter range and replace subsequent dashes
+        address = re.sub( r'(\d+)([A-Z]{1,2})', r'\1 \2', address )
+        address_parts = address.split( ' ', 2 )
+        address_parts[2] = address_parts[2].replace( '-', ' ' )
+        address = ' '.join( address_parts )
+    elif not re.search( '\d+-\d+', address ):
+        # Replace dashes in entire address if it does not contain <number>-<number>
         address = address.replace( '-', ' ' )
+
+    if verbose:
+        if bf_address != address:
+            print( 'Hyphen handling, before and after: <{}>, <{}>'.format( bf_address, address ) )
 
     address = address.strip()
 
@@ -261,23 +282,23 @@ def fix_outputs_we_dont_like( parts, city, verbose ):
             print( 'Af moving LandmarkName fragments to StreetName and StreetNamePostType', parts )
 
     # Handle hyphenated letter range following address number, such as '206 A-B PARK ST'
-    elif ( 'AddressNumber' in  keys ) and ( 'StreetName' in keys ) and re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z]-[A-Z] ', parts['StreetName'] ):
+    elif ( 'AddressNumber' in keys ) and ( 'StreetName' in keys ) and re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z]-[A-Z] ', parts['StreetName'] ):
         if verbose:
-            print( 'Bf moving occupancy letters from StateName to AddressNumber', parts )
+            print( 'Bf moving occupancy letter range from StreetName to AddressNumber', parts )
         words = parts['StreetName'].split()
         parts['AddressNumber'] = ' '.join( [parts['AddressNumber'], words.pop(0)] )
         parts['StreetName'] = ' '.join( words )
         if verbose:
-            print( 'Af moving occupancy letters from StateName to AddressNumber', parts )
+            print( 'Af moving occupancy letter range from StreetName to AddressNumber', parts )
 
     # Handle single letter following address number, such as '2 D WOODLAND ST'
-    elif ( 'AddressNumber' in  keys ) and ( 'StreetName' in keys ) and re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z] ', parts['StreetName'] ):
+    elif ( 'AddressNumber' in keys ) and ( 'StreetName' in keys ) and re.search( '^\d+$', parts['AddressNumber'] ) and re.search( '^[A-Z] ', parts['StreetName'] ):
         words = parts['StreetName'].split()
         # Make sure it's not a misplaced pre-directional
         if words[0] not in DIRS.values():
             if verbose:
                 print( 'Bf moving occupancy letter from StateName to AddressNumber', parts )
-            parts['AddressNumber'] = ' '.join( [parts['AddressNumber'], words.pop(0)] )
+            parts['AddressNumber'] = ''.join( [parts['AddressNumber'], words.pop(0)] )
             parts['StreetName'] = ' '.join( words )
             if verbose:
                 print( 'Af moving occupancy letter from StateName to AddressNumber', parts )
@@ -294,12 +315,12 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
     # Initialize return value
     address = original.strip().upper()
 
-    # Help usaddress parsing algorithm with troublesome address inputs
-    address, additional_info = fix_inputs_we_dont_like( address, return_parts )
-
     if verbose:
         print( '' )
         print( 'Normalizing address in column "{0}": "{1}"'.format( col_name, address ) )
+
+    # Help usaddress parsing algorithm with troublesome address inputs
+    address, additional_info = fix_inputs_we_dont_like( address, return_parts, verbose )
 
     parts = {}
 
@@ -345,7 +366,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
                         parts['StreetNamePreDirectional'] = pre_dir
                     elif pre_dir in DIRS:
                         parts['StreetNamePreDirectional'] = DIRS[pre_dir]
-                    elif re.match( r'^\d+[a-zA-Z]$', pre_dir ):
+                    elif re.match( r'^\d+[A-Z]$', pre_dir ):
                         parts['AddressNumber'] += '-' + pre_dir
                         parts['StreetNamePreDirectional'] = ''
                     else:

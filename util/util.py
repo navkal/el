@@ -122,6 +122,8 @@ NORMALIZED_OCCUPANCY = 'occupancy'
 NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
 SAVE_NORMALIZED_ADDR = 'save_normalized_address'
 SAVE_NORMALIZED_NUM_NAME = 'save_normalized_num_name'
+NORM_ADDR_STRIP = NORMALIZED_ADDRESS + '_strip'
+NORM_ADDR_STRIP_NOT = NORM_ADDR_STRIP + '_not'
 
 ADDRESS = 'address'
 ADDR_STREET_NUMBER = STREET_NUMBER.format( ADDRESS )
@@ -2183,8 +2185,6 @@ def expand_address_ranges( df ):
 
         # Iterate over letters, adding two entries for each: '<number> <letter>' and '<number><letter>'
         for letter in letters_in_range:
-            address_number = ' '.join( [number, letter] )
-            df_expanded = add_address_row( address_number, street, row, df_expanded )
             address_number = ''.join( [number, letter] )
             df_expanded = add_address_row( address_number, street, row, df_expanded )
 
@@ -2195,13 +2195,13 @@ def expand_address_ranges( df ):
 
 
 # Merge repeatedly on original and reformatted addresses
-def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels ):
+def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, last_resort ):
 
     # Merge unmatched with parcels table
     df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
     df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
 
-    # Expand addresses in assessment data
+    # Expand addresses in parcels table
     df_parcels = expand_address_ranges( df_parcels )
 
     # Merge unmatched with parcels table
@@ -2215,12 +2215,45 @@ def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_p
     df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
     df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
 
-    # Simplify address numbers expressed as <number><letter>, such as '6B SALEM ST', in unmatched dataframe
-    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORMALIZED_ADDRESS].replace( { r'(^\d+)([A-Z]+ )' : r'\1 ' }, regex=True )
+    if last_resort:
 
-    # Merge unmatched with parcels table
-    df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
-    df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
+        print( '---' )
+        print( '-- Last resort --' )
+
+        # Create copies of normalized address columns with trailing address letter stripped away
+        df_unmatched[NORM_ADDR_STRIP + '1'] = df_unmatched[NORMALIZED_ADDRESS].replace( { r'(^\d+)([A-Z]+ )' : r'\1 ' }, regex=True )
+        df_parcels[NORM_ADDR_STRIP + '2'] = df_parcels[NORMALIZED_ADDRESS].replace( { r'(^\d+)([A-Z]+ )' : r'\1 ' }, regex=True )
+
+        # Save copy of unstripped address columns
+        df_unmatched[NORM_ADDR_STRIP_NOT + '1'] = df_unmatched[NORMALIZED_ADDRESS]
+        df_parcels[NORM_ADDR_STRIP_NOT + '2'] = df_parcels[NORMALIZED_ADDRESS]
+
+        # Save columns
+        left_columns = df_unmatched.columns
+
+        # Merge unmatched stripped with parcels unstripped
+        df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORM_ADDR_STRIP + '1']
+        df_parcels[NORMALIZED_ADDRESS] = df_parcels[NORM_ADDR_STRIP_NOT + '2']
+        df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+        df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
+
+        # Merge unmatched unstripped with parcels stripped
+        df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORM_ADDR_STRIP_NOT + '1']
+        df_parcels[NORMALIZED_ADDRESS] = df_parcels[NORM_ADDR_STRIP + '2']
+        df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+        df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
+
+        # --> Commented out because too risky -->
+        # Merge unmatched stripped with parcels stripped
+        # df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORM_ADDR_STRIP + '1']
+        # df_parcels[NORMALIZED_ADDRESS] = df_parcels[NORM_ADDR_STRIP + '2']
+        # df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+        # df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result )
+        # <-- Commented out because too risky <--
+
+        # Delete columns no longer needed
+        df_unmatched = df_unmatched.drop( columns=[NORM_ADDR_STRIP+'1', NORM_ADDR_STRIP_NOT+'1'] )
+        df_result = df_result.drop( columns=[NORM_ADDR_STRIP+'1', NORM_ADDR_STRIP_NOT+'1', NORM_ADDR_STRIP+'2', NORM_ADDR_STRIP_NOT+'2'] )
 
     return df_result, df_unmatched
 
@@ -2248,14 +2281,14 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     # Match using full normalized address
     print( '---' )
     print( '-- Matching on normalized address --' )
-    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels )
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
 
     # Retry using normalized fragments (street number + street name) in place of normalized address
     print( '---' )
     print( '-- Matching on street number + street name --' )
     df_parcels = df_parcels_save
     df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORMALIZED_STREET_NUMBER] + ' ' + df_unmatched[NORMALIZED_STREET_NAME]
-    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels )
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, True )
 
     # Finish up
     df_result = df_result.append( df_unmatched, ignore_index=True )

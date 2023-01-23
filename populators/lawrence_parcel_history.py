@@ -9,7 +9,6 @@ pd.set_option( 'display.width', 1000 )
 import sys
 sys.path.append( '../util' )
 import util
-import normalize
 import vision
 
 ACCT = util.ACCOUNT_NUMBER
