@@ -120,11 +120,13 @@ NORMALIZED_STREET_NUMBER = 'street_number'
 NORMALIZED_STREET_NAME = 'street_name'
 NORMALIZED_OCCUPANCY = 'occupancy'
 NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
-SAVE_NORMALIZED_ADDR = 'save_normalized_address'
-SAVE_NORMALIZED_NUM_NAME = 'save_normalized_num_name'
 NORM_ADDR_STRIP = NORMALIZED_ADDRESS + '_strip'
 NORM_ADDR_STRIP_NOT = NORM_ADDR_STRIP + '_not'
-TRUNCATED_ADDRESS = 'truncated_address'
+
+LEFT_FULL_ADDR = 'left_full_addr'
+LEFT_TRUNC_ADDR = 'left_trunc_addr'
+RIGHT_FULL_ADDR = 'right_full_addr'
+RIGHT_TRUNC_ADDR = 'right_trunc_addr'
 
 ADDRESS = 'address'
 ADDR_STREET_NUMBER = STREET_NUMBER.format( ADDRESS )
@@ -2077,7 +2079,8 @@ def likely_dem_to_party_preference_score( dem_score ):
 # Read parcels assessment table columns needed for merge
 def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_NUMBER, NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] ):
     df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=ID, columns=columns, parse_dates=True )
-    df_parcels[TRUNCATED_ADDRESS] = df_parcels[NORMALIZED_STREET_NUMBER] + ' ' + df_parcels[NORMALIZED_STREET_NAME]
+    df_parcels[RIGHT_TRUNC_ADDR] = df_parcels[NORMALIZED_STREET_NUMBER] + ' ' + df_parcels[NORMALIZED_STREET_NAME]
+    df_parcels[RIGHT_FULL_ADDR] = df_parcels[NORMALIZED_ADDRESS]
     df_parcels = df_parcels.drop( columns=[NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] )
     return df_parcels
 
@@ -2273,7 +2276,8 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     print( 'Left dataframe before merge: {}'.format( df_left.shape ) )
 
     # Save structures that we will need again later
-    df_left[SAVE_NORMALIZED_ADDR] = df_left[NORMALIZED_ADDRESS]
+    df_left[LEFT_FULL_ADDR] = df_left[NORMALIZED_ADDRESS]
+    df_left[LEFT_TRUNC_ADDR] = df_left[NORMALIZED_STREET_NUMBER] + ' ' + df_left[NORMALIZED_STREET_NAME]
 
     # Initialize empty result and table of unmatched rows
     df_result = pd.DataFrame()
@@ -2282,20 +2286,37 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
 
     # Match using full normalized address
     print( '---' )
-    print( '-- Matching on normalized address --' )
+    print( '-- Matching on normalized address (FxF) --' )
     df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
 
-    # Retry using normalized fragments (street number + street name) in place of normalized address
+    # Retry using truncated address (street number + street name) on left only
     print( '---' )
-    print( '-- Matching on street number + street name --' )
-    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORMALIZED_STREET_NUMBER] + ' ' + df_unmatched[NORMALIZED_STREET_NAME]
-    # df_parcels[NORMALIZED_ADDRESS] = df_parcels[TRUNCATED_ADDRESS]
-    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, True )
+    print( '-- Matching with street number + street name on left only (TxF) --' )
+    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_TRUNC_ADDR]
+    df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_FULL_ADDR]
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
+
+    # Retry using truncated address (street number + street name) on right only
+    print( '---' )
+    print( '-- Matching with street number + street name on right only (FxT) --' )
+    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_FULL_ADDR]
+    df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_TRUNC_ADDR]
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
+
+    # --> Commented out because too risky -->
+    # Retry using normalized fragments (street number + street name) on left and right
+    # print( '---' )
+    # print( '-- Matching with street number + street name on left and right (TxT) --' )
+    # df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[NORMALIZED_STREET_NUMBER] + ' ' + df_unmatched[NORMALIZED_STREET_NAME]
+    # df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_TRUNC_ADDR]
+    # df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
+    # df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, True )
+    # <-- Commented out because too risky <--
 
     # Finish up
     df_result = df_result.append( df_unmatched, ignore_index=True )
-    df_result[NORMALIZED_ADDRESS] = df_result[SAVE_NORMALIZED_ADDR]
-    df_result = df_result.drop( columns=[SAVE_NORMALIZED_ADDR, TRUNCATED_ADDRESS] )
+    df_result[NORMALIZED_ADDRESS] = df_result[LEFT_FULL_ADDR]
+    df_result = df_result.drop( columns=[LEFT_FULL_ADDR, LEFT_TRUNC_ADDR, RIGHT_FULL_ADDR, RIGHT_TRUNC_ADDR] )
     df_result = df_result.drop_duplicates( subset=drop_subset )
     df_result = df_result.sort_values( by=sort_by )
 

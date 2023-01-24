@@ -205,22 +205,13 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
         if bf_address != address:
             print( 'Hyphen handling, before and after: <{}>, <{}>'.format( bf_address, address ) )
 
-    # Simplify trailing occupancy specifier
-    if re.search( r' (UNIT ?)?#? ?\d+\w?$', address ):
-        if verbose:
-            print( 'Bf removing UNIT # <{}>'.format( address ) )
-        address = ' '.join( address.split( ' UNIT ' ) )
-        address = ''.join( address.split( '#' ) )
-        if verbose:
-            print( 'Af removing UNIT # <{}>'.format( address ) )
-
     address = address.strip()
 
     return address, additional_info
 
 
 # Modify parsing results according to our liking
-def fix_outputs_we_dont_like( parts, city, verbose ):
+def fix_outputs_we_dont_like( parts, city, return_parts, verbose ):
 
     keys = parts.keys()
 
@@ -312,6 +303,31 @@ def fix_outputs_we_dont_like( parts, city, verbose ):
             if verbose:
                 print( 'Af moving occupancy letter from StateName to AddressNumber', parts )
 
+    # Optionally remove OccupancyType
+    if return_parts and ( 'OccupancyType' in keys ):
+        del parts['OccupancyType']
+
+    # Optionally clean up OccupancyIdentifier
+    if return_parts and ( 'OccupancyIdentifier' in keys ):
+        if verbose:
+            print( 'Bf normalizing OccupancyIdentifier', parts )
+        if parts['OccupancyIdentifier'] in ['1ST', '2ND', '3RD', '4TH']:
+            parts['OccupancyIdentifier'] = parts['OccupancyIdentifier'][0]
+        elif parts['OccupancyIdentifier'].startswith( 'UNIT' ):
+            parts['OccupancyIdentifier'] = re.sub( r'^UNIT', '', parts['OccupancyIdentifier'] ).strip()
+        elif parts['OccupancyIdentifier'].endswith( 'FLR' ):
+            parts['OccupancyIdentifier'] = re.sub( r'FLR$', '', parts['OccupancyIdentifier'] ).strip()
+        elif parts['OccupancyIdentifier'].endswith( 'FL' ):
+            parts['OccupancyIdentifier'] = re.sub( r'FL$', '', parts['OccupancyIdentifier'] ).strip()
+        elif parts['OccupancyIdentifier'].find( '#' ) >= 0:
+            parts['OccupancyIdentifier'] = parts['OccupancyIdentifier'].split( '#' )[-1].strip()
+        elif ( re.search( r'^\d+ [A-Z]$', parts['OccupancyIdentifier'] ) or re.search( '^[A-Z] \d+$', parts['OccupancyIdentifier'] ) ):
+            parts['OccupancyIdentifier'] = ''.join( parts['OccupancyIdentifier'].split() )
+        if verbose:
+            print( 'Af normalizing OccupancyIdentifier', parts )
+            if not ( re.search( r'^\d+[A-Z]*( [NSEW])?$', parts['OccupancyIdentifier'] ) or re.search( '^[A-Z]+\d*( [NSEW])?$', parts['OccupancyIdentifier'] ) or re.search( '^\d+-\d+$', parts['OccupancyIdentifier'] ) ):
+                print( 'OccupancyIdentifier not fixed <{}>'.format( parts['OccupancyIdentifier'] ) )
+
     return parts
 
 
@@ -344,7 +360,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
                 parts = copy.deepcopy( norm[0] )
 
                 # Fix parsing results we don't like
-                parts = fix_outputs_we_dont_like( parts, city, verbose )
+                parts = fix_outputs_we_dont_like( parts, city, return_parts, verbose )
 
                 keys = parts.keys()
 
