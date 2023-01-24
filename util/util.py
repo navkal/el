@@ -2294,14 +2294,14 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     print( '-- Matching with street number + street name on left only (TxF) --' )
     df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_TRUNC_ADDR]
     df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_FULL_ADDR]
-    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, True )
 
     # Retry using truncated address (street number + street name) on right only
-    print( '---' )
-    print( '-- Matching with street number + street name on right only (FxT) --' )
-    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_FULL_ADDR]
-    df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_TRUNC_ADDR]
-    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
+    # print( '---' )
+    # print( '-- Matching with street number + street name on right only (FxT) --' )
+    # df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_FULL_ADDR]
+    # df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_TRUNC_ADDR]
+    # df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
 
     # --> Commented out because too risky -->
     # Retry using normalized fragments (street number + street name) on left and right
