@@ -303,6 +303,15 @@ def fix_outputs_we_dont_like( parts, city, return_parts, verbose ):
             if verbose:
                 print( 'Af moving occupancy letter from StateName to AddressNumber', parts )
 
+    # Handle single letter, identified as a suffix, following purely numeric address number, such as '251 C FARNHAM ST'
+    elif return_parts and ( 'AddressNumber' in keys ) and ( 'AddressNumberSuffix' in keys ) and parts['AddressNumber'].isdigit() and re.search( '^[A-Z]$', parts['AddressNumberSuffix'] ):
+        if verbose:
+            print( 'Bf moving AddressNumberSuffix to AddressNumber', parts )
+        parts['AddressNumber'] = ''.join( [ parts['AddressNumber'], parts['AddressNumberSuffix'] ] )
+        del parts['AddressNumberSuffix']
+        if verbose:
+            print( 'Af moving AddressNumberSuffix to AddressNumber', parts )
+
     # Optionally remove OccupancyType
     if return_parts and ( 'OccupancyType' in keys ):
         del parts['OccupancyType']
