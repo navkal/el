@@ -125,6 +125,10 @@ LEFT_ADDR_FULL = 'left_addr_full'
 LEFT_ADDR_TRUNC = 'left_addr_trunc'
 LEFT_ADDR_EDIT = 'left_addr_edit'
 LEFT_ADDR_STRIP = 'left_addr_strip'
+RIGHT_ADDR_TRUNC = 'right_addr_trunc'
+RIGHT_ADDR_EDIT = 'right_addr_edit'
+RIGHT_ADDR_STRIP = 'right_addr_strip'
+CONFIDENCE = 'confidence'
 
 ADDRESS = 'address'
 ADDR_STREET_NUMBER = STREET_NUMBER.format( ADDRESS )
@@ -2074,12 +2078,6 @@ def likely_dem_to_party_preference_score( dem_score ):
     return pref_score
 
 
-# Read parcels assessment table columns needed for merge
-def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_NUMBER] ):
-    df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=ID, columns=columns, parse_dates=True )
-    return df_parcels
-
-
 # Isolate entries that did not find matches when merged with assessment data
 def isolate_unmatched( df_merge, left_columns, df_result, s_descr='' ):
 
@@ -2200,7 +2198,7 @@ def expand_address_ranges( df ):
 
 
 # Merge repeatedly on original and reformatted addresses
-def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, last_resort ):
+def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, strip_left=False, strip_right=False ):
 
     # Merge unmatched with parcels table
     df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
@@ -2220,10 +2218,10 @@ def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_p
     df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
     df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, 'Expanded on left' )
 
-    if last_resort:
+    if strip_left:
 
         print( '---' )
-        print( '-- Last resort --' )
+        print( '-- Strip left --' )
 
         pattern = r'(^\d+)([A-Z]+ )(.*)'
 
@@ -2248,7 +2246,39 @@ def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_p
         df_unmatched = df_unmatched.drop( columns=[LEFT_ADDR_EDIT, LEFT_ADDR_STRIP] )
         df_result = df_result.drop( columns=[LEFT_ADDR_EDIT, LEFT_ADDR_STRIP] )
 
+    if strip_right:
+
+        print( '---' )
+        print( '-- Strip right --' )
+
+        pattern = r'(^\d+)([A-Z]+ )(.*)'
+
+        # Create copies of normalized address columns with trailing address letter stripped away
+        df_parcels[RIGHT_ADDR_EDIT] = df_parcels[NORMALIZED_ADDRESS].replace( { pattern : r'\1 \3 \2' }, regex=True )
+        df_parcels[RIGHT_ADDR_STRIP] = df_parcels[NORMALIZED_ADDRESS].replace( { pattern : r'\1 \3' }, regex=True )
+
+        # Merge unmatched edited
+        df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_ADDR_EDIT]
+        df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+        df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, 'Edited on right' )
+
+        # Merge unmatched stripped
+        df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_ADDR_STRIP]
+        df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
+        df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, 'Stripped on right' )
+
+        # Delete columns no longer needed
+        df_result = df_result.drop( columns=[RIGHT_ADDR_EDIT, RIGHT_ADDR_STRIP] )
+
     return df_result, df_unmatched
+
+
+# Read parcels assessment table columns needed for merge
+def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_NUMBER, NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] ):
+    df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=ID, columns=columns, parse_dates=True )
+    df_parcels[RIGHT_ADDR_TRUNC] = df_parcels[NORMALIZED_STREET_NUMBER] + ' ' + df_parcels[NORMALIZED_STREET_NAME]
+    df_parcels = df_parcels.drop( columns=[NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] )
+    return df_parcels
 
 
 # Merge dataframe with commercial and residential assessment data based on normalized addresses
@@ -2271,21 +2301,48 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     left_columns = df_left.columns
     df_unmatched = df_left.copy()
 
+    #
+    # High confidence matching
+    #
+
+    # Initialize high confidence for these matches
+    df_parcels[CONFIDENCE] = '1'
+
     # Match using full normalized address
     print( '---' )
-    print( '-- Matching on normalized address (FxF) --' )
-    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, False )
+    print( '-- Matching on left full and right full addresses (FxF) --' )
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels )
 
     # Retry using truncated address (street number + street name) on left side
     print( '---' )
-    print( '-- Matching again using truncated address on left side (TxF) --' )
+    print( '-- Matching on left truncated and right full address (TxF) --' )
     df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_ADDR_TRUNC]
-    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, True )
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, strip_left=True )
+
+    #
+    # Low confidence matching
+    #
+
+    # Initialize low confidence for remaining matches
+    df_parcels[CONFIDENCE] = '0'
+
+    # Getting more desperate.  Try again with truncated addresses on right side
+    print( '---' )
+    print( '-- Matching on left full and right truncated address (FxT) --' )
+    df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_ADDR_FULL]
+    df_parcels[NORMALIZED_ADDRESS] = df_parcels[RIGHT_ADDR_TRUNC]
+    df_result, df_unmatched = merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_parcels, strip_right=True )
 
     # Finish up
     df_result = df_result.append( df_unmatched, ignore_index=True )
     df_result[NORMALIZED_ADDRESS] = df_result[LEFT_ADDR_FULL]
-    df_result = df_result.drop( columns=[LEFT_ADDR_FULL, LEFT_ADDR_TRUNC] )
+    df_result = df_result.drop( columns=[LEFT_ADDR_FULL, LEFT_ADDR_TRUNC, RIGHT_ADDR_TRUNC] )
+
+    # When matches are duplicated with differing confidence levels, keep row with higher confidence
+    df_result = df_result.sort_values( by=[CONFIDENCE], ascending=False )
+    df_result = df_result.drop_duplicates( subset=set( df_result.columns ).difference( set( [CONFIDENCE] ) ) )
+
+    # Clean up and sort according to supplied parameters
     df_result = df_result.drop_duplicates( subset=drop_subset )
     df_result = df_result.sort_values( by=sort_by )
 
