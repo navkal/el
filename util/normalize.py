@@ -150,6 +150,11 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     address = re.sub( r'22 ?- ?24 PLEASANT$', '22-24 PLEASANT TER', address )
     address = re.sub( r'^5-7- ARLINGTON TERR$', '5-7 ARLINGTON TER', address )
     address = re.sub( r'(\d+) W ST', r'\1 WEST ST', address )
+    address = re.sub( r' ALLYN$', ' ALLYN TER', address )
+    address = re.sub( r' WESTWOOD$', ' WESTWOOD TER', address )
+    address = re.sub( r' COLONIAL$', ' COLONIAL TER', address )
+    address = re.sub( r' ANDOVER$', ' ANDOVER TER', address )
+    address = re.sub( r' BICKNELL$', ' BICKNELL TER', address )
 
     # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )
@@ -312,6 +317,15 @@ def fix_outputs_we_dont_like( parts, city, return_parts, verbose ):
         if verbose:
             print( 'Af moving AddressNumberSuffix to AddressNumber', parts )
 
+    # Handle single letter, identified as occupancy identifier, with purely numeric address number, such as '38 MAY ST A'
+    elif return_parts and ( 'AddressNumber' in keys ) and ( 'OccupancyIdentifier' in keys ) and parts['AddressNumber'].isdigit() and re.search( '^[A-Z]$', parts['OccupancyIdentifier'] ):
+        if verbose:
+            print( 'Bf moving OccupancyIdentifier to AddressNumber', parts )
+        parts['AddressNumber'] = ''.join( [ parts['AddressNumber'], parts['OccupancyIdentifier'] ] )
+        del parts['OccupancyIdentifier']
+        if verbose:
+            print( 'Af moving OccupancyIdentifier to AddressNumber', parts )
+
     # Optionally remove OccupancyType
     if return_parts and ( 'OccupancyType' in keys ):
         del parts['OccupancyType']
@@ -321,17 +335,28 @@ def fix_outputs_we_dont_like( parts, city, return_parts, verbose ):
         if verbose:
             print( 'Bf normalizing OccupancyIdentifier', parts )
         if parts['OccupancyIdentifier'] in ['1ST', '2ND', '3RD', '4TH']:
+            # Simplify floor number
             parts['OccupancyIdentifier'] = parts['OccupancyIdentifier'][0]
         elif parts['OccupancyIdentifier'].startswith( 'UNIT' ):
+            # Strip UNIT indicator
             parts['OccupancyIdentifier'] = re.sub( r'^UNIT', '', parts['OccupancyIdentifier'] ).strip()
         elif parts['OccupancyIdentifier'].endswith( 'FLR' ):
+            # Strip FLR indicator
             parts['OccupancyIdentifier'] = re.sub( r'FLR$', '', parts['OccupancyIdentifier'] ).strip()
         elif parts['OccupancyIdentifier'].endswith( 'FL' ):
+            # Strip FL indicator
             parts['OccupancyIdentifier'] = re.sub( r'FL$', '', parts['OccupancyIdentifier'] ).strip()
         elif parts['OccupancyIdentifier'].find( '#' ) >= 0:
+            # Strip pound sign (#)
             parts['OccupancyIdentifier'] = parts['OccupancyIdentifier'].split( '#' )[-1].strip()
         elif ( re.search( r'^\d+ [A-Z]$', parts['OccupancyIdentifier'] ) or re.search( '^[A-Z] \d+$', parts['OccupancyIdentifier'] ) ):
+            # Remove space between pure number and single letter
             parts['OccupancyIdentifier'] = ''.join( parts['OccupancyIdentifier'].split() )
+
+        # Remove occupancy identifier if it is redundant
+        if 'AddressNumber' in keys and ( parts['AddressNumber'] == parts['OccupancyIdentifier'] ):
+            del parts['OccupancyIdentifier']
+
         if verbose:
             print( 'Af normalizing OccupancyIdentifier', parts )
             if not ( re.search( r'^\d+[A-Z]*( [NSEW])?$', parts['OccupancyIdentifier'] ) or re.search( '^[A-Z]+\d*( [NSEW])?$', parts['OccupancyIdentifier'] ) or re.search( '^\d+-\d+$', parts['OccupancyIdentifier'] ) ):

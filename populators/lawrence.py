@@ -146,6 +146,10 @@ if __name__ == '__main__':
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 
+    # Report statistics on unmatched addresses
+    print( '\n=======> Unmatched addresses' )
+    os.system( 'python lawrence_unmatched.py -m {0}'.format( args.master_filename ) )
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     util.create_about_table( 'Lawrence', util.make_df_about_energize_lawrence(), args.master_filename )

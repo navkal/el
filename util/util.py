@@ -2132,11 +2132,13 @@ def expand_address_ranges( df ):
         range_last = int( re.search( '^\d*', address_range[1] ).group(0) )
 
         # Extract street
-        street = ' '.join( row[NORMALIZED_ADDRESS].split()[1:] )
+        words = row[NORMALIZED_ADDRESS].split()[1:]
+        num_suffix = words.pop() if re.search( '^[A-Z]$', words[-1] ) else ''
+        street = ' '.join( words )
 
         # Iterate over all numbers in the address range, incrementing by 2
         for num in range( range_first, range_last + 1, 2 ):
-            df_expanded = add_address_row( num, street, row, df_expanded )
+            df_expanded = add_address_row( str( num ) + num_suffix, street, row, df_expanded )
 
         # Determine whether either range specifier contains a letter
         letter_in_range_first = re.search( '[A-Z]', address_range[0] )
