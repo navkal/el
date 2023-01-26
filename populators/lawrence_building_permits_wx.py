@@ -43,7 +43,8 @@ if __name__ == '__main__':
     df_permits[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_permits.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Merge permits dataframe with assessment data
-    df_permits = util.merge_with_assessment_data( df_permits, engine=engine, sort_by=[util.ACCOUNT_NUMBER] )
+    table_name = 'BuildingPermits_L_Wx'
+    df_permits = util.merge_with_assessment_data( table_name, df_permits, engine=engine, sort_by=[util.ACCOUNT_NUMBER] )
 
     # Clean up
     df_permits = df_permits.dropna( axis='columns', how='all' )
@@ -51,6 +52,6 @@ if __name__ == '__main__':
     df_permits = df_permits.sort_values( by=[util.PERMIT_NUMBER] )
 
     # Create table in database
-    util.create_table( 'BuildingPermits_L_Wx', conn, cur, df=df_permits )
+    util.create_table( table_name, conn, cur, df=df_permits )
 
     util.report_elapsed_time()

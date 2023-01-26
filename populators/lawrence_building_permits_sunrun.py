@@ -91,9 +91,10 @@ if __name__ == '__main__':
     df_left[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_left.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Merge left dataframe with assessment data
-    df_result = util.merge_with_assessment_data( df_left, engine=engine, sort_by=[util.PERMIT_NUMBER, util.FILE_NUMBER, util.ACCOUNT_NUMBER] )
+    table_name = 'BuildingPermits_L_Sunrun'
+    df_result = util.merge_with_assessment_data( table_name, df_left, engine=engine, sort_by=[util.PERMIT_NUMBER, util.FILE_NUMBER, util.ACCOUNT_NUMBER] )
 
     # Create table in database
-    util.create_table( 'BuildingPermits_L_Sunrun', conn, cur, df=df_result )
+    util.create_table( table_name, conn, cur, df=df_result )
 
     util.report_elapsed_time()

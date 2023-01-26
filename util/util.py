@@ -128,7 +128,12 @@ LEFT_ADDR_STRIP = 'left_addr_strip'
 RIGHT_ADDR_TRUNC = 'right_addr_trunc'
 RIGHT_ADDR_EDIT = 'right_addr_edit'
 RIGHT_ADDR_STRIP = 'right_addr_strip'
+
+# Confidence of address matching results
 CONFIDENCE = 'confidence'
+CONFIDENCE_HIGH = 'High'
+CONFIDENCE_MEDIUM = 'Medium'
+CONFIDENCE_LOW = 'Low'
 
 ADDRESS = 'address'
 ADDR_STREET_NUMBER = STREET_NUMBER.format( ADDRESS )
@@ -2237,6 +2242,9 @@ def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_p
         df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
         df_result, df_unmatched = isolate_unmatched( df_merge, left_columns, df_result, 'Edited on left' )
 
+        # Here for the first time we remove meaningful information from the address.  Lower confidence level of subsequent matches.
+        df_parcels[CONFIDENCE] = CONFIDENCE_MEDIUM
+
         # Merge unmatched stripped
         df_unmatched[NORMALIZED_ADDRESS] = df_unmatched[LEFT_ADDR_STRIP]
         df_merge = pd.merge( df_unmatched, df_parcels, how='left', on=[NORMALIZED_ADDRESS] )
@@ -2282,7 +2290,7 @@ def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_N
 
 
 # Merge dataframe with commercial and residential assessment data based on normalized addresses
-def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER], drop_subset=None, engine=None, df_parcels=None ):
+def merge_with_assessment_data( table_name, df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER], drop_subset=None, engine=None, df_parcels=None ):
 
     # If we have engine, retrieve the parcels table
     if engine != None:
@@ -2306,7 +2314,7 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     #
 
     # Initialize high confidence for these matches
-    df_parcels[CONFIDENCE] = '1'
+    df_parcels[CONFIDENCE] = CONFIDENCE_HIGH
 
     # Match using full normalized address
     print( '---' )
@@ -2323,8 +2331,8 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     # Low confidence matching
     #
 
-    # Initialize low confidence for remaining matches
-    df_parcels[CONFIDENCE] = '0'
+    # Set low confidence for remaining matches
+    df_parcels[CONFIDENCE] = CONFIDENCE_LOW
 
     # Getting more desperate.  Try again with truncated addresses on right side
     print( '---' )
@@ -2351,6 +2359,7 @@ def merge_with_assessment_data( df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER]
     len_result = len( df_result )
     len_matched = len_result - len_unmatched
     print( '---' )
+    print( '-- {} --'.format( table_name ) )
     print( 'FINAL Matched: {}'.format( len_matched ) )
     print( 'FINAL Unmatched: {}'.format( len_unmatched ) )
     print( 'FINAL Result: {}'.format( len_result ) )

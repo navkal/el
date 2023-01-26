@@ -44,9 +44,10 @@ if __name__ == '__main__':
     df_parcels = df_parcels[ [ADDR] + list( df_parcels[df_parcels.columns.difference( df_left.columns )] ) ]
 
     # Merge left dataframe with assessment data
-    df_result = util.merge_with_assessment_data( df_left, df_parcels=df_parcels, sort_by=[util.LICENSE_NUMBER, util.ACCOUNT_NUMBER] )
+    table_name = 'Businesses_L'
+    df_result = util.merge_with_assessment_data( table_name, df_left, df_parcels=df_parcels, sort_by=[util.LICENSE_NUMBER, util.ACCOUNT_NUMBER] )
 
     # Save final table of businesses
-    util.create_table( 'Businesses_L', conn, cur, df=df_result )
+    util.create_table( table_name, conn, cur, df=df_result )
 
     util.report_elapsed_time()

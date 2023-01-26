@@ -40,7 +40,8 @@ if __name__ == '__main__':
     df_jobs[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_jobs.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Merge jobs dataframe with assessment data
-    df_jobs = util.merge_with_assessment_data( df_jobs, engine=engine, sort_by=[util.ACCOUNT_NUMBER] )
+    table_name = 'GlcacJobs_L'
+    df_jobs = util.merge_with_assessment_data( table_name, df_jobs, engine=engine, sort_by=[util.ACCOUNT_NUMBER] )
 
     # Clean up
     df_jobs = df_jobs.dropna( axis='columns', how='all' )
@@ -48,6 +49,6 @@ if __name__ == '__main__':
     df_jobs = df_jobs.sort_values( by=[util.JOB_NUMBER] )
 
     # Create table in database
-    util.create_table( 'GlcacJobs_L', conn, cur, df=df_jobs )
+    util.create_table( table_name, conn, cur, df=df_jobs )
 
     util.report_elapsed_time()
