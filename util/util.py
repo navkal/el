@@ -2359,7 +2359,7 @@ def merge_with_assessment_data( table_name, df_left, sort_by=[PERMIT_NUMBER, ACC
     len_result = len( df_result )
     len_matched = len_result - len_unmatched
     print( '---' )
-    print( '-- {} --'.format( table_name ) )
+    print( "FINAL Matched in '{}': {}%".format( table_name, round( 100 * len_matched / len_result, 2 ) ) )
     print( 'FINAL Matched: {}'.format( len_matched ) )
     print( 'FINAL Unmatched: {}'.format( len_unmatched ) )
     print( 'FINAL Result: {}'.format( len_result ) )
