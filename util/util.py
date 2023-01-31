@@ -463,7 +463,7 @@ KITCHENS_ = 'kitchens_'
 BATHS_ = 'baths_'
 OCCUPANCY_ = 'occupancy_'
 
-
+MBLU = 'mblu' # Stands for Map, Block, Lot, Unit
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1748,7 +1748,7 @@ COLUMN_ORDER = \
         JOB_NUMBER,
         PERMIT_NUMBER,
     ],
-    'ParcelSummary':
+    'ParcelSummary_L':
     [
         IS_RESIDENTIAL,
         NORMALIZED_STREET_NAME,
@@ -1771,6 +1771,7 @@ COLUMN_ORDER = \
     [
         VISION_ID,
         ACCOUNT_NUMBER,
+        MBLU,
         IS_RESIDENTIAL,
         NORMALIZED_STREET_NAME,
         LOCATION,

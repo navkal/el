@@ -42,6 +42,7 @@ RE_KTCH = r'Num Kitchens\:?'
 # Column labels
 VSID = util.VISION_ID
 ACCT = util.ACCOUNT_NUMBER
+MBLU = util.MBLU
 LOCN = util.LOCATION
 OWN1 = util.OWNER_1_NAME
 OWN2 = util.OWNER_2_NAME
@@ -77,6 +78,7 @@ COLS = \
 [
     VSID,
     ACCT,
+    MBLU,
     LOCN,
     OWN1,
     OWN2,
@@ -172,7 +174,7 @@ def make_summary( s_res, df ):
     return df_summary
 
 
-def summarize_and_exit( df ):
+def summarize_and_exit( df, summary_table_name ):
 
     print( '' )
 
@@ -189,16 +191,18 @@ def summarize_and_exit( df ):
     df_summary = df_summary.sort_values( by=[STREET_NAME, ISRS], ascending=[True, False] )
 
     # Save to database
-    util.create_table( 'ParcelSummary', conn, cur, df=df_summary )
+    util.create_table( summary_table_name, conn, cur, df=df_summary )
 
     # Report elapsed time
     util.report_elapsed_time()
     sys.exit()
 
 
-def clean_string( col ):
-    col = col.fillna( '' )
+def clean_string( col, remove_all_spaces=False ):
+    col = col.fillna( '' ).astype( str )
     col = col.str.strip().replace( r'\s+', ' ', regex=True )
+    if remove_all_spaces:
+        col = col.str.strip().replace( r'\s', '', regex=True )
     return col
 
 def clean_float( col ):
@@ -246,6 +250,7 @@ def save_and_exit( signum, frame ):
 
         # Clean up data
         df[ACCT] = clean_string( df[ACCT] )
+        df[MBLU] = clean_string( df[MBLU], remove_all_spaces=True )
         df[LOCN] = clean_string( df[LOCN] )
         df[OWN1] = clean_string( df[OWN1] )
         df[OWN2] = clean_string( df[OWN2] )
@@ -274,9 +279,12 @@ def save_and_exit( signum, frame ):
         df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
         df[TOT_AREA] = clean_integer( df[TOT_AREA] )
 
-        # If we got account numbers, ensure that they are unique
-        if len( df[ACCT][df[ACCT] != ''] ):
+        # If we got account numbers or Mblu values on every row, ensure that they are unique
+        if len( df[ACCT][df[ACCT] != ''] ) == len( df ):
             df = df.drop_duplicates( subset=[ACCT], keep='last' )
+        elif len( df[MBLU][df[MBLU] != ''] ) == len( df ):
+            df = df.drop_duplicates( subset=[MBLU], keep='last' )
+        # else don't drop anything; we already dropped on VISION ID
 
         # Calculate age
         df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
@@ -395,7 +403,7 @@ if __name__ == '__main__':
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
     parser.add_argument( '-r', dest='refresh', action='store_true', help='Refresh records in existing database?' )
     parser.add_argument( '-p', dest='post_process', action='store_true', help='Post-process only?' )
-    parser.add_argument( '-s', dest='summarize', action='store_true', help='Summarize only?' )
+    parser.add_argument( '-s', dest='summary_table_name', help='Output summary table name, used in summarize-only opration, to summarize the results of a completed scrape' )
     args = parser.parse_args()
 
     # Flag precedence for refresh
@@ -409,7 +417,7 @@ if __name__ == '__main__':
 
     # Retrieve various arguments that override Lawrence-specific defaults
     municipality = args.municipality if args.municipality else 'lawrence'
-    parcels_table_name = args.parcels_table_name if args.parcels_table_name else 'Parcels_L'\
+    parcels_table_name = args.parcels_table_name if args.parcels_table_name else 'Parcels_L'
 
     if args.vision_id_range:
         vision_id_range = args.vision_id_range.split( ',' )
@@ -429,8 +437,9 @@ if __name__ == '__main__':
         df = pd.DataFrame( columns=COLS )
 
     # Take early exit with summarize option
-    if args.summarize:
-        summarize_and_exit( df )
+    if args.summary_table_name:
+        # This option has no default value
+        summarize_and_exit( df, args.summary_table_name )
 
     # Determine range of Vision IDs to process
     if len( df ):
@@ -478,7 +487,7 @@ if __name__ == '__main__':
         if ( ( n_processed % 50 == 0 ) and ( n_processed != n_last_reported ) ) or ( n_tried % 100 == 0 ):
             n_last_reported = n_processed
             util.report_elapsed_time( prefix='' )
-            s_status = ' Processed {} ({}%) of {}, requesting VISION ID {}'.format( n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
+            s_status = ' Tried {} ({}%) and Processed {} ({}%) of {}, requesting VISION ID {}'.format( n_tried, round( 100 * n_tried / len( id_range ), 2 ), n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
             print( s_status )
 
         url = url_base + str( vision_id )
@@ -496,6 +505,7 @@ if __name__ == '__main__':
             # Extract values
             soup = BeautifulSoup( rsp.text, 'html.parser' )
             sr_row[ACCT] = scrape_element( soup, 'span', 'MainContent_lblAcctNum' )
+            sr_row[MBLU] = scrape_element( soup, 'span', 'MainContent_lblMblu' )
             sr_row[LOCN] = scrape_element( soup, 'span', 'MainContent_lblTab1Title' )
             sr_row[OWN1] = scrape_element( soup, 'span', 'MainContent_lblOwner' )
             sr_row[OWN2] = scrape_element( soup, 'span', 'MainContent_lblCoOwner' )

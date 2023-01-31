@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # Summarize scraped parcel records
     print( '\n=======> Summarize' )
-    os.system( 'python vision_parcels.py -s -d {0}'.format( args.database_filename ) )
+    os.system( 'python vision_parcels.py -s ParcelSummary_L -d {0}'.format( args.database_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
