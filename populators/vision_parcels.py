@@ -487,7 +487,7 @@ if __name__ == '__main__':
         if ( ( n_processed % 50 == 0 ) and ( n_processed != n_last_reported ) ) or ( n_tried % 100 == 0 ):
             n_last_reported = n_processed
             util.report_elapsed_time( prefix='' )
-            s_status = ' Tried {} ({}%) and Processed {} ({}%) of {}, requesting VISION ID {}'.format( n_tried, round( 100 * n_tried / len( id_range ), 2 ), n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
+            s_status = ' Tried {} ({}%) and processed {} ({}%) of {}; requesting VISION ID {}'.format( n_tried, round( 100 * n_tried / len( id_range ), 2 ), n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
             print( s_status )
 
         url = url_base + str( vision_id )
