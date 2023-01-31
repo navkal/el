@@ -58,7 +58,7 @@ if __name__ == '__main__':
     os.system( 'python lawrence_commercial.py -m {0}'.format( args.master_filename ) )
 
     # Correct mis-classification of residential and commercial assessment records
-    os.system( 'python lawrence_land_use.py -l ../xl/lawrence/assessment/residential_land_use_codes.xlsx -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_land_use.py -l ../xl/residential_land_use_codes.xlsx -m {0}'.format( args.master_filename ) )
 
     # Read business registration data
     print( '\n=======> Businesses input 1' )

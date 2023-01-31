@@ -24,13 +24,10 @@ import util
 import normalize
 
 
-URL_BASE = 'https://gis.vgsi.com/lawrencema/parcel.aspx?pid='
+URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
 
-ID_RANGE_MIN = 200
-ID_RANGE_MAX = 106000
-ID_RANGE_STOP = ID_RANGE_MAX + 1
-
-PARCELS_TABLE = 'Parcels_L'
+LAWRENCE_RANGE_MIN = 200
+LAWRENCE_RANGE_MAX = 106000
 
 ADDR = util.NORMALIZED_ADDRESS
 STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
@@ -200,13 +197,18 @@ def summarize_and_exit( df ):
 
 
 def clean_string( col ):
+    col = col.fillna( '' )
     col = col.str.strip().replace( r'\s+', ' ', regex=True )
+    return col
+
+def clean_float( col ):
+    col = col.replace( r'^\s*$', np.nan, regex=True)
+    col = col.fillna( '0' ).astype( float )
     return col
 
 def clean_integer( col ):
     col = col.replace( '[\$,]', '', regex=True )
-    col = col.replace( r'^\s*$', np.nan, regex=True )
-    col = col.fillna( '0' ).astype( float ).astype( int )
+    col = clean_float( col ).astype( int )
     return col
 
 def clean_date( col ):
@@ -260,7 +262,7 @@ def save_and_exit( signum, frame ):
         df[BATH] = clean_integer( df[BATH] )
         df[LAND] = clean_string( df[LAND] )
         df[DESC] = clean_string( df[DESC] )
-        df[ACRE] = df[ACRE].astype( float )
+        df[ACRE] = clean_float( df[ACRE] )
         df[SLPR] = clean_integer( df[SLPR] )
         df[SLDT] = clean_date( df[SLDT] )
         df[ZONE] = clean_string( df[ZONE] )
@@ -272,22 +274,23 @@ def save_and_exit( signum, frame ):
         df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
         df[TOT_AREA] = clean_integer( df[TOT_AREA] )
 
-        # Ensure account numbers are unique
-        df = df.drop_duplicates( subset=[ACCT], keep='last' )
+        # If we got account numbers, ensure that they are unique
+        if len( df[ACCT][df[ACCT] != ''] ):
+            df = df.drop_duplicates( subset=[ACCT], keep='last' )
 
         # Calculate age
         df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
 
         # Normalize addresses.  Use result_type='expand' to load multiple columns!
         df[ADDR] = df[LOCN]
-        df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+        df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city=municipality.upper(), return_parts=True ), axis=1, result_type='expand' )
 
         # Report size of output
         print( '' )
         print( 'Saving {} VISION IDs'.format( len( df ) ) )
 
         # Preserve current progress in database
-        util.create_table( PARCELS_TABLE, conn, cur, df=df )
+        util.create_table( parcels_table_name, conn, cur, df=df )
 
     # Report elapsed time
     util.report_elapsed_time()
@@ -385,7 +388,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Scrape parcel assessment data from Vision Government Solutions website' )
     parser.add_argument( '-d', dest='db_filename', help='Database filename' )
+    parser.add_argument( '-t', dest='parcels_table_name',  help='Output parcels table name - Name of target table in SQLite database file' )
     parser.add_argument( '-l', dest='luc_filename',  help='Land use codes spreadsheet filename' )
+    parser.add_argument( '-m', dest='municipality',  help='Name of municipality in MA' )
+    parser.add_argument( '-v', dest='vision_id_range',  help='Range of Vision IDs to request' )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
     parser.add_argument( '-r', dest='refresh', action='store_true', help='Refresh records in existing database?' )
     parser.add_argument( '-p', dest='post_process', action='store_true', help='Post-process only?' )
@@ -401,12 +407,23 @@ if __name__ == '__main__':
         args.create = False
         args.refresh = True
 
+    # Retrieve various arguments that override Lawrence-specific defaults
+    municipality = args.municipality if args.municipality else 'lawrence'
+    parcels_table_name = args.parcels_table_name if args.parcels_table_name else 'Parcels_L'\
+
+    if args.vision_id_range:
+        vision_id_range = args.vision_id_range.split( ',' )
+        vision_id_range = [int(s) for s in vision_id_range]
+    else:
+        vision_id_range = [LAWRENCE_RANGE_MIN, LAWRENCE_RANGE_MAX]
+    vision_id_range[1] += 1
+
     # Open the database
     conn, cur, engine = util.open_database( args.db_filename, args.create )
 
     # Read pre-existing table from database
     try:
-        df = pd.read_sql_table( PARCELS_TABLE, engine, index_col=util.ID, parse_dates=True )
+        df = pd.read_sql_table( parcels_table_name, engine, index_col=util.ID, parse_dates=True )
         df[SLDT] = pd.to_datetime( df[SLDT] ).dt.strftime( '%m/%d/%Y' )
     except:
         df = pd.DataFrame( columns=COLS )
@@ -423,14 +440,17 @@ if __name__ == '__main__':
             id_range = df[VSID].to_list()
         else:
             # Discover remainder of range
-            id_range = range( 1 + df[VSID].max(), ID_RANGE_STOP )
+            id_range = range( 1 + df[VSID].max(), vision_id_range[1] )
     else:
         # Table does not exist.  Discover full range.
-        id_range = range( ID_RANGE_MIN, ID_RANGE_STOP )
+        id_range = range( vision_id_range[0], vision_id_range[1] )
 
     print( '' )
     s_doing_what =  '{} {}'.format( ( 'Post-processing' if args.post_process else 'Refreshing' ), len( id_range ) ) if ( len( df ) and args.refresh ) else 'Discovering'
-    print( '{} VISION IDs in range {} to {}'.format( s_doing_what, id_range[0], id_range[-1] ) )
+    if len( id_range ):
+        print( '{} VISION IDs in range {} to {}'.format( s_doing_what, id_range[0], id_range[-1] ) )
+    else:
+        exit( 'No VISION IDs to process in {}'.format( id_range ) )
     print( '' )
 
     # Take early exit with post-process option
@@ -445,6 +465,9 @@ if __name__ == '__main__':
     sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
     ls_res_codes = list( sr_res_codes )
 
+    # Prepare URL base
+    url_base = URL_BASE.format( municipality )
+
     # Initialize counter
     n_processed = 0
     n_last_reported = -1
@@ -458,7 +481,7 @@ if __name__ == '__main__':
             s_status = ' Processed {} ({}%) of {}, requesting VISION ID {}'.format( n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
             print( s_status )
 
-        url = URL_BASE + str( vision_id )
+        url = url_base + str( vision_id )
         try:
             rsp = requests.get( url, verify=False )
         except:

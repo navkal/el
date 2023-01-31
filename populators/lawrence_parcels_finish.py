@@ -18,11 +18,11 @@ if __name__ == '__main__':
 
     # Post-process scraped parcel records
     print( '\n=======> Post-process' )
-    os.system( 'python lawrence_parcels.py -p -d {0}'.format( args.database_filename ) )
+    os.system( 'python vision_parcels.py -p -d {0}'.format( args.database_filename ) )
 
     # Summarize scraped parcel records
     print( '\n=======> Summarize' )
-    os.system( 'python lawrence_parcels.py -s -d {0}'.format( args.database_filename ) )
+    os.system( 'python vision_parcels.py -s -d {0}'.format( args.database_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
