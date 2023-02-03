@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     # Read raw parcels data
     print( '\n=======> Parcels input' )
-    os.system( 'python db_to_db.py -i ../db/lawrence_vision_scrape.sqlite -f RawParcels_L -t RawParcels_L -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f RawParcels_L -t RawParcels_L -o {0} -c'.format( args.master_filename ) )
 
     # Clean and summarize parcels data
     print( '\n=======> Parcels table and summary' )

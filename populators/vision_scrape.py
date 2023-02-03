@@ -17,8 +17,11 @@ import signal
 import sys
 sys.path.append('../util')
 import util
+import printctl
 
 SAVE_INTERVAL = 500
+
+CONTINUE_AT_TABLE = '_ContinueAtVisionId'
 
 URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
 
@@ -95,6 +98,17 @@ COLS = \
 ]
 
 
+b_loop_ran_to_completion = False
+def save_continue_at():
+
+    # If not running in refresh mode, update continue-at table
+    if not args.refresh:
+        df_continue_at = pd.DataFrame() if b_loop_ran_to_completion else pd.DataFrame( data={ VSID: [vision_id] } )
+        printctl.off()
+        util.create_table( CONTINUE_AT_TABLE, conn, cur, df=df_continue_at )
+        printctl.on()
+
+
 def save_progress( df ):
 
     if len( df ):
@@ -112,6 +126,8 @@ def save_progress( df ):
         util.create_table( args.parcels_table_name, conn, cur, df=df )
         print( '' )
 
+        # Save vision ID at which to continue discovery
+        save_continue_at()
 
 
 b_save_and_exit_done = False
@@ -259,7 +275,12 @@ if __name__ == '__main__':
             id_range = df[VSID].to_list()
         else:
             # Discover remainder of range
-            id_range = range( 1 + df[VSID].max(), vision_id_range[1] )
+            try:
+                df_continue = pd.read_sql_table( CONTINUE_AT_TABLE, engine, index_col=util.ID, parse_dates=True )
+                range_min = df_continue[VSID].iloc[0]
+            except:
+                range_min = vision_id_range[1]
+            id_range = range( range_min, vision_id_range[1] )
     else:
         # Table does not exist.  Discover full range.
         id_range = range( vision_id_range[0], vision_id_range[1] )
@@ -291,6 +312,9 @@ if __name__ == '__main__':
             util.report_elapsed_time( prefix='' )
             s_status = ' Tried {} ({}%) and processed {} ({}%) of {}; requesting VISION ID {}'.format( n_tried, round( 100 * n_tried / len( id_range ), 2 ), n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
             print( s_status )
+
+            # Save current vision ID at which to continue if this process is interrupted
+            save_continue_at()
 
         url = url_base + str( vision_id )
         try:
@@ -348,5 +372,7 @@ if __name__ == '__main__':
 
         # Increment count
         n_tried += 1
+
+    b_loop_ran_to_completion = True
 
     save_and_exit( None, None )
