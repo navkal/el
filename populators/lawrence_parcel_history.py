@@ -106,8 +106,8 @@ if __name__ == '__main__':
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
-    # Retrieve raw parcels table from database
-    df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=util.ID, parse_dates=True )
+    # Retrieve parcels table from database
+    df_parcels = pd.read_sql_table( 'Parcels_L', engine, index_col=util.ID, parse_dates=True )
 
     # Merge permit numbers from specified permit tables
     for s_type in PERMIT_TYPES:

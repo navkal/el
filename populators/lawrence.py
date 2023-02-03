@@ -17,11 +17,14 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
-    # Read parcels data
-    print( '\n=======> Parcels tables' )
-    os.system( 'python lawrence_parcels_finish.py -d ../db/lawrence_parcels.sqlite'.format( args.master_filename ) )
-    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f Parcels_L -t RawParcels -o {0} -c'.format( args.master_filename ) )
-    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f ParcelSummary_L -t ParcelSummary_L -o {0}'.format( args.master_filename ) )
+    # Read raw parcels data
+    print( '\n=======> Parcels input' )
+    os.system( 'python db_to_db.py -i ../db/lawrence_vision_scrape.sqlite -f RawParcels_L -t RawParcels_L -o {0} -c'.format( args.master_filename ) )
+
+    # Clean and summarize parcels data
+    print( '\n=======> Parcels table and summary' )
+    os.system( 'python lawrence_parcels_clean.py -l ../xl/residential_land_use_codes.xlsx -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
 
     # Read census data
     print( '\n=======> Census input' )
@@ -178,7 +181,7 @@ if __name__ == '__main__':
             'RawCommercial_1',
             'RawCommercial_2',
             'RawGlcacJobs',
-            'RawParcels',
+            'RawParcels_L',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',

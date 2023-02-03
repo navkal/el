@@ -11,29 +11,16 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
-import numpy as np
 import re
 import signal
-
-import datetime
-THIS_YEAR = datetime.date.today().year
 
 import sys
 sys.path.append('../util')
 import util
-import normalize
 
+SAVE_INTERVAL = 500
 
 URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
-
-LAWRENCE_RANGE_MIN = 200
-LAWRENCE_RANGE_MAX = 106000
-
-ADDR = util.NORMALIZED_ADDRESS
-STREET_NUMBER = util.NORMALIZED_STREET_NUMBER
-STREET_NAME = util.NORMALIZED_STREET_NAME
-OCCUPANCY = util.NORMALIZED_OCCUPANCY
-ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 RE_OCCU = r'Occupancy\:?'
 RE_BATH = r'Total Ba?thr?m?s\:?'
@@ -70,7 +57,6 @@ TOT_OCCU = util.TOTAL_OCCUPANCY
 TOT_BATH = util.TOTAL_BATHS
 TOT_KTCH = util.TOTAL_KITCHENS
 TOT_AREA = util.TOTAL_AREA
-ISRS = util.IS_RESIDENTIAL
 
 
 # Column order
@@ -106,123 +92,27 @@ COLS = \
     TOT_BATH,
     TOT_KTCH,
     TOT_AREA,
-    ISRS,
 ]
 
-# Column name fragments for summary table
-SUMMARY_FUEL_TYPES = \
-{
-    'Oil': util.OIL_,
-    'Gas': util.GAS_,
-    'Electric': util.ELEC_,
-}
-KTCH_TOT = util.KITCHENS_ + util.TOTAL
-BATH_TOT = util.BATHS_ + util.TOTAL
-OCCU_TOT = util.OCCUPANCY_ + util.TOTAL
 
-def make_summary_row( idx, df_group ):
-    sr_summary = pd.Series()
-    sr_summary[STREET_NAME] = idx
+def save_progress( df ):
 
-    # Street features
-    sr_summary[util.PARCEL_COUNT] = len( df_group )
-    sr_summary[BLDS] = df_group[BLDS].sum()
+    if len( df ):
 
-    # Building features
-    sr_summary[KTCH_TOT] = df_group[KTCH].sum()
-    sr_summary[BATH_TOT] = df_group[BATH].sum()
-    sr_summary[OCCU_TOT] = df_group[OCCU].sum()
+        # Reorganize rows
+        df[VSID] = df[VSID].astype( int )
+        df = df.drop_duplicates( subset=[VSID], keep='last' )
+        df = df.sort_values( by=[VSID] )
 
-    # Building features by fuel type
-    for fuel_type in SUMMARY_FUEL_TYPES.items():
+        # Report size of output
+        print( '' )
+        print( 'Saving {} VISION IDs'.format( len( df ) ) )
 
-        df_fuel = df_group[ df_group[FUEL]==fuel_type[0] ]
-
-        if len( df_fuel ):
-            sr_summary[fuel_type[1] + KTCH_TOT] = df_fuel[KTCH].sum()
-            sr_summary[fuel_type[1] + BATH_TOT] = df_fuel[BATH].sum()
-            sr_summary[fuel_type[1] + OCCU_TOT] = df_fuel[OCCU].sum()
-
-    return sr_summary
+        # Preserve current progress in database
+        util.create_table( args.parcels_table_name, conn, cur, df=df )
+        print( '' )
 
 
-def make_summary( s_res, df ):
-
-    print( 'Summarizing {} {} VISION IDs'.format( len( df ), s_res ) )
-
-    # Drop empty street names
-    df = df[ df[STREET_NAME].str.len() > 0 ]
-
-    # Initialize summary dataframe
-    df_summary = pd.DataFrame()
-
-    # Iterate through street groups
-    for idx, df_group in df.groupby( by=[STREET_NAME] ):
-
-        # Summarize current street
-        sr_summary = make_summary_row( idx, df_group )
-
-        # Append row to summary dataframe
-        if df_summary.empty:
-            df_summary = pd.DataFrame( columns=sr_summary.index )
-        df_summary = df_summary.append( sr_summary, ignore_index=True )
-
-    # Convert float to integer
-    for col_name in df_summary.columns[1:]:
-        df_summary[col_name] = clean_integer( df_summary[col_name] )
-
-    return df_summary
-
-
-def summarize_and_exit( df, summary_table_name ):
-
-    print( '' )
-
-    # Summarize residential parcels
-    df_res = make_summary( 'Residential', df[ df[ISRS]==util.YES ] )
-    df_res[ISRS] = util.YES
-
-    # Summarize commercial parcels
-    df_com = make_summary( 'Commercial', df[ df[ISRS]==util.NO ] )
-    df_com[ISRS] = util.NO
-
-    # Combine and sort
-    df_summary = pd.concat( [df_res, df_com ] )
-    df_summary = df_summary.sort_values( by=[STREET_NAME, ISRS], ascending=[True, False] )
-
-    # Save to database
-    util.create_table( summary_table_name, conn, cur, df=df_summary )
-
-    # Report elapsed time
-    util.report_elapsed_time()
-    sys.exit()
-
-
-def clean_string( col, remove_all_spaces=False ):
-    col = col.fillna( '' ).astype( str )
-    col = col.str.strip().replace( r'\s+', ' ', regex=True )
-    if remove_all_spaces:
-        col = col.str.strip().replace( r'\s', '', regex=True )
-    return col
-
-def clean_float( col ):
-    col = col.replace( r'^\s*$', np.nan, regex=True)
-    col = col.fillna( '0' ).astype( float )
-    return col
-
-def clean_integer( col ):
-    col = col.replace( '[\$,]', '', regex=True )
-    col = clean_float( col ).astype( int )
-    return col
-
-def clean_date( col ):
-    col = pd.to_datetime( col, infer_datetime_format=True, errors='coerce' )
-    return col
-
-def calculate_age( row ):
-    year_built = row[YEAR]
-    age = ( THIS_YEAR - year_built ) if year_built else -1
-    return age
 
 b_save_and_exit_done = False
 def save_and_exit( signum, frame ):
@@ -234,71 +124,12 @@ def save_and_exit( signum, frame ):
     else:
         b_save_and_exit_done = True
 
-    global df
-
     # Report current status
-    if not args.post_process:
-        print( '' )
-        print( 'Stopping at VISION ID {}'.format( vision_id ) )
+    print( '' )
+    print( 'Stopping at VISION ID {}'.format( vision_id ) )
 
-    if len( df ):
-
-        # Reorganize rows
-        df[VSID] = df[VSID].astype( int )
-        df = df.drop_duplicates( subset=[VSID], keep='last' )
-        df = df.sort_values( by=[VSID] )
-
-        # Clean up data
-        df[ACCT] = clean_string( df[ACCT] )
-        df[MBLU] = clean_string( df[MBLU], remove_all_spaces=True )
-        df[LOCN] = clean_string( df[LOCN] )
-        df[OWN1] = clean_string( df[OWN1] )
-        df[OWN2] = clean_string( df[OWN2] )
-        df[ASMT] = clean_integer( df[ASMT] )
-        df[STYL] = clean_string( df[STYL] )
-        df[OCCU] = clean_integer( df[OCCU] )
-        df[HEAT] = clean_string( df[HEAT] )
-        df[FUEL] = clean_string( df[FUEL] )
-        df[AIRC] = clean_string( df[AIRC] )
-        df[HTAC] = clean_string( df[HTAC] )
-        df[FLR1] = clean_string( df[FLR1] )
-        df[RESU] = clean_integer( df[RESU] )
-        df[KTCH] = clean_integer( df[KTCH] )
-        df[BATH] = clean_integer( df[BATH] )
-        df[LAND] = clean_string( df[LAND] )
-        df[DESC] = clean_string( df[DESC] )
-        df[ACRE] = clean_float( df[ACRE] )
-        df[SLPR] = clean_integer( df[SLPR] )
-        df[SLDT] = clean_date( df[SLDT] )
-        df[ZONE] = clean_string( df[ZONE] )
-        df[YEAR] = clean_integer( df[YEAR] )
-        df[AREA] = clean_integer( df[AREA] )
-        df[BLDS] = clean_integer( df[BLDS] )
-        df[TOT_OCCU] = clean_integer( df[TOT_OCCU] )
-        df[TOT_BATH] = clean_integer( df[TOT_BATH] )
-        df[TOT_KTCH] = clean_integer( df[TOT_KTCH] )
-        df[TOT_AREA] = clean_integer( df[TOT_AREA] )
-
-        # If we got account numbers or Mblu values on every row, ensure that they are unique
-        if len( df[ACCT][df[ACCT] != ''] ) == len( df ):
-            df = df.drop_duplicates( subset=[ACCT], keep='last' )
-        elif len( df[MBLU][df[MBLU] != ''] ) == len( df ):
-            df = df.drop_duplicates( subset=[MBLU], keep='last' )
-        # else don't drop anything; we already dropped on VISION ID
-
-        # Calculate age
-        df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
-
-        # Normalize addresses.  Use result_type='expand' to load multiple columns!
-        df[ADDR] = df[LOCN]
-        df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city=municipality.upper(), return_parts=True ), axis=1, result_type='expand' )
-
-        # Report size of output
-        print( '' )
-        print( 'Saving {} VISION IDs'.format( len( df ) ) )
-
-        # Preserve current progress in database
-        util.create_table( parcels_table_name, conn, cur, df=df )
+    # Save what we have scraped
+    save_progress( df )
 
     # Report elapsed time
     util.report_elapsed_time()
@@ -395,51 +226,30 @@ def scrape_buildings( soup, sr_row ):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Scrape parcel assessment data from Vision Government Solutions website' )
-    parser.add_argument( '-d', dest='db_filename', help='Database filename' )
-    parser.add_argument( '-t', dest='parcels_table_name',  help='Output parcels table name - Name of target table in SQLite database file' )
-    parser.add_argument( '-l', dest='luc_filename',  help='Land use codes spreadsheet filename' )
-    parser.add_argument( '-m', dest='municipality',  help='Name of municipality in MA' )
+    parser.add_argument( '-d', dest='db_filename', help='Database filename', required=True )
+    parser.add_argument( '-t', dest='parcels_table_name',  help='Output parcels table name - Name of target table in SQLite database file', required=True )
+    parser.add_argument( '-m', dest='municipality',  help='Name of municipality in MA', required=True )
     parser.add_argument( '-v', dest='vision_id_range',  help='Range of Vision IDs to request' )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
     parser.add_argument( '-r', dest='refresh', action='store_true', help='Refresh records in existing database?' )
-    parser.add_argument( '-p', dest='post_process', action='store_true', help='Post-process only?' )
-    parser.add_argument( '-s', dest='summary_table_name', help='Output summary table name, used in summarize-only opration, to summarize the results of a completed scrape' )
     args = parser.parse_args()
 
-    # Flag precedence for refresh
+    # Refresh and range arguments
     if args.refresh:
         args.create = False
-
-    # Flag precedence for post-process
-    if args.post_process:
-        args.create = False
-        args.refresh = True
-
-    # Retrieve various arguments that override Lawrence-specific defaults
-    municipality = args.municipality if args.municipality else 'lawrence'
-    parcels_table_name = args.parcels_table_name if args.parcels_table_name else 'Parcels_L'
-
-    if args.vision_id_range:
+    elif args.vision_id_range:
         vision_id_range = args.vision_id_range.split( ',' )
         vision_id_range = [int(s) for s in vision_id_range]
-    else:
-        vision_id_range = [LAWRENCE_RANGE_MIN, LAWRENCE_RANGE_MAX]
-    vision_id_range[1] += 1
+        vision_id_range[1] += 1
 
     # Open the database
     conn, cur, engine = util.open_database( args.db_filename, args.create )
 
     # Read pre-existing table from database
     try:
-        df = pd.read_sql_table( parcels_table_name, engine, index_col=util.ID, parse_dates=True )
-        df[SLDT] = pd.to_datetime( df[SLDT] ).dt.strftime( '%m/%d/%Y' )
+        df = pd.read_sql_table( args.parcels_table_name, engine, index_col=util.ID, parse_dates=True )
     except:
         df = pd.DataFrame( columns=COLS )
-
-    # Take early exit with summarize option
-    if args.summary_table_name:
-        # This option has no default value
-        summarize_and_exit( df, args.summary_table_name )
 
     # Determine range of Vision IDs to process
     if len( df ):
@@ -455,32 +265,24 @@ if __name__ == '__main__':
         id_range = range( vision_id_range[0], vision_id_range[1] )
 
     print( '' )
-    s_doing_what =  '{} {}'.format( ( 'Post-processing' if args.post_process else 'Refreshing' ), len( id_range ) ) if ( len( df ) and args.refresh ) else 'Discovering'
+    s_doing_what =  '{} {}'.format( 'Refreshing' , len( id_range ) ) if ( len( df ) and args.refresh ) else 'Discovering'
     if len( id_range ):
         print( '{} VISION IDs in range {} to {}'.format( s_doing_what, id_range[0], id_range[-1] ) )
     else:
         exit( 'No VISION IDs to process in {}'.format( id_range ) )
     print( '' )
 
-    # Take early exit with post-process option
-    if args.post_process:
-        save_and_exit( None, None )
-    else:
-        signal.signal( signal.SIGINT, save_and_exit )
-
-    # Retrieve residential codes
-    df_res_codes = pd.read_excel( args.luc_filename, dtype=object )
-    sr_res_codes = df_res_codes['Residential Land Use Code']
-    sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
-    ls_res_codes = list( sr_res_codes )
-
     # Prepare URL base
-    url_base = URL_BASE.format( municipality )
+    url_base = URL_BASE.format( args.municipality.lower() )
 
     # Initialize counter
-    n_processed = 0
+    n_processed = 0 if args.refresh else len( df )
     n_last_reported = -1
     n_tried = 0
+    n_saved = n_processed
+
+    # Set condition handler
+    signal.signal( signal.SIGINT, save_and_exit )
 
     for vision_id in id_range:
 
@@ -533,14 +335,16 @@ if __name__ == '__main__':
             # Extract summary building values
             sr_row = scrape_buildings( soup, sr_row )
 
-            # Set residential flag
-            sr_row[ISRS] = util.YES if sr_row[LAND] in ls_res_codes else util.NO
-
             # Load new row into dataframe
             df = df.append( sr_row, ignore_index=True )
 
             # Increment count
             n_processed += 1
+
+            # Intermittently save what we have scraped
+            if n_processed - n_saved >= SAVE_INTERVAL:
+                save_progress( df )
+                n_saved = n_processed if args.refresh else len( df )
 
         # Increment count
         n_tried += 1

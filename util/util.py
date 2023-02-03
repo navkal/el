@@ -1498,6 +1498,7 @@ COLUMN_ORDER = \
     [
         'vision_id',
         'account_number',
+        'mblu',
         'primary_land_use_code',
         'primary_land_use_code_description',
         'first_floor_use',
@@ -1655,6 +1656,7 @@ COLUMN_ORDER = \
     [
         LICENSE_NUMBER,
         ACCOUNT_NUMBER,
+        MBLU,
         BUSINESS_NAME,
         LICENSE_SUBTYPE,
         STATUS,
@@ -2284,7 +2286,7 @@ def merge_expand_merge_expand_merge( df_result, df_unmatched, left_columns, df_p
 
 # Read parcels assessment table columns needed for merge
 def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_NUMBER, NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] ):
-    df_parcels = pd.read_sql_table( 'RawParcels', engine, index_col=ID, columns=columns, parse_dates=True )
+    df_parcels = pd.read_sql_table( 'Parcels_L', engine, index_col=ID, columns=columns, parse_dates=True )
     df_parcels[RIGHT_ADDR_TRUNC] = df_parcels[NORMALIZED_STREET_NUMBER] + ' ' + df_parcels[NORMALIZED_STREET_NAME]
     df_parcels = df_parcels.drop( columns=[NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] )
     return df_parcels

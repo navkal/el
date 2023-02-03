@@ -47,6 +47,7 @@ STREET_TYPES = \
     'HOLLOW': 'HOLW',
     'KNOLL': 'KNL',
     'LANE': 'LN',
+    'LN AVE': 'LNAVE',
     'LODGE': 'LDG',
     'LOOP': 'LOOP',
     'LP': 'LOOP',
@@ -155,6 +156,7 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     address = re.sub( r' COLONIAL$', ' COLONIAL TER', address )
     address = re.sub( r' ANDOVER$', ' ANDOVER TER', address )
     address = re.sub( r' BICKNELL$', ' BICKNELL TER', address )
+    address = re.sub( r' HAYDEN$', ' HAYDEN AVE', address )
 
     # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )

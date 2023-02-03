@@ -1,18 +1,45 @@
 # Copyright 2023 Energize Lawrence.  All rights reserved.
 
-import argparse
-
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import numpy as np
+
 import util
+
+#
+# Utility functions to clean Vision data
+#
+
+def clean_string( col, remove_all_spaces=False ):
+    col = col.fillna( '' ).astype( str )
+    col = col.str.strip().replace( r'\s+', ' ', regex=True )
+    if remove_all_spaces:
+        col = col.str.strip().replace( r'\s', '', regex=True )
+    return col
+
+def clean_float( col ):
+    col = col.replace( r'^\s*$', np.nan, regex=True)
+    col = col.fillna( '0' ).astype( float )
+    return col
+
+def clean_integer( col ):
+    col = col.replace( '[\$,]', '', regex=True )
+    col = clean_float( col ).astype( int )
+    return col
+
+def clean_date( col ):
+    col = pd.to_datetime( col, infer_datetime_format=True, errors='coerce' )
+    return col
+
+
 
 # Incorporate scraped data from online Vision database into previously merged assessment data
 def incorporate_vision_assessment_data( engine, df_assessment, verbose=False ):
 
     # Read parcel records scraped from Vision database
-    df_vision = pd.read_sql_table( 'RawParcels', engine, index_col=util.ID, parse_dates=True )
+    df_vision = pd.read_sql_table( 'Parcels_L', engine, index_col=util.ID, parse_dates=True )
 
     # Partition columns into three groups: intersection and two differences
     v_inter_a = df_vision.columns.intersection( df_assessment.columns )
