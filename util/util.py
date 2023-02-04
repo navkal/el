@@ -1389,7 +1389,6 @@ CONSISTENT_COLUMN_NAMES = \
 
 CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
-CONSISTENT_COLUMN_NAMES['RawCommercialProperties_L'] = { **CONSISTENT_COLUMN_NAMES['RawCommercial_1'], **CONSISTENT_COLUMN_NAMES['RawCommercial_2'], }
 
 # --> Generate column name mappings for Mass Energy Insight tables -->
 def populate_mei_column_names( dict, start_year, end_year ):
