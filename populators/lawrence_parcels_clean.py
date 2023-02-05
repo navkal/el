@@ -80,7 +80,7 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Read raw table from database
-    df = pd.read_sql_table( 'RawParcels_L', engine, index_col=util.ID, parse_dates=True )
+    df = pd.read_sql_table( 'Vision_Lawrence', engine, index_col=util.ID, parse_dates=True )
 
     # Retrieve residential codes
     df_res_codes = pd.read_excel( args.luc_filename, dtype=object )

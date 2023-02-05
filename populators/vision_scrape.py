@@ -123,7 +123,7 @@ def save_progress( df ):
         print( 'Saving {} VISION IDs'.format( len( df ) ) )
 
         # Preserve current progress in database
-        util.create_table( args.parcels_table_name, conn, cur, df=df )
+        util.create_table( parcels_table_name, conn, cur, df=df )
         print( '' )
 
         # Save vision ID at which to continue discovery
@@ -242,8 +242,6 @@ def scrape_buildings( soup, sr_row ):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Scrape parcel assessment data from Vision Government Solutions website' )
-    parser.add_argument( '-d', dest='db_filename', help='Database filename', required=True )
-    parser.add_argument( '-t', dest='parcels_table_name',  help='Output parcels table name - Name of target table in SQLite database file', required=True )
     parser.add_argument( '-m', dest='municipality',  help='Name of municipality in MA', required=True )
     parser.add_argument( '-v', dest='vision_id_range',  help='Range of Vision IDs to request' )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
@@ -253,17 +251,24 @@ if __name__ == '__main__':
     # Refresh and range arguments
     if args.refresh:
         args.create = False
-    elif args.vision_id_range:
-        vision_id_range = args.vision_id_range.split( ',' )
+    else:
+        if args.vision_id_range:
+            vision_id_range = args.vision_id_range.split( ',' )
+        else:
+            # Default discovery range
+            vision_id_range = [1,200000]
         vision_id_range = [int(s) for s in vision_id_range]
         vision_id_range[1] += 1
 
     # Open the database
-    conn, cur, engine = util.open_database( args.db_filename, args.create )
+    municipality = args.municipality.lower()
+    db_filename = '../db/vision_{}.sqlite'.format( municipality )
+    conn, cur, engine = util.open_database( db_filename, args.create )
 
     # Read pre-existing table from database
+    parcels_table_name = 'Vision_' + municipality.capitalize()
     try:
-        df = pd.read_sql_table( args.parcels_table_name, engine, index_col=util.ID, parse_dates=True )
+        df = pd.read_sql_table( parcels_table_name, engine, index_col=util.ID, parse_dates=True )
     except:
         df = pd.DataFrame( columns=COLS )
 
@@ -294,7 +299,7 @@ if __name__ == '__main__':
     print( '' )
 
     # Prepare URL base
-    url_base = URL_BASE.format( args.municipality.lower() )
+    url_base = URL_BASE.format( municipality )
 
     # Initialize counter
     n_processed = 0 if args.refresh else len( df )

@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     # Read raw parcels data
     print( '\n=======> Parcels input' )
-    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f RawParcels_L -t RawParcels_L -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f Vision_Lawrence -t Vision_Lawrence -o {0} -c'.format( args.master_filename ) )
 
     # Clean and summarize parcels data
     print( '\n=======> Parcels table and summary' )
@@ -181,12 +181,12 @@ if __name__ == '__main__':
             'RawCommercial_1',
             'RawCommercial_2',
             'RawGlcacJobs',
-            'RawParcels_L',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',
             'RawResidential_4',
             'RawResidential_5',
+            'Vision_Lawrence',
          ],
         'encipher_column_names':
         [

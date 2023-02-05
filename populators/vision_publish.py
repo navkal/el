@@ -8,27 +8,29 @@ import sys
 sys.path.append( '../util' )
 import util
 
-
 # Main program
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Generate Vision master and research databases' )
     parser.add_argument( '-m', dest='master_filename',  help='Output filename - Name of master database file', required=True )
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
+    parser.add_argument( '-t', dest='towns',  help='List of towns to include', required=True )
     args = parser.parse_args()
 
+    create = ' -c'
+    ls_towns = args.towns.split( ',' )
+
     # Copy tables
-    print( '\n=======> Lawrence table' )
-    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f RawParcels_L -t Lawrence -o {0} -c'.format( args.master_filename ) )
-
-    print( '\n=======> Lexington table' )
-    os.system( 'python db_to_db.py -i ../db/vision_lexington.sqlite -f RawParcels_Lex -t Lexington -o {0}'.format( args.master_filename ) )
-
+    print( '\n=======> Copying tables' )
+    for town in ls_towns:
+        town = town.capitalize()
+        print( '\n-------> {}'.format( town ) )
+        os.system( 'python db_to_db.py -i ../db/vision_{}.sqlite -f Vision_{} -t Vision_{} -o {} {}'.format( town.lower(), town, town, args.master_filename, create ) )
+        create = ''
 
     # Generate copyright notice
     print( '\n=======> Copyright' )
     util.create_about_table( 'Vision', util.make_df_about_energize_lawrence(), args.master_filename )
-
 
     # Publish research copy of database
     input_db = util.read_database( args.master_filename )
