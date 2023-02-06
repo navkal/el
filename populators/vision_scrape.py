@@ -322,7 +322,12 @@ if __name__ == '__main__':
         url = url_base + str( vision_id )
         try:
             rsp = requests.get( url, verify=False )
-        except:
+        except Exception as e:
+            print( '' )
+            print( '==>' )
+            print( '==> Exiting due to exception:' )
+            print( '==> {}'.format( str( e ) ) )
+            print( '==>' )
             save_and_exit( None, None )
 
         if ( rsp.url == url ):
