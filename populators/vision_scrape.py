@@ -160,7 +160,7 @@ def scrape_element( soup, tag, id ):
 
 
 # Scrape cell of Building Attributes table, identified by label regex
-def scrape_building_attribute( soup, re_label, building=1 ):
+def scrape_building_attribute( soup, re_label, building=1, is_numeric=False ):
 
     b_found = False
     s_attribute = ''
@@ -172,8 +172,12 @@ def scrape_building_attribute( soup, re_label, building=1 ):
             if not tr.string:
                 for td in tr:
                     if b_found:
-                        s_attribute = td.string
+                        s_attribute = str( td.string ).strip()
                     b_found = re.match( re_label, td.string )
+
+    # Optionally replace letter O with zero
+    if is_numeric:
+        s_attribute = s_attribute.replace( 'O', '0' )
 
     return s_attribute
 
@@ -196,25 +200,19 @@ def scrape_buildings( soup, sr_row ):
         n_building += 1
 
         # Attempt to extract field value and add to total
-        scr_occu = scrape_building_attribute( soup, RE_OCCU, building=n_building )
-        if scr_occu:
-            s = str( scr_occu.string.strip() )
-            if len( s ):
-                n_occu += int( float( s ) )
+        scr_occu = scrape_building_attribute( soup, RE_OCCU, building=n_building, is_numeric=True )
+        if len( scr_occu ):
+            n_occu += int( float( scr_occu ) )
 
         # Attempt to extract field value and add to total
-        scr_bath = scrape_building_attribute( soup, RE_BATH, building=n_building )
-        if scr_bath:
-            s = str( scr_bath.string.strip() )
-            if len( s ):
-                n_bath += int( float( s ) )
+        scr_bath = scrape_building_attribute( soup, RE_BATH, building=n_building, is_numeric=True )
+        if len( scr_bath ):
+            n_bath += int( float( scr_bath ) )
 
         # Attempt to extract field value and add to total
-        scr_ktch = scrape_building_attribute( soup, RE_KTCH, building=n_building )
-        if scr_ktch:
-            s = str( scr_ktch.string.strip() )
-            if len( s ):
-                n_ktch += int( float( s ) )
+        scr_ktch = scrape_building_attribute( soup, RE_KTCH, building=n_building, is_numeric=True )
+        if len( scr_ktch ):
+            n_ktch += int( float( scr_ktch ) )
 
         # Attempt to extract field value and add to total
         scr_area = scrape_element( soup, 'span', 'MainContent_ctl{:02d}_lblBldArea'.format( n_building ) )
