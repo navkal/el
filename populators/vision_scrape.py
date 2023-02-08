@@ -25,6 +25,13 @@ CONTINUE_AT_TABLE = '_ContinueAtVisionId'
 
 URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
 
+BUILDING_TABLE_ID_FORMAT = 'MainContent_ctl{:02d}_grdCns'
+BUILDING_AREA_ID_FORMAT = 'MainContent_ctl{:02d}_lblBldArea'
+BUILDING_YEAR_ID_FORMAT = 'MainContent_ctl{:02d}_lblYearBuilt'
+BUILDING_TABLE_ID = 'building_id'
+BUILDING_AREA_ID = 'area_id'
+BUILDING_YEAR_ID = 'year_id'
+
 RE_OCCU = r'Occupancy\:?'
 RE_BATH = r'Total Ba?thr?m?s\:?'
 RE_KTCH = r'Num Kitchens\:?'
@@ -98,14 +105,12 @@ COLS = \
 ]
 
 
-b_loop_ran_to_completion = False
 def save_continue_at():
 
     # If not running in refresh mode, update continue-at table
     if not args.refresh:
-        df_continue_at = pd.DataFrame() if b_loop_ran_to_completion else pd.DataFrame( data={ VSID: [vision_id] } )
         printctl.off()
-        util.create_table( CONTINUE_AT_TABLE, conn, cur, df=df_continue_at )
+        util.create_table( CONTINUE_AT_TABLE, conn, cur, df=pd.DataFrame( data={ VSID: [vision_id] } ) )
         printctl.on()
 
 
@@ -126,8 +131,8 @@ def save_progress( df ):
         util.create_table( parcels_table_name, conn, cur, df=df )
         print( '' )
 
-        # Save vision ID at which to continue discovery
-        save_continue_at()
+    # Save vision ID at which to continue discovery
+    save_continue_at()
 
 
 b_save_and_exit_done = False
@@ -152,6 +157,53 @@ def save_and_exit( signum, frame ):
     sys.exit()
 
 
+# Find HTML IDs associated with building tables, areas, and years
+def find_all_building_ids( soup, building_count ):
+
+    ls_building_ids = []
+    first_building_id = ''
+    first_area_id = ''
+    first_year_id = ''
+
+    # Set range limit for the search
+    try:
+        range_max = min( 5 + ( 3 * int( building_count ) ), 100 )
+    except:
+        range_max = 100
+
+    # Search for HTML IDs, using 2-digit integers from 01 to range max
+    for n_index in range( 1, range_max ):
+
+        # Initialize dictionary of building and area IDs
+        dc_ids = { BUILDING_TABLE_ID: '', BUILDING_AREA_ID: '' }
+
+        # If page contains building table with current index, save the ID
+        building_id = BUILDING_TABLE_ID_FORMAT.format( n_index )
+        if soup.find( 'table', id=building_id ):
+            dc_ids[BUILDING_TABLE_ID] = building_id
+            if first_building_id == '':
+                first_building_id = building_id
+
+        # If page contains building area with current index, save the ID
+        area_id = BUILDING_AREA_ID_FORMAT.format( n_index )
+        if soup.find( 'span', id=area_id ):
+            dc_ids[BUILDING_AREA_ID] = area_id
+            if first_area_id == '':
+                first_area_id = area_id
+
+        # If page contains year built with current index, save the ID
+        year_id = BUILDING_YEAR_ID_FORMAT.format( n_index )
+        if soup.find( 'span', id=year_id ):
+            if first_year_id == '':
+                first_year_id = year_id
+
+        # If we got anything in the dictionary, append to the list
+        if dc_ids[BUILDING_TABLE_ID] or dc_ids[BUILDING_AREA_ID]:
+            ls_building_ids.append( dc_ids )
+
+    return ls_building_ids, first_building_id, first_area_id, first_year_id
+
+
 # Scrape HTML element by id
 def scrape_element( soup, tag, id ):
     element = soup.find( tag, id=id )
@@ -160,12 +212,12 @@ def scrape_element( soup, tag, id ):
 
 
 # Scrape cell of Building Attributes table, identified by label regex
-def scrape_building_attribute( soup, re_label, building=1, is_numeric=False ):
+def scrape_building_attribute( soup, building_id, re_label, is_numeric=False ):
 
     b_found = False
     s_attribute = ''
 
-    table = soup.find( 'table', id='MainContent_ctl{:02d}_grdCns'.format( building ) )
+    table = soup.find( 'table', id=building_id )
 
     if table:
         for tr in table:
@@ -175,15 +227,19 @@ def scrape_building_attribute( soup, re_label, building=1, is_numeric=False ):
                         s_attribute = str( td.string ).strip()
                     b_found = re.match( re_label, td.string )
 
-    # Optionally replace letter O with zero
     if is_numeric:
+
+        # Replace letter O with zero (e.g. 'O1' - thanks, Tewksbury)
         s_attribute = s_attribute.replace( 'O', '0' )
+
+        # Strip trailing non-numeric text (e.g. '2 Full' - thanks, Quincy)
+        s_attribute = re.sub( r'(^\d+)(.*)', r'\1', s_attribute )
 
     return s_attribute
 
 
 # Scrape and summarize building values
-def scrape_buildings( soup, sr_row ):
+def scrape_buildings( soup, ls_building_ids, sr_row ):
 
     # Initialize tallies
     n_occu = 0
@@ -191,39 +247,32 @@ def scrape_buildings( soup, sr_row ):
     n_ktch = 0
     n_area = 0
 
-    # Initialize counter
-    n_building = 0
+    for dc_ids in ls_building_ids:
 
-    while True:
-
-        # Increment counter
-        n_building += 1
+        building_id = dc_ids[BUILDING_TABLE_ID]
+        area_id = dc_ids[BUILDING_AREA_ID]
 
         # Attempt to extract field value and add to total
-        scr_occu = scrape_building_attribute( soup, RE_OCCU, building=n_building, is_numeric=True )
+        scr_occu = scrape_building_attribute( soup, building_id, RE_OCCU, is_numeric=True )
         if len( scr_occu ):
             n_occu += int( float( scr_occu ) )
 
         # Attempt to extract field value and add to total
-        scr_bath = scrape_building_attribute( soup, RE_BATH, building=n_building, is_numeric=True )
+        scr_bath = scrape_building_attribute( soup, building_id, RE_BATH, is_numeric=True )
         if len( scr_bath ):
             n_bath += int( float( scr_bath ) )
 
         # Attempt to extract field value and add to total
-        scr_ktch = scrape_building_attribute( soup, RE_KTCH, building=n_building, is_numeric=True )
+        scr_ktch = scrape_building_attribute( soup, building_id, RE_KTCH, is_numeric=True )
         if len( scr_ktch ):
             n_ktch += int( float( scr_ktch ) )
 
         # Attempt to extract field value and add to total
-        scr_area = scrape_element( soup, 'span', 'MainContent_ctl{:02d}_lblBldArea'.format( n_building ) )
+        scr_area = scrape_element( soup, 'span', area_id )
         if scr_area:
             s = str( scr_area.string.strip().replace( ',', '' ) )
             if len( s ):
                 n_area += int( float( s ) )
-
-        # If we didn't get any field values, quit
-        if not ( scr_occu or scr_bath or scr_ktch or scr_area ):
-            break
 
     # Insert totals in row
     sr_row[TOT_OCCU] = n_occu
@@ -246,47 +295,52 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='refresh', action='store_true', help='Refresh records in existing database?' )
     args = parser.parse_args()
 
-    # Refresh and range arguments
-    if args.refresh:
-        args.create = False
-    else:
-        if args.vision_id_range:
-            vision_id_range = args.vision_id_range.split( ',' )
-        else:
-            # Default discovery range
-            vision_id_range = [1,200000]
-        vision_id_range = [int(s) for s in vision_id_range]
-        vision_id_range[1] += 1
-
     # Open the database
     municipality = args.municipality.lower()
     db_filename = '../db/vision_{}.sqlite'.format( municipality )
     conn, cur, engine = util.open_database( db_filename, args.create )
 
     # Read pre-existing table from database
-    parcels_table_name = 'Vision_' + municipality.capitalize()
+    parcels_table_name = 'Vision_Raw_' + municipality.capitalize()
     try:
         df = pd.read_sql_table( parcels_table_name, engine, index_col=util.ID, parse_dates=True )
     except:
         df = pd.DataFrame( columns=COLS )
 
-    # Determine range of Vision IDs to process
-    if len( df ):
-        # Table exists
-        if args.refresh:
-            # Refresh existing records
-            id_range = df[VSID].to_list()
-        else:
-            # Discover remainder of range
-            try:
-                df_continue = pd.read_sql_table( CONTINUE_AT_TABLE, engine, index_col=util.ID, parse_dates=True )
-                range_min = df_continue[VSID].iloc[0]
-            except:
-                range_min = vision_id_range[1]
-            id_range = range( range_min, vision_id_range[1] )
+    # Read continuation table from database
+    try:
+        df_continue = pd.read_sql_table( CONTINUE_AT_TABLE, engine, index_col=util.ID, parse_dates=True )
+    except:
+        df_continue = pd.DataFrame()
+
+    # Determine lower and upper bounds of Vision IDs to request
+    if args.vision_id_range:
+        # Supplied discovery range
+        vision_id_range = args.vision_id_range.split( ',' )
     else:
-        # Table does not exist.  Discover full range.
-        id_range = range( vision_id_range[0], vision_id_range[1] )
+        # Default discovery range
+        vision_id_range = [1,200000]
+    vision_id_range = [int(s) for s in vision_id_range]
+    vision_id_range[1] += 1
+
+    # Determine range of Vision IDs to request
+    if args.refresh:
+        # Refresh mode - update existing records, optionally restricted by specified vision ID bounds
+        id_range = df[VSID].to_list()
+        if args.vision_id_range:
+            id_range = [ n for n in id_range if ( ( n >= vision_id_range[0] ) and ( n < vision_id_range[1] ) ) ]
+    else:
+        # Discover by consecutive integers
+        if args.create:
+            # Create mode - start at lower bound
+            range_min = vision_id_range[0]
+        elif len( df_continue ):
+            # Continue mode - start at saved value
+            range_min = df_continue[VSID].iloc[0]
+        else:
+            # Continue mode - start value not available, use lower bound
+            range_min = vision_id_range[0]
+        id_range = range( range_min, vision_id_range[1] )
 
     print( '' )
     s_doing_what =  '{} {}'.format( 'Refreshing' , len( id_range ) ) if ( len( df ) and args.refresh ) else 'Discovering'
@@ -332,40 +386,46 @@ if __name__ == '__main__':
 
         if ( rsp.url == url ):
 
+            # Parse the HTML
+            soup = BeautifulSoup( rsp.text, 'html.parser' )
+
+            # Find IDs of all building tables and areas
+            building_count = scrape_element( soup, 'span', 'MainContent_lblBldCount' )
+            ls_building_ids, first_building_id, first_area_id, first_year_id = find_all_building_ids( soup, building_count )
+
             # Initialize new dataframe row
             sr_row = pd.Series( index=COLS )
             sr_row[VSID] = vision_id
 
             # Extract values
-            soup = BeautifulSoup( rsp.text, 'html.parser' )
             sr_row[ACCT] = scrape_element( soup, 'span', 'MainContent_lblAcctNum' )
             sr_row[MBLU] = scrape_element( soup, 'span', 'MainContent_lblMblu' )
             sr_row[LOCN] = scrape_element( soup, 'span', 'MainContent_lblTab1Title' )
             sr_row[OWN1] = scrape_element( soup, 'span', 'MainContent_lblOwner' )
             sr_row[OWN2] = scrape_element( soup, 'span', 'MainContent_lblCoOwner' )
             sr_row[ASMT] = scrape_element( soup, 'span', 'MainContent_lblGenAssessment' )
-            sr_row[STYL] = scrape_building_attribute( soup, r'Style\:?' )
-            sr_row[OCCU] = scrape_building_attribute( soup, RE_OCCU )
-            sr_row[HEAT] = scrape_building_attribute( soup, r'Heat(ing)? Type\:?' )
-            sr_row[FUEL] = scrape_building_attribute( soup, r'Heat(ing)? Fuel\:?' )
-            sr_row[AIRC] = scrape_building_attribute( soup, r'AC Type\:?' )
-            sr_row[HTAC] = scrape_building_attribute( soup, r'Heat\/AC\:?' )
-            sr_row[FLR1] = scrape_building_attribute( soup, r'1st Floor Use\:?' )
-            sr_row[RESU] = scrape_building_attribute( soup, r'Residential Units\:?' )
-            sr_row[KTCH] = scrape_building_attribute( soup, RE_KTCH )
-            sr_row[BATH] = scrape_building_attribute( soup, RE_BATH )
+            sr_row[STYL] = scrape_building_attribute( soup, first_building_id, r'Style\:?' )
+            sr_row[OCCU] = scrape_building_attribute( soup, first_building_id, RE_OCCU, is_numeric=True )
+            sr_row[HEAT] = scrape_building_attribute( soup, first_building_id, r'Heat(ing)? Type\:?' )
+            sr_row[FUEL] = scrape_building_attribute( soup, first_building_id, r'Heat(ing)? Fuel\:?' )
+            sr_row[AIRC] = scrape_building_attribute( soup, first_building_id, r'AC Type\:?' )
+            sr_row[HTAC] = scrape_building_attribute( soup, first_building_id, r'Heat\/AC\:?' )
+            sr_row[FLR1] = scrape_building_attribute( soup, first_building_id, r'1st Floor Use\:?' )
+            sr_row[RESU] = scrape_building_attribute( soup, first_building_id, r'Residential Units\:?' )
+            sr_row[KTCH] = scrape_building_attribute( soup, first_building_id, RE_KTCH, is_numeric=True )
+            sr_row[BATH] = scrape_building_attribute( soup, first_building_id, RE_BATH, is_numeric=True )
             sr_row[LAND] = scrape_element( soup, 'span', 'MainContent_lblUseCode' )
             sr_row[DESC] = scrape_element( soup, 'span', 'MainContent_lblUseCodeDescription' )
             sr_row[ACRE] = scrape_element( soup, 'span', 'MainContent_lblLndAcres' )
             sr_row[SLPR] = scrape_element( soup, 'span', 'MainContent_lblPrice' )
             sr_row[SLDT] = scrape_element( soup, 'span', 'MainContent_lblSaleDate' )
             sr_row[ZONE] = scrape_element( soup, 'span', 'MainContent_lblZone' )
-            sr_row[YEAR] = scrape_element( soup, 'span', 'MainContent_ctl01_lblYearBuilt' )
-            sr_row[AREA] = scrape_element( soup, 'span', 'MainContent_ctl01_lblBldArea' )
-            sr_row[BLDS] = scrape_element( soup, 'span', 'MainContent_lblBldCount' )
+            sr_row[YEAR] = scrape_element( soup, 'span', first_year_id )
+            sr_row[AREA] = scrape_element( soup, 'span', first_area_id )
+            sr_row[BLDS] = building_count
 
             # Extract summary building values
-            sr_row = scrape_buildings( soup, sr_row )
+            sr_row = scrape_buildings( soup, ls_building_ids, sr_row )
 
             # Load new row into dataframe
             df = df.append( sr_row, ignore_index=True )
@@ -380,7 +440,5 @@ if __name__ == '__main__':
 
         # Increment count
         n_tried += 1
-
-    b_loop_ran_to_completion = True
 
     save_and_exit( None, None )

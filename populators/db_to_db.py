@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser.add_argument( '-t', dest='to_table_name',  help='Name of destination table', required=True )
     parser.add_argument( '-o', dest='output_filename',  help='Output database filename' )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
+    parser.add_argument( '-s', dest='strip', action='store_true', help='Strip whitespace from string columns?' )
     args = parser.parse_args()
 
     # Open the input database
@@ -27,6 +28,11 @@ if __name__ == '__main__':
 
     # Retrieve table from input database
     df = pd.read_sql_table( args.from_table_name, engine, index_col=util.ID )
+
+    # Optionally strip strings
+    if args.strip:
+        df_obj = df.select_dtypes( include=['object'] )
+        df[df_obj.columns] = df_obj.apply( lambda col: col.str.strip() )
 
     # Open the output database
     conn, cur, engine = util.open_database( args.output_filename, args.create )

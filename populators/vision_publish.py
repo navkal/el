@@ -17,15 +17,30 @@ if __name__ == '__main__':
     parser.add_argument( '-t', dest='towns',  help='List of towns to include', required=True )
     args = parser.parse_args()
 
-    create = ' -c'
+    # Retrieve list of towns
     ls_towns = args.towns.split( ',' )
 
-    # Copy tables
-    print( '\n=======> Copying tables' )
+    # Initialize database create argument
+    create = ' -c'
+
+    ls_raw_table_names = []
+
+    # Process list of tables
+    print( '\n=======> Processing scraped tables from {}'.format( ls_towns ) )
     for town in ls_towns:
         town = town.capitalize()
-        print( '\n-------> {}'.format( town ) )
-        os.system( 'python db_to_db.py -i ../db/vision_{}.sqlite -f Vision_{} -t Vision_{} -o {} {}'.format( town.lower(), town, town, args.master_filename, create ) )
+        print( '\n=======> {}'.format( town ) )
+
+        raw_table_name = 'Vision_Raw_{}'.format( town )
+        ls_raw_table_names.append( raw_table_name )
+
+        # Copy
+        os.system( 'python db_to_db.py -i ../db/vision_{}.sqlite -f {} -t {} -o {} {}'.format( town.lower(), raw_table_name, raw_table_name, args.master_filename, create ) )
+
+        # Clean
+        os.system( 'python vision_clean.py -f {} -t Vision_{}  -l ../xl/residential_land_use_codes.xlsx -m {}'.format( raw_table_name, town, args.master_filename ) )
+
+        # Clear database create argument
         create = ''
 
     # Generate copyright notice
@@ -39,6 +54,7 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
+            * ls_raw_table_names
         ],
         'encipher_column_names':
         [

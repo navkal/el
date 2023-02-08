@@ -72,15 +72,18 @@ if __name__ == '__main__':
 
     # Retrieve arguments
     parser = argparse.ArgumentParser( description='Clean parcel assessment data scraped from Vision Government Solutions website' )
-    parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
-    parser.add_argument( '-l', dest='luc_filename',  help='Land use codes spreadsheet filename' )
+    parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
+    parser.add_argument( '-l', dest='luc_filename',  help='Land use codes spreadsheet filename', required=True )
+    parser.add_argument( '-f', dest='from_table_name',  help='Name of source table', required=True )
+    parser.add_argument( '-t', dest='to_table_name',  help='Name of destination table', required=True )
+    parser.add_argument( '-n', dest='normalize', action='store_true', help='Normalize addresses?' )
     args = parser.parse_args()
 
     # Open the database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Read raw table from database
-    df = pd.read_sql_table( 'Vision_Lawrence', engine, index_col=util.ID, parse_dates=True )
+    df = pd.read_sql_table( args.from_table_name, engine, index_col=util.ID, parse_dates=True )
 
     # Retrieve residential codes
     df_res_codes = pd.read_excel( args.luc_filename, dtype=object )
@@ -133,12 +136,13 @@ if __name__ == '__main__':
     # Calculate age
     df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
 
-    # Normalize addresses.  Use result_type='expand' to load multiple columns!
-    df[ADDR] = df[LOCN]
-    df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+    # Optionally normalize addresses.  Use result_type='expand' to load multiple columns!
+    if args.normalize:
+        df[ADDR] = df[LOCN]
+        df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Preserve current progress in database
-    util.create_table( 'Parcels_L', conn, cur, df=df )
+    util.create_table( args.to_table_name, conn, cur, df=df )
 
     # Report elapsed time
     util.report_elapsed_time()

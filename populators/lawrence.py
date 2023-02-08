@@ -19,11 +19,11 @@ if __name__ == '__main__':
 
     # Read raw parcels data
     print( '\n=======> Parcels input' )
-    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f Vision_Lawrence -t Vision_Lawrence -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f Vision_Raw_Lawrence -t Vision_Raw_Lawrence -o {0} -c'.format( args.master_filename ) )
 
     # Clean and summarize parcels data
     print( '\n=======> Parcels table and summary' )
-    os.system( 'python lawrence_parcels_clean.py -l ../xl/residential_land_use_codes.xlsx -m {0}'.format( args.master_filename ) )
+    os.system( 'python vision_clean.py -f Vision_Raw_Lawrence -t Parcels_L -l ../xl/residential_land_use_codes.xlsx -n -m {0}'.format( args.master_filename ) )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
 
     # Read census data
@@ -186,7 +186,7 @@ if __name__ == '__main__':
             'RawResidential_3',
             'RawResidential_4',
             'RawResidential_5',
-            'Vision_Lawrence',
+            'Vision_Raw_Lawrence',
          ],
         'encipher_column_names':
         [
