@@ -85,12 +85,6 @@ if __name__ == '__main__':
     # Read raw table from database
     df = pd.read_sql_table( args.from_table_name, engine, index_col=util.ID, parse_dates=True )
 
-    # Retrieve residential codes
-    df_res_codes = pd.read_excel( args.luc_filename, dtype=object )
-    sr_res_codes = df_res_codes['Residential Land Use Code']
-    sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
-    ls_res_codes = list( sr_res_codes )
-
     # Clean up data
     df[ACCT] = vision.clean_string( df[ACCT] )
     df[MBLU] = vision.clean_string( df[MBLU], remove_all_spaces=True )
@@ -123,6 +117,8 @@ if __name__ == '__main__':
     df[TOT_AREA] = vision.clean_integer( df[TOT_AREA] )
 
     # Add residential flag column
+    ls_res_codes = util.get_residential_land_use_codes( args.luc_filename)
+    df[LAND] = util.clean_residential_land_use_codes( df[LAND] )
     df[ISRS] = util.NO
     df.loc[df[LAND].isin( ls_res_codes ), ISRS] = util.YES
 

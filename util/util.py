@@ -1390,6 +1390,23 @@ CONSISTENT_COLUMN_NAMES = \
 CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
 
+
+# Clean  residential land use codes for reliable matching
+def clean_residential_land_use_codes( sr_res_codes ):
+    sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
+    return sr_res_codes
+
+
+# Generate list of residential land use codes, used to categorize properties
+def get_residential_land_use_codes( luc_filename ):
+    df_res_codes = pd.read_excel( luc_filename, dtype=object )
+    sr_res_codes = df_res_codes['Residential Land Use Code']
+    sr_res_codes = clean_residential_land_use_codes( sr_res_codes )
+    sr_res_codes = sr_res_codes.drop_duplicates()
+    ls_res_codes = list( sr_res_codes )
+    return ls_res_codes
+
+
 # --> Generate column name mappings for Mass Energy Insight tables -->
 def populate_mei_column_names( dict, start_year, end_year ):
 

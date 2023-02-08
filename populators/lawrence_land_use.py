@@ -52,11 +52,12 @@ if __name__ == '__main__':
     df_res = pd.read_sql_table( 'Assessment_L_Residential_Merged', engine, index_col=util.ID )
     df_com = pd.read_sql_table( 'Assessment_L_Commercial_Merged', engine, index_col=util.ID )
 
+    # Prepare land use code columns for matching
+    df_res[LUC] = util.clean_residential_land_use_codes( df_res[LUC] )
+    df_com[LUC] = util.clean_residential_land_use_codes( df_com[LUC] )
+
     # Retrieve residential codes and prepare for processing
-    df_res_codes = pd.read_excel( args.luc_filename, dtype=object )
-    sr_res_codes = df_res_codes['Residential Land Use Code']
-    sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )
-    ls_res_codes = list( sr_res_codes )
+    ls_res_codes = util.get_residential_land_use_codes( args.luc_filename)
 
     # Move properties from residential to commercial table
     df_res, df_com = move_properties( df_res, df_com, False )
