@@ -33,8 +33,8 @@ BUILDING_AREA_ID = 'area_id'
 BUILDING_YEAR_ID = 'year_id'
 
 RE_OCCU = r'Occupancy\:?'
-RE_BATH = r'Total Ba?thr?m?s\:?'
-RE_KTCH = r'Num Kitchens\:?'
+RE_BATH = r'To?ta?l (Full )?Ba?thr?m?s\:?'
+RE_KTCH = r'(Num|Total) Kitchens\:?'
 
 # Column labels
 VSID = util.VISION_ID
