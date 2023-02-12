@@ -13,7 +13,7 @@ import util
 
 DEFAULT_POVERTY_RATE = 6.5
 
-DATA_YEAR = '2019'
+DATA_YEAR = '2021'
 MWH_USED = DATA_YEAR + util.ELECTRIC_USAGE
 THERMS_USED = DATA_YEAR + util.GAS_USAGE
 KWH_USED_PER_CAPITA = DATA_YEAR + '_kwh_used_per_capita'
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED] * 100
     df_towns[util.PCT_ENERGY_BURDENED] = df_towns[util.PCT_ENERGY_BURDENED].fillna( DEFAULT_POVERTY_RATE ).round( 1 )
 
-    # Isolate 2019 residential usage statistics
+    # Isolate 2021 residential usage statistics
     df_usage = df_gr.copy()
     df_usage = df_usage[ ( df_usage[util.SECTOR]==util.SECTOR_RES_AND_LOW ) & ( df_usage[util.YEAR]==int(DATA_YEAR) ) ]
     df_usage = df_usage[ [util.TOWN_NAME, util.ANNUAL_ELECTRIC_USAGE, util.ANNUAL_GAS_USAGE] ]

@@ -17,6 +17,7 @@ import signal
 import sys
 sys.path.append('../util')
 import util
+import vision
 import printctl
 
 SAVE_INTERVAL = 500
@@ -24,13 +25,6 @@ SAVE_INTERVAL = 500
 CONTINUE_AT_TABLE = '_ContinueAtVisionId'
 
 URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
-
-BUILDING_TABLE_ID_FORMAT = 'MainContent_ctl{:02d}_grdCns'
-BUILDING_AREA_ID_FORMAT = 'MainContent_ctl{:02d}_lblBldArea'
-BUILDING_YEAR_ID_FORMAT = 'MainContent_ctl{:02d}_lblYearBuilt'
-BUILDING_TABLE_ID = 'building_id'
-BUILDING_AREA_ID = 'area_id'
-BUILDING_YEAR_ID = 'year_id'
 
 RE_OCCU = r'Occupancy\:?'
 RE_BATH = r'To?ta?l (Full )?Ba?thr?m?s\:?'
@@ -157,75 +151,23 @@ def save_and_exit( signum, frame ):
     sys.exit()
 
 
-# Find HTML IDs associated with building tables, areas, and years
-def find_all_building_ids( soup, building_count ):
-
-    ls_building_ids = []
-    first_building_id = ''
-    first_area_id = ''
-    first_year_id = ''
-
-    # Set range limit for the search
-    try:
-        range_max = min( 5 + ( 3 * int( building_count ) ), 100 )
-    except:
-        range_max = 100
-
-    # Search for HTML IDs, using 2-digit integers from 01 to range max
-    for n_index in range( 1, range_max ):
-
-        # Initialize dictionary of building and area IDs
-        dc_ids = { BUILDING_TABLE_ID: '', BUILDING_AREA_ID: '' }
-
-        # If page contains building table with current index, save the ID
-        building_id = BUILDING_TABLE_ID_FORMAT.format( n_index )
-        if soup.find( 'table', id=building_id ):
-            dc_ids[BUILDING_TABLE_ID] = building_id
-            if first_building_id == '':
-                first_building_id = building_id
-
-        # If page contains building area with current index, save the ID
-        area_id = BUILDING_AREA_ID_FORMAT.format( n_index )
-        if soup.find( 'span', id=area_id ):
-            dc_ids[BUILDING_AREA_ID] = area_id
-            if first_area_id == '':
-                first_area_id = area_id
-
-        # If page contains year built with current index, save the ID
-        year_id = BUILDING_YEAR_ID_FORMAT.format( n_index )
-        if soup.find( 'span', id=year_id ):
-            if first_year_id == '':
-                first_year_id = year_id
-
-        # If we got anything in the dictionary, append to the list
-        if dc_ids[BUILDING_TABLE_ID] or dc_ids[BUILDING_AREA_ID]:
-            ls_building_ids.append( dc_ids )
-
-    return ls_building_ids, first_building_id, first_area_id, first_year_id
-
-
-# Scrape HTML element by id
-def scrape_element( soup, tag, id ):
-    element = soup.find( tag, id=id )
-    text = element.string if element else ''
-    return text
-
-
 # Scrape cell of Building Attributes table, identified by label regex
 def scrape_building_attribute( soup, building_id, re_label, is_numeric=False ):
 
-    b_found = False
     s_attribute = ''
 
     table = soup.find( 'table', id=building_id )
 
     if table:
-        for tr in table:
-            if not tr.string:
-                for td in tr:
-                    if b_found:
-                        s_attribute = str( td.string ).strip()
-                    b_found = re.match( re_label, td.string )
+        # Iterate over rows
+        trs = table.find_all( 'tr' )
+        for tr in trs:
+            # If current row has 2 cells and first cell matches label...
+            tds = tr.find_all( 'td' )
+            if ( len( tds ) == 2 ) and re.match( re_label, tds[0].string ):
+                # Save the attribute and terminate search
+                s_attribute = str( tds[1].string ).strip()
+                break
 
     if is_numeric:
 
@@ -249,8 +191,8 @@ def scrape_buildings( soup, ls_building_ids, sr_row ):
 
     for dc_ids in ls_building_ids:
 
-        building_id = dc_ids[BUILDING_TABLE_ID]
-        area_id = dc_ids[BUILDING_AREA_ID]
+        building_id = dc_ids[vision.BUILDING_TABLE_ID]
+        area_id = dc_ids[vision.BUILDING_AREA_ID]
 
         # Attempt to extract field value and add to total
         scr_occu = scrape_building_attribute( soup, building_id, RE_OCCU, is_numeric=True )
@@ -268,7 +210,7 @@ def scrape_buildings( soup, ls_building_ids, sr_row ):
             n_ktch += int( float( scr_ktch ) )
 
         # Attempt to extract field value and add to total
-        scr_area = scrape_element( soup, 'span', area_id )
+        scr_area = vision.scrape_element( soup, 'span', area_id )
         if scr_area:
             s = str( scr_area.string.strip().replace( ',', '' ) )
             if len( s ):
@@ -351,7 +293,7 @@ if __name__ == '__main__':
     print( '' )
 
     # Prepare URL base
-    url_base = URL_BASE.format( municipality )
+    url_base = vision.URL_BASE.format( municipality )
 
     # Initialize counter
     n_processed = 0 if args.refresh else len( df )
@@ -390,20 +332,20 @@ if __name__ == '__main__':
             soup = BeautifulSoup( rsp.text, 'html.parser' )
 
             # Find IDs of all building tables and areas
-            building_count = scrape_element( soup, 'span', 'MainContent_lblBldCount' )
-            ls_building_ids, first_building_id, first_area_id, first_year_id = find_all_building_ids( soup, building_count )
+            building_count = vision.scrape_element( soup, 'span', 'MainContent_lblBldCount' )
+            ls_building_ids, first_building_id, first_area_id, first_year_id = vision.find_all_building_ids( soup, building_count )
 
             # Initialize new dataframe row
             sr_row = pd.Series( index=COLS )
             sr_row[VSID] = vision_id
 
             # Extract values
-            sr_row[ACCT] = scrape_element( soup, 'span', 'MainContent_lblAcctNum' )
-            sr_row[MBLU] = scrape_element( soup, 'span', 'MainContent_lblMblu' )
-            sr_row[LOCN] = scrape_element( soup, 'span', 'MainContent_lblTab1Title' )
-            sr_row[OWN1] = scrape_element( soup, 'span', 'MainContent_lblOwner' )
-            sr_row[OWN2] = scrape_element( soup, 'span', 'MainContent_lblCoOwner' )
-            sr_row[ASMT] = scrape_element( soup, 'span', 'MainContent_lblGenAssessment' )
+            sr_row[ACCT] = vision.scrape_element( soup, 'span', 'MainContent_lblAcctNum' )
+            sr_row[MBLU] = vision.scrape_element( soup, 'span', 'MainContent_lblMblu' )
+            sr_row[LOCN] = vision.scrape_element( soup, 'span', 'MainContent_lblTab1Title' )
+            sr_row[OWN1] = vision.scrape_element( soup, 'span', 'MainContent_lblOwner' )
+            sr_row[OWN2] = vision.scrape_element( soup, 'span', 'MainContent_lblCoOwner' )
+            sr_row[ASMT] = vision.scrape_element( soup, 'span', 'MainContent_lblGenAssessment' )
             sr_row[STYL] = scrape_building_attribute( soup, first_building_id, r'Style\:?' )
             sr_row[OCCU] = scrape_building_attribute( soup, first_building_id, RE_OCCU, is_numeric=True )
             sr_row[HEAT] = scrape_building_attribute( soup, first_building_id, r'Heat(ing)? Type\:?' )
@@ -414,14 +356,14 @@ if __name__ == '__main__':
             sr_row[RESU] = scrape_building_attribute( soup, first_building_id, r'Residential Units\:?' )
             sr_row[KTCH] = scrape_building_attribute( soup, first_building_id, RE_KTCH, is_numeric=True )
             sr_row[BATH] = scrape_building_attribute( soup, first_building_id, RE_BATH, is_numeric=True )
-            sr_row[LAND] = scrape_element( soup, 'span', 'MainContent_lblUseCode' )
-            sr_row[DESC] = scrape_element( soup, 'span', 'MainContent_lblUseCodeDescription' )
-            sr_row[ACRE] = scrape_element( soup, 'span', 'MainContent_lblLndAcres' )
-            sr_row[SLPR] = scrape_element( soup, 'span', 'MainContent_lblPrice' )
-            sr_row[SLDT] = scrape_element( soup, 'span', 'MainContent_lblSaleDate' )
-            sr_row[ZONE] = scrape_element( soup, 'span', 'MainContent_lblZone' )
-            sr_row[YEAR] = scrape_element( soup, 'span', first_year_id )
-            sr_row[AREA] = scrape_element( soup, 'span', first_area_id )
+            sr_row[LAND] = vision.scrape_element( soup, 'span', 'MainContent_lblUseCode' )
+            sr_row[DESC] = vision.scrape_element( soup, 'span', 'MainContent_lblUseCodeDescription' )
+            sr_row[ACRE] = vision.scrape_element( soup, 'span', 'MainContent_lblLndAcres' )
+            sr_row[SLPR] = vision.scrape_element( soup, 'span', 'MainContent_lblPrice' )
+            sr_row[SLDT] = vision.scrape_element( soup, 'span', 'MainContent_lblSaleDate' )
+            sr_row[ZONE] = vision.scrape_element( soup, 'span', 'MainContent_lblZone' )
+            sr_row[YEAR] = vision.scrape_element( soup, 'span', first_year_id )
+            sr_row[AREA] = vision.scrape_element( soup, 'span', first_area_id )
             sr_row[BLDS] = building_count
 
             # Extract summary building values

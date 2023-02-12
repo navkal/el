@@ -6,4 +6,5 @@ def off():
   sys.stdout = open( os.devnull, 'w' )
 
 def on():
+  sys.stdout.close()
   sys.stdout = save

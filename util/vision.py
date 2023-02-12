@@ -4,9 +4,22 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+from bs4 import BeautifulSoup
+
 import numpy as np
 
 import util
+
+
+
+URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
+
+BUILDING_TABLE_ID_FORMAT = 'MainContent_ctl{:02d}_grdCns'
+BUILDING_AREA_ID_FORMAT = 'MainContent_ctl{:02d}_lblBldArea'
+BUILDING_YEAR_ID_FORMAT = 'MainContent_ctl{:02d}_lblYearBuilt'
+BUILDING_TABLE_ID = 'building_id'
+BUILDING_AREA_ID = 'area_id'
+BUILDING_YEAR_ID = 'year_id'
 
 #
 # Utility functions to clean Vision data
@@ -32,6 +45,60 @@ def clean_integer( col ):
 def clean_date( col ):
     col = pd.to_datetime( col, infer_datetime_format=True, errors='coerce' )
     return col
+
+
+# Scrape HTML element by id
+def scrape_element( soup, tag, id ):
+    element = soup.find( tag, id=id )
+    text = element.string if element else ''
+    return text
+
+
+# Find HTML IDs associated with building tables, areas, and years
+def find_all_building_ids( soup, building_count ):
+
+    ls_building_ids = []
+    first_building_id = ''
+    first_area_id = ''
+    first_year_id = ''
+
+    # Set range limit for the search
+    try:
+        range_max = min( 5 + ( 3 * int( building_count ) ), 100 )
+    except:
+        range_max = 100
+
+    # Search for HTML IDs, using 2-digit integers from 01 to range max
+    for n_index in range( 1, range_max ):
+
+        # Initialize dictionary of building and area IDs
+        dc_ids = { BUILDING_TABLE_ID: '', BUILDING_AREA_ID: '' }
+
+        # If page contains building table with current index, save the ID
+        building_id = BUILDING_TABLE_ID_FORMAT.format( n_index )
+        if soup.find( 'table', id=building_id ):
+            dc_ids[BUILDING_TABLE_ID] = building_id
+            if first_building_id == '':
+                first_building_id = building_id
+
+        # If page contains building area with current index, save the ID
+        area_id = BUILDING_AREA_ID_FORMAT.format( n_index )
+        if soup.find( 'span', id=area_id ):
+            dc_ids[BUILDING_AREA_ID] = area_id
+            if first_area_id == '':
+                first_area_id = area_id
+
+        # If page contains year built with current index, save the ID
+        year_id = BUILDING_YEAR_ID_FORMAT.format( n_index )
+        if soup.find( 'span', id=year_id ):
+            if first_year_id == '':
+                first_year_id = year_id
+
+        # If we got anything in the dictionary, append to the list
+        if dc_ids[BUILDING_TABLE_ID] or dc_ids[BUILDING_AREA_ID]:
+            ls_building_ids.append( dc_ids )
+
+    return ls_building_ids, first_building_id, first_area_id, first_year_id
 
 
 
