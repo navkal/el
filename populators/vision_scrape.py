@@ -5,7 +5,6 @@ import requests
 from bs4 import BeautifulSoup
 
 import warnings
-warnings.filterwarnings( 'ignore' )
 
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
@@ -26,9 +25,59 @@ CONTINUE_AT_TABLE = '_ContinueAtVisionId'
 
 URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
 
-RE_OCCU = r'Occupancy\:?'
-RE_BATH = r'To?ta?l (Full )?Ba?thr?m?s\:?'
-RE_KTCH = r'(Num|Total) Kitchens\:?'
+LS_STYL = \
+[
+    'STYLE',
+    'Style',
+    'Style:',
+]
+LS_OCCU = \
+[
+    'Occupancy',
+]
+LS_HEAT = \
+[
+    'Heat Sys',
+    'Heat Type:',
+    'Heating Type',
+]
+LS_FUEL = \
+[
+    'Heat Fuel',
+    'Heat Fuel:',
+    'Heating Fuel',
+]
+LS_AIRC = \
+[
+    'AC Type',
+    'AC Type:',
+]
+LS_HTAC = \
+[
+    'Heat/AC',
+]
+LS_FLR1 = \
+[
+    '1st Floor Use:',
+]
+LS_RESU = \
+[
+    'Res/Com Units:',
+    'Residential Units',
+    'Residential Units:',
+]
+LS_KTCH = \
+[
+    'Num Kitchens',
+    'Total Kitchens',
+]
+LS_BATH = \
+[
+    'Total Baths',
+    'Total Bthrms:',
+    'Total Full Bthrms:',
+    'Ttl Bathrms:',
+]
 
 # Column labels
 VSID = util.VISION_ID
@@ -152,7 +201,7 @@ def save_and_exit( signum, frame ):
 
 
 # Scrape cell of Building Attributes table, identified by label regex
-def scrape_building_attribute( soup, building_id, re_label, is_numeric=False ):
+def scrape_building_attribute( soup, building_id, ls_labels, is_numeric=False ):
 
     s_attribute = ''
 
@@ -164,7 +213,7 @@ def scrape_building_attribute( soup, building_id, re_label, is_numeric=False ):
         for tr in trs:
             # If current row has 2 cells and first cell matches label...
             tds = tr.find_all( 'td' )
-            if ( len( tds ) == 2 ) and re.match( re_label, tds[0].string ):
+            if ( len( tds ) == 2 ) and ( tds[0].string in ls_labels ):
                 # Save the attribute and terminate search
                 s_attribute = str( tds[1].string ).strip()
                 break
@@ -195,17 +244,17 @@ def scrape_buildings( soup, ls_building_ids, sr_row ):
         area_id = dc_ids[vision.BUILDING_AREA_ID]
 
         # Attempt to extract field value and add to total
-        scr_occu = scrape_building_attribute( soup, building_id, RE_OCCU, is_numeric=True )
+        scr_occu = scrape_building_attribute( soup, building_id, LS_OCCU, is_numeric=True )
         if len( scr_occu ):
             n_occu += int( float( scr_occu ) )
 
         # Attempt to extract field value and add to total
-        scr_bath = scrape_building_attribute( soup, building_id, RE_BATH, is_numeric=True )
+        scr_bath = scrape_building_attribute( soup, building_id, LS_BATH, is_numeric=True )
         if len( scr_bath ):
             n_bath += int( float( scr_bath ) )
 
         # Attempt to extract field value and add to total
-        scr_ktch = scrape_building_attribute( soup, building_id, RE_KTCH, is_numeric=True )
+        scr_ktch = scrape_building_attribute( soup, building_id, LS_KTCH, is_numeric=True )
         if len( scr_ktch ):
             n_ktch += int( float( scr_ktch ) )
 
@@ -316,6 +365,8 @@ if __name__ == '__main__':
             save_continue_at()
 
         url = url_base + str( vision_id )
+
+        warnings.filterwarnings( 'ignore' )
         try:
             rsp = requests.get( url, verify=False )
         except Exception as e:
@@ -325,6 +376,7 @@ if __name__ == '__main__':
             print( '==> {}'.format( str( e ) ) )
             print( '==>' )
             save_and_exit( None, None )
+        warnings.resetwarnings()
 
         if ( rsp.url == url ):
 
@@ -336,7 +388,7 @@ if __name__ == '__main__':
             ls_building_ids, first_building_id, first_area_id, first_year_id = vision.find_all_building_ids( soup, building_count )
 
             # Initialize new dataframe row
-            sr_row = pd.Series( index=COLS )
+            sr_row = pd.Series( index=COLS, dtype=object )
             sr_row[VSID] = vision_id
 
             # Extract values
@@ -346,16 +398,16 @@ if __name__ == '__main__':
             sr_row[OWN1] = vision.scrape_element( soup, 'span', 'MainContent_lblOwner' )
             sr_row[OWN2] = vision.scrape_element( soup, 'span', 'MainContent_lblCoOwner' )
             sr_row[ASMT] = vision.scrape_element( soup, 'span', 'MainContent_lblGenAssessment' )
-            sr_row[STYL] = scrape_building_attribute( soup, first_building_id, r'Style\:?' )
-            sr_row[OCCU] = scrape_building_attribute( soup, first_building_id, RE_OCCU, is_numeric=True )
-            sr_row[HEAT] = scrape_building_attribute( soup, first_building_id, r'Heat(ing)? Type\:?' )
-            sr_row[FUEL] = scrape_building_attribute( soup, first_building_id, r'Heat(ing)? Fuel\:?' )
-            sr_row[AIRC] = scrape_building_attribute( soup, first_building_id, r'AC Type\:?' )
-            sr_row[HTAC] = scrape_building_attribute( soup, first_building_id, r'Heat\/AC\:?' )
-            sr_row[FLR1] = scrape_building_attribute( soup, first_building_id, r'1st Floor Use\:?' )
-            sr_row[RESU] = scrape_building_attribute( soup, first_building_id, r'Residential Units\:?' )
-            sr_row[KTCH] = scrape_building_attribute( soup, first_building_id, RE_KTCH, is_numeric=True )
-            sr_row[BATH] = scrape_building_attribute( soup, first_building_id, RE_BATH, is_numeric=True )
+            sr_row[STYL] = scrape_building_attribute( soup, first_building_id, LS_STYL )
+            sr_row[OCCU] = scrape_building_attribute( soup, first_building_id, LS_OCCU, is_numeric=True )
+            sr_row[HEAT] = scrape_building_attribute( soup, first_building_id, LS_HEAT )
+            sr_row[FUEL] = scrape_building_attribute( soup, first_building_id, LS_FUEL )
+            sr_row[AIRC] = scrape_building_attribute( soup, first_building_id, LS_AIRC )
+            sr_row[HTAC] = scrape_building_attribute( soup, first_building_id, LS_HTAC )
+            sr_row[FLR1] = scrape_building_attribute( soup, first_building_id, LS_FLR1 )
+            sr_row[RESU] = scrape_building_attribute( soup, first_building_id, LS_RESU )
+            sr_row[KTCH] = scrape_building_attribute( soup, first_building_id, LS_KTCH, is_numeric=True )
+            sr_row[BATH] = scrape_building_attribute( soup, first_building_id, LS_BATH, is_numeric=True )
             sr_row[LAND] = vision.scrape_element( soup, 'span', 'MainContent_lblUseCode' )
             sr_row[DESC] = vision.scrape_element( soup, 'span', 'MainContent_lblUseCodeDescription' )
             sr_row[ACRE] = vision.scrape_element( soup, 'span', 'MainContent_lblLndAcres' )
