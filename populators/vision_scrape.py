@@ -25,6 +25,12 @@ CONTINUE_AT_TABLE = '_ContinueAtVisionId'
 
 URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
 
+#
+# Lists of labels that we use to identify values of interest in HTML tables.
+# - To determine whether these lists need to be updated, run vision_labels.py.
+# - To determine whether a specific town uses one or more specific labels, run vision_examples.py.
+#
+
 LS_STYL = \
 [
     'STYLE',
@@ -37,7 +43,6 @@ LS_OCCU = \
 ]
 LS_HEAT = \
 [
-    'Heat Sys',
     'Heat Type:',
     'Heating Type',
 ]
@@ -359,6 +364,8 @@ if __name__ == '__main__':
             n_last_reported = n_processed
             util.report_elapsed_time( prefix='' )
             s_status = ' Tried {} ({}%) and processed {} ({}%) of {}; requesting VISION ID {}'.format( n_tried, round( 100 * n_tried / len( id_range ), 2 ), n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
+            if args.refresh and ( n_tried != n_processed ):
+                s_status += '\n !!! Refresh could not process all requested VISION IDs'
             print( s_status )
 
             # Save current vision ID at which to continue if this process is interrupted
