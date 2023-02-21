@@ -137,6 +137,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Clean up Mass Energy Insight and optional related tables' )
     parser.add_argument( '-d', dest='db_filename', help='Database filename' )
     parser.add_argument( '-i', dest='input_table', help='Input table name' )
+    parser.add_argument( '-z', dest='input_table_iso_zones', help='Input table name: mapping from account numbers to ISO zones' )
     parser.add_argument( '-e', dest='input_table_electric', help='Input table name: external electricity suppliers' )
     parser.add_argument( '-g', dest='input_table_gas', help='Input table name: external gas suppliers' )
     parser.add_argument( '-o', dest='output_table', help='Output table name' )
@@ -151,6 +152,13 @@ if __name__ == '__main__':
     df_raw = pd.read_sql_table( args.input_table, engine, index_col=util.ID )
     df = df_raw.copy()
     df[util.ACCOUNT_NUMBER] = strip_leading_zeros( df[util.ACCOUNT_NUMBER] )
+
+    # Read and merge optional ISO zone information
+    if args.input_table_iso_zones is not None:
+        df_iso_zones = pd.read_sql_table( args.input_table_iso_zones, engine, index_col=util.ID )
+        df_iso_zones[util.ACCOUNT_NUMBER] = df_iso_zones[util.ACCOUNT_NUMBER].astype( str )
+        df = pd.merge( df, df_iso_zones, how='left', on=[util.ACCOUNT_NUMBER] )
+        df.insert( df.columns.get_loc( util.ACCOUNT_NUMBER ) + 1, util.ISO_ZONE, df.pop( util.ISO_ZONE ) )
 
     # Read optional table of external electricity suppliers from database
     if args.input_table_electric is not None:

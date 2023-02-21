@@ -66,13 +66,18 @@ if __name__ == '__main__':
 
     # Read external suppliers data
     print( '\n=======> External suppliers input' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_electric.xlsx -t RawExternalSuppliersElectric_L -o {0}'.format( args.master_filename ) )
-    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_gas.xlsx -t RawExternalSuppliersGas_L -r 1 -m -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_electric_l.xlsx -t RawExternalSuppliersElectric_L -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/external_suppliers_gas_l.xlsx -t RawExternalSuppliersGas_L -r 1 -m -o {0}'.format( args.master_filename ) )
+
+    # Read ISO zones data
+    print( '\n=======> ISO zones input' )
+    os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/iso_zones_l.xlsx -s account_number -t RawIsoZones_L -o {0}'.format( args.master_filename ) )
+
 
     # Generate clean Mass Energy Insight tables with optional addition of external suppliers data
     print( '\n=======> Mass Energy Insight tables' )
     os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_A -o Mei_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_L -e RawExternalSuppliersElectric_L -g RawExternalSuppliersGas_L -o Mei_L -p ExternalSuppliersElectric_L -q ExternalSuppliersGas_L -d {0}'.format( args.master_filename ) )
+    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_L -z RawIsoZones_L -e RawExternalSuppliersElectric_L -g RawExternalSuppliersGas_L -o Mei_L -p ExternalSuppliersElectric_L -q ExternalSuppliersGas_L -d {0}'.format( args.master_filename ) )
 
     # Generate Mass Energy Insight month tables
     print( '\n=======> Mass Energy Insight months' )
@@ -95,10 +100,11 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
-            'RawMassEnergyInsight_A',
-            'RawMassEnergyInsight_L',
             'RawExternalSuppliersElectric_L',
             'RawExternalSuppliersGas_L',
+            'RawIsoZones_L',
+            'RawMassEnergyInsight_A',
+            'RawMassEnergyInsight_L',
          ],
         'encipher_column_names':
         [

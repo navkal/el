@@ -436,6 +436,7 @@ ONE = 'one'
 CUSTOMER_NAME = 'customer_name'
 UTILITY_ACCOUNT = 'utility_account'
 EXTERNAL_SUPPLIER = 'external_supplier'
+ISO_ZONE = 'iso_zone'
 MEI_TRACKING = 'mei_tracking'
 STREET = 'street'
 CITY = 'city'
@@ -1139,6 +1140,11 @@ CONSISTENT_COLUMN_NAMES = \
         'Residence Status': STATUS,
         'Uitlity': 'utility',
     },
+    'RawIsoZones_L': \
+    {
+        'account_number': ACCOUNT_NUMBER,
+        'iso_zone': ISO_ZONE,
+    },
     'RawLocalElectionResults': \
     {
         'P-1': PRECINCT_1,
@@ -1440,7 +1446,7 @@ def populate_mei_column_names( dict, start_year, end_year ):
                 dict[month_name] = str( n_year ) + '_' + month_number.zfill( 2 )
 
 ######
-# Hard-coded calls, no longer needed because mass_energy_insight.by generates calls dynamically:
+# Hard-coded calls, no longer needed because mass_energy_insight.py generates calls dynamically:
 # populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A'], 2011, 2030 )
 # populate_mei_column_names( CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'], 2011, 2030 )
 ######
