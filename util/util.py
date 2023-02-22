@@ -8,6 +8,7 @@ import openpyxl
 import re
 import string
 import datetime
+import warnings
 
 import time
 START_TIME = time.time()
@@ -911,7 +912,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Use Group': PROPERTY_USE_GROUP,
         'Total Project Cost': PROJECT_COST,
     },
-    'RawBuildingPermits_Wx_2023': \
+    'RawBuildingPermits_Wx_Ongoing': \
     {
         'Permit#': PERMIT_NUMBER,
         'File#': FILE_NUMBER,
@@ -2476,7 +2477,11 @@ def read_excel_files( input_directory, column_labels, skiprows ):
 
         input_path = input_directory + '/' + filename
         print( 'Reading "{0}"'.format( input_path ) )
+
+        # Filter warning apparently caused by unorthodox sheet name
+        warnings.filterwarnings( 'ignore', category=UserWarning, module='openpyxl' )
         df = pd.read_excel( input_path, dtype=object, skiprows=skiprows )
+        warnings.resetwarnings()
 
         # Optionally add extra columns and populate with filename fragments delimited by underscore - e.g., given input file moo_1234.xlsx, column value will be 'moo'
         if column_labels:

@@ -126,8 +126,8 @@ if __name__ == '__main__':
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx.xlsx -p "Work Description,Use of Property" -t RawBuildingPermits_Wx -o {0}'.format( args.master_filename ) )
     print( '\n=======> Past weatherization building permits input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_past.xlsx -p "id" -t RawBuildingPermits_Wx_Past -o {0}'.format( args.master_filename ) )
-    print( '\n=======> 2023 weatherization building permits input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/wx/building_permits_wx_2023.xlsx -p "Project Description,Use of Property" -t RawBuildingPermits_Wx_2023 -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Ongoing weatherization building permits input' )
+    os.system( 'python xl_to_db.py -d ../xl/lawrence/building_permits/wx/ongoing -p "Project Description,Use of Property" -t RawBuildingPermits_Wx_Ongoing -o {0}'.format( args.master_filename ) )
 
     # Generate weatherization Building Permits table
     print( '\n=======> Weatherization Building Permits table' )
@@ -173,7 +173,7 @@ if __name__ == '__main__':
             'RawBuildingPermits_Solar',
             'RawBuildingPermits_Sunrun',
             'RawBuildingPermits_Wx',
-            'RawBuildingPermits_Wx_2023',
+            'RawBuildingPermits_Wx_Ongoing',
             'RawBuildingPermits_Wx_Past',
             'RawBusinesses_1',
             'RawBusinesses_2',
