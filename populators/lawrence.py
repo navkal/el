@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     # Read solar building permit data
     print( '\n=======> Solar Building Permit input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/building_permits/building_permits_solar.xlsx -p "Permit Type,Subtype,Use of Property" -t RawBuildingPermits_Solar -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -d ../xl/lawrence/building_permits/solar -p "Permit Type,Subtype,Use of Property" -t RawBuildingPermits_Solar -o {0}'.format( args.master_filename ) )
 
     # Generate Solar Building Permits table
     print( '\n=======> Solar Building Permits table' )
