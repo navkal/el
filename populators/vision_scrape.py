@@ -91,6 +91,8 @@ MBLU = util.MBLU
 LOCN = util.LOCATION
 OWN1 = util.OWNER_1_NAME
 OWN2 = util.OWNER_2_NAME
+OADR = util.OWNER_ADDRESS
+OZIP = util.OWNER_ZIP
 ASMT = util.TOTAL_ASSESSED_VALUE
 STYL = util.STYLE
 OCCU = util.OCCUPANCY_HOUSEHOLDS
@@ -126,6 +128,8 @@ COLS = \
     LOCN,
     OWN1,
     OWN2,
+    OADR,
+    OZIP,
     ASMT,
     STYL,
     OCCU,
@@ -404,6 +408,7 @@ if __name__ == '__main__':
             sr_row[LOCN] = vision.scrape_element( soup, 'span', 'MainContent_lblTab1Title' )
             sr_row[OWN1] = vision.scrape_element( soup, 'span', 'MainContent_lblOwner' )
             sr_row[OWN2] = vision.scrape_element( soup, 'span', 'MainContent_lblCoOwner' )
+            sr_row[OADR], sr_row[OZIP] = vision.scrape_address( soup, 'span', 'MainContent_lblAddr1' )
             sr_row[ASMT] = vision.scrape_element( soup, 'span', 'MainContent_lblGenAssessment' )
             sr_row[STYL] = scrape_building_attribute( soup, first_building_id, LS_STYL )
             sr_row[OCCU] = scrape_building_attribute( soup, first_building_id, LS_OCCU, is_numeric=True )

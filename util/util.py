@@ -202,7 +202,8 @@ GAL_PER_DAY = 'gal_per_day'
 OWNER_1_NAME = 'owner_1_name'
 OWNER_2_NAME = 'owner_2_name'
 OWNER_3_NAME = 'owner_3_name'
-
+OWNER_ADDRESS = 'owner_address'
+OWNER_ZIP = 'owner_zip'
 SITE_ADDRESS = 'site_address'
 
 SALE_DATE = 'sale_date'
@@ -1827,6 +1828,8 @@ COLUMN_ORDER = \
         ZONE,
         OWNER_1_NAME,
         OWNER_2_NAME,
+        OWNER_ADDRESS,
+        OWNER_ZIP,
         NORMALIZED_ADDRESS,
         NORMALIZED_STREET_NUMBER,
         NORMALIZED_OCCUPANCY,

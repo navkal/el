@@ -5,6 +5,7 @@ pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
 from bs4 import BeautifulSoup
+import re
 
 import numpy as np
 
@@ -52,6 +53,32 @@ def scrape_element( soup, tag, id ):
     element = soup.find( tag, id=id )
     text = element.string if element else ''
     return text
+
+# Scrape multi-line HTML element
+def scrape_lines( soup, tag, id, sep=', ' ):
+    # Initialize list of lines
+    ls_lines = []
+
+    # Find and iterate over lines
+    lines = soup.find( tag, id=id )
+    for line in lines:
+        s = line.string
+        if s:
+            s = s.strip()
+            if s:
+                ls_lines.append( s.strip() )
+
+    # Join lines, delimited by separator
+    text = sep.join( ls_lines )
+
+    return text
+
+# Scrape multi-line address
+def scrape_address( soup, tag, id ):
+    address = scrape_lines( soup, tag, id )
+    match = re.search( r'\d{5}(-\d{4})?$', address )
+    zip = match.group() if match else ''
+    return address, zip
 
 
 # Find HTML IDs associated with building tables, areas, and years
