@@ -179,7 +179,7 @@ def edit_database( input_db, dc_sheets ):
             col_idx = 0
             for column_name in input_db[sheet_name].columns:
                 col_idx += 1
-                input_db[sheet_name] = input_db[sheet_name].rename( columns={ column_name: str( col_idx ).zfill( num_width ) + '-' + column_name } )
+                input_db[sheet_name] = input_db[sheet_name].rename( columns={ column_name: str( col_idx ).zfill( num_width ) + ': ' + column_name } )
 
             print( '' )
             print( 'Editing worksheet "{}"'.format( sheet_name ) )
