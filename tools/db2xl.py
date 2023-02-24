@@ -11,23 +11,87 @@ import datetime
 
 ######################
 #
-# Sample parameter sequences
+# db2xl.py publishes a sqlite database as an Excel workbook, each table corresponding to a single worksheet in the output file.
+#
+# Sample parameter sequence:
 #
 # -i input_db.sqlite -o output_workbook.xlsx [-t tables.xlsx]
 #
-# The tables file contains the following columns:
-# - 'table_name': Lists tables to include, in the desired order
-# - 'tab_name': Lists alternate labels for tabs.  (To keep original table name, leave blank.)
+# Tables file
+#   By default (i.e., if the tables file is not supplied), db2xl.py publishes the entire database.
+#   The tables file allows you to specify which tables to publish, in what order, and under what names.
+#   It also allows you to specify, for individual tables, which columns to publish, in what order, and under what names.
+#
+#   The tables file consists of one or more worksheets (tabs).
+#
+#   The first worksheet specifies which tables to publish, in what order, and under what names.
+#   It contains the following columns:
+#
+#   - 'table_name': Lists tables to include, in the desired order
+#   - 'tab_name': Lists alternate labels for tabs.  (To keep original table name, leave blank.)
+#
+#   Each (optional) subsequent worksheet describes, for a specific output worksheet, which columns to publish, in what order, and under what names.
+#   It must bear the name of the output tab to which it applies.  It contains the following columns:
+#
+#   - 'old_column_name': Lists columns to include, in the desired order
+#   - 'new_column_name': Lists new name to be used for each column.  During publication, db2xl.py will insert a numeric prefix into each of these names.
 #
 ######################
 
 
 TABLE_NAME = 'table_name'
 TAB_NAME = 'tab_name'
+OLD_COLUMN_NAME = 'old_column_name'
+NEW_COLUMN_NAME = 'new_column_name'
 WORKBOOK_STRUCTURE = 'Workbook Structure'
 COPYRIGHT = 'Copyright'
 
 EXCEL_TAB_NAME_MAX_LEN = 31
+
+
+# Read Excel input file that describes operation to be performed
+def read_tabs_file():
+
+    df_tabs = None
+    dc_sheets = {}
+
+    workbook = pd.read_excel( args.tabs_filename, dtype=object, sheet_name=None )
+
+    for sheet_name in workbook:
+
+        df = workbook[sheet_name]
+
+        if len( df ):
+
+            # Clean up whitespace and NaN
+            df = df.applymap( lambda x: x.strip() if type(x)==str else x )
+            df = df.fillna( '' )
+
+            # Drop rows with empty first column
+            df = df[df[df.columns[0]] != '' ]
+            df = df.reset_index( drop=True )
+
+            # Prohibit duplicates
+            df_test = df.copy()
+
+            for col in df_test.columns:
+                df_test = df_test[ df_test[col] != '' ]
+                bf_len = len( df_test )
+                df_test = df_test.drop_duplicates( subset=col )
+
+                if len( df_test ) != bf_len:
+                    print( '' )
+                    print( '!!! Duplicates found: sheet "{}", column "{}"'.format( sheet_name, col ) )
+                    exit()
+
+            # Save as master tabs list or sheet detail
+            if not isinstance( df_tabs, pd.DataFrame ):
+                df_tabs = df
+            else:
+                dc_sheets[sheet_name] = df
+
+    return df_tabs, dc_sheets
+
 
 
 # Open the SQLite database
@@ -93,6 +157,38 @@ def read_database():
     tab_keys = sorted( tab_order )
 
     return input_db, tab_order, tab_keys
+
+
+# Edit columns as specified by tab input file
+def edit_database( input_db, dc_sheets ):
+
+    for sheet_name in input_db:
+
+        if sheet_name in dc_sheets:
+
+            # Select columns to be published
+            input_db[sheet_name] = input_db[sheet_name][dc_sheets[sheet_name][OLD_COLUMN_NAME]]
+
+            # Rename columns to be published
+            dc_rename = dict( zip( dc_sheets[sheet_name][OLD_COLUMN_NAME], dc_sheets[sheet_name][NEW_COLUMN_NAME] ) )
+            input_db[sheet_name] = input_db[sheet_name].rename( columns=dc_rename )
+
+            # Number columns to be published
+            n_cols = len( input_db[sheet_name].columns )
+            num_width = len( str( n_cols ) )
+            col_idx = 0
+            for column_name in input_db[sheet_name].columns:
+                col_idx += 1
+                input_db[sheet_name] = input_db[sheet_name].rename( columns={ column_name: str( col_idx ).zfill( num_width ) + '-' + column_name } )
+
+            print( '' )
+            print( 'Editing worksheet "{}"'.format( sheet_name ) )
+            print( '', 'Selecting columns:' )
+            print( '', list( dc_rename.keys() ) )
+            print( '', 'Publishing as:')
+            print( '', list( input_db[sheet_name].columns ) )
+
+        return input_db
 
 
 def build_structure():
@@ -171,37 +267,17 @@ if __name__ == '__main__':
     # Report and read optional Tabs file
     if args.tabs_filename != None:
         print( 'Tabs filename:', args.tabs_filename )
-
-        # Read table-name -> tab-name mapping
-        df_tabs = pd.read_excel( args.tabs_filename, dtype=object )
-
-        # Strip whitespace from all cells
-        df_tabs = df_tabs.applymap( lambda x: x.strip() if type(x)==str else x )
-
-        # Replace null with empty string
-        df_tabs = df_tabs.fillna( '' )
-
-        # Drop rows with empty table name
-        df_tabs = df_tabs[ df_tabs[TABLE_NAME] != '' ]
-        df_tabs = df_tabs.reset_index( drop=True )
-
-        # Prohibit duplicates
-        df_test = df_tabs.copy()
-
-        for col in df_test.columns:
-            df_test = df_test[ df_test[col] != '' ]
-            bf_len = len( df_test )
-            df_test = df_test.drop_duplicates( subset=col )
-
-            if len( df_test ) != bf_len:
-                print( '' )
-                print( 'Error: Duplicates found in {} column'.format( col ) )
-                exit()
+        df_tabs, dc_sheets = read_tabs_file()
     else:
         df_tabs = None
+        dc_sheets = {}
+
 
     # Read database file
     input_db, tab_order, tab_keys = read_database()
+
+    # Edit tables as specified in Tabs file
+    input_db = edit_database( input_db, dc_sheets )
 
     # Build self-describing dataframe
     df_structure = build_structure()
