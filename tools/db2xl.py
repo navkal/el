@@ -93,7 +93,6 @@ def read_tabs_file():
     return df_tabs, dc_sheets
 
 
-
 # Open the SQLite database
 def open_database():
 
@@ -188,12 +187,12 @@ def edit_database( input_db, dc_sheets ):
             print( '', 'Publishing as:')
             print( '', list( input_db[sheet_name].columns ) )
 
-        return input_db
+    return input_db
 
 
+# Build dataframe describing workbook structure
 def build_structure():
 
-    # Build dataframe to describe workbook structure
     df_structure = pd.DataFrame()
 
     for tab_key in tab_keys:
@@ -211,12 +210,14 @@ def build_structure():
     return df_structure
 
 
+# Synthesize copyright worksheet
 def make_copyright():
     copyright_notice = '© {} Energize Lawrence.  All rights reserved.'.format( datetime.date.today().year )
     df_copyright = pd.DataFrame( columns=['copyright'], data=[copyright_notice] )
     return df_copyright
 
 
+# Save results to output workbook
 def write_workbook():
 
     # Open output Excel file
