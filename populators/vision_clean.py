@@ -30,6 +30,8 @@ MBLU = util.MBLU
 LOCN = util.LOCATION
 OWN1 = util.OWNER_1_NAME
 OWN2 = util.OWNER_2_NAME
+OADR = util.OWNER_ADDRESS
+OZIP = util.OWNER_ZIP
 ASMT = util.TOTAL_ASSESSED_VALUE
 STYL = util.STYLE
 OCCU = util.OCCUPANCY_HOUSEHOLDS
@@ -55,7 +57,7 @@ TOT_BATH = util.TOTAL_BATHS
 TOT_KTCH = util.TOTAL_KITCHENS
 TOT_AREA = util.TOTAL_AREA
 ISRS = util.IS_RESIDENTIAL
-
+OLCL = util.OWNER_IS_LOCAL
 
 
 
@@ -74,8 +76,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Clean parcel assessment data scraped from Vision Government Solutions website' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-l', dest='luc_filename',  help='Land use codes spreadsheet filename', required=True )
-    parser.add_argument( '-f', dest='from_table_name',  help='Name of source table', required=True )
-    parser.add_argument( '-t', dest='to_table_name',  help='Name of destination table', required=True )
+    parser.add_argument( '-i', dest='input_table_name',  help='Name of source table', required=True )
+    parser.add_argument( '-o', dest='output_table_name',  help='Name of destination table', required=True )
+    parser.add_argument( '-t', dest='town_name',  help='Name of town', required=True )
     parser.add_argument( '-n', dest='normalize', action='store_true', help='Normalize addresses?' )
     args = parser.parse_args()
 
@@ -83,7 +86,7 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Read raw table from database
-    df = pd.read_sql_table( args.from_table_name, engine, index_col=util.ID, parse_dates=True )
+    df = pd.read_sql_table( args.input_table_name, engine, index_col=util.ID, parse_dates=True )
 
     # Clean up data
     df[ACCT] = vision.clean_string( df[ACCT] )
@@ -91,6 +94,7 @@ if __name__ == '__main__':
     df[LOCN] = vision.clean_string( df[LOCN] )
     df[OWN1] = vision.clean_string( df[OWN1] )
     df[OWN2] = vision.clean_string( df[OWN2] )
+    df[OADR] = vision.clean_string( df[OADR] )
     df[ASMT] = vision.clean_integer( df[ASMT] )
     df[STYL] = vision.clean_string( df[STYL] )
     df[OCCU] = vision.clean_integer( df[OCCU] )
@@ -122,6 +126,10 @@ if __name__ == '__main__':
     df[ISRS] = util.NO
     df.loc[df[LAND].isin( ls_res_codes ), ISRS] = util.YES
 
+    # Add local-owner flag column
+    df[OLCL] = util.NO
+    df.loc[df[OADR].str.contains( ', *' + args.town_name + ' *,', case=False ), OLCL] = util.YES
+
     # If we got account numbers or Mblu values on every row, ensure that they are unique
     if len( df[ACCT][df[ACCT] != ''] ) == len( df ):
         df = df.drop_duplicates( subset=[ACCT], keep='last' )
@@ -138,7 +146,7 @@ if __name__ == '__main__':
         df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Preserve current progress in database
-    util.create_table( args.to_table_name, conn, cur, df=df )
+    util.create_table( args.output_table_name, conn, cur, df=df, alt_column_order='Vision_Clean' )
 
     # Report elapsed time
     util.report_elapsed_time()

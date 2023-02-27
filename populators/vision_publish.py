@@ -38,7 +38,7 @@ if __name__ == '__main__':
         os.system( 'python db_to_db.py -i ../db/vision_{}.sqlite -f {} -t {} -o {} {}'.format( town.lower(), raw_table_name, raw_table_name, args.master_filename, create ) )
 
         # Clean
-        os.system( 'python vision_clean.py -f {} -t Vision_{}  -l ../xl/residential_land_use_codes.xlsx -m {}'.format( raw_table_name, town, args.master_filename ) )
+        os.system( 'python vision_clean.py -i {} -o Vision_{}  -l ../xl/residential_land_use_codes.xlsx -t {} -m {}'.format( raw_table_name, town, town, args.master_filename ) )
 
         # Clear database create argument
         create = ''

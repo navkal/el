@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # Clean and summarize parcels data
     print( '\n=======> Parcels table and summary' )
-    os.system( 'python vision_clean.py -f Vision_Raw_Lawrence -t Parcels_L -l ../xl/residential_land_use_codes.xlsx -n -m {0}'.format( args.master_filename ) )
+    os.system( 'python vision_clean.py -i Vision_Raw_Lawrence -o Parcels_L -l ../xl/residential_land_use_codes.xlsx -t Lawrence -n -m {0}'.format( args.master_filename ) )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
 
     # Read census data

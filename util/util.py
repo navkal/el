@@ -397,6 +397,7 @@ LICENSE_TYPE = 'license_type'
 CLOSED_DATE = 'closed_date'
 
 IS_RESIDENTIAL = 'is_residential'
+OWNER_IS_LOCAL = 'owner_is_local'
 
 OPENED = 'opened'
 
@@ -1799,6 +1800,7 @@ COLUMN_ORDER = \
         ACCOUNT_NUMBER,
         MBLU,
         IS_RESIDENTIAL,
+        OWNER_IS_LOCAL,
         NORMALIZED_STREET_NAME,
         LOCATION,
         YEAR_BUILT,
@@ -1928,6 +1930,44 @@ COLUMN_ORDER = \
     ],
     'Streets':
     [
+    ],
+    'Vision_Clean':
+    [
+        VISION_ID,
+        ACCOUNT_NUMBER,
+        MBLU,
+        IS_RESIDENTIAL,
+        OWNER_IS_LOCAL,
+        LOCATION,
+        YEAR_BUILT,
+        AGE,
+        BUILDING_COUNT,
+        TOTAL_ASSESSED_VALUE,
+        STYLE,
+        HEATING_FUEL + _DESC,
+        HEATING_TYPE + _DESC,
+        AC_TYPE + _DESC,
+        HEAT_AC,
+        FIRST_FLOOR_USE,
+        LAND_USE_CODE,
+        LAND_USE_CODE + _DESC,
+        RESIDENTIAL_UNITS,
+        KITCHENS,
+        BATHS,
+        OCCUPANCY_HOUSEHOLDS,
+        TOTAL_OCCUPANCY,
+        TOTAL_BATHS,
+        TOTAL_KITCHENS,
+        TOTAL_AREA,
+        LIVING_AREA,
+        TOTAL_ACRES,
+        SALE_PRICE,
+        SALE_DATE,
+        ZONE,
+        OWNER_1_NAME,
+        OWNER_2_NAME,
+        OWNER_ADDRESS,
+        OWNER_ZIP,
     ],
     'Water':
     [
@@ -2600,7 +2640,7 @@ def read_database( input_filename ):
 
 
 # Create table with specified name and model
-def create_table( table_name, conn, cur, columns=None, df=None ):
+def create_table( table_name, conn, cur, columns=None, df=None, alt_column_order='' ):
 
     if ( columns is None ) and ( df is None ):
         print( "!!! create_table() missing required parameter: either 'columns' or 'df'" )
@@ -2611,7 +2651,8 @@ def create_table( table_name, conn, cur, columns=None, df=None ):
         # Initialize and reorder columns
         if columns is None:
             columns = df.columns
-        columns = reorder_columns( table_name, list( columns ) )
+        column_order = table_name if table_name in COLUMN_ORDER else alt_column_order
+        columns = reorder_columns( column_order, list( columns ) )
 
         # Drop table if it already exists
         cur.execute( 'DROP TABLE IF EXISTS ' + table_name )
