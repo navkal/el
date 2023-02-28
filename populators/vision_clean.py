@@ -60,11 +60,17 @@ ISRS = util.IS_RESIDENTIAL
 OLCL = util.OWNER_IS_LOCAL
 
 
-
-def calculate_age( row ):
-    year_built = row[YEAR]
+# Calculate building age
+def calculate_age( year_built ):
     age = ( THIS_YEAR - year_built ) if year_built else -1
     return age
+
+
+# Encode hyperlink destined for Excel spreadsheet
+def make_vision_link( town_name, vision_id ):
+    url = vision.URL_BASE.format( town_name ) + str( vision_id )
+    hyperlink_code = '=HYPERLINK("%s", "%s")' % ( url, vision_id )
+    return hyperlink_code
 
 
 ######################
@@ -138,12 +144,15 @@ if __name__ == '__main__':
     # else don't drop anything; we already dropped on VISION ID
 
     # Calculate age
-    df[util.AGE] = df.apply( lambda row: calculate_age( row ), axis=1 )
+    df[util.AGE] = df[YEAR].apply( lambda year_built: calculate_age( year_built ) )
 
     # Optionally normalize addresses.  Use result_type='expand' to load multiple columns!
     if args.normalize:
         df[ADDR] = df[LOCN]
         df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+
+    # Encode Vision URL as Excel hyperlink
+    df[util.VISION_LINK] = df[VSID].apply( lambda vision_id: make_vision_link( args.town_name, vision_id ) )
 
     # Preserve current progress in database
     util.create_table( args.output_table_name, conn, cur, df=df, alt_column_order='Vision_Clean' )

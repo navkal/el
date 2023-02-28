@@ -326,6 +326,7 @@ RESIDENTIAL_R2_RATE = 'residential_r2_rate'
 COMMERCIAL_RATE = 'commercial_rate'
 
 VISION_ID = 'vision_id'
+VISION_LINK = 'vision_link'
 GIS_ID = 'gis_id'
 OWNER_NAME = 'owner_name'
 LOCATION = 'location'

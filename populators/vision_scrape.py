@@ -23,8 +23,6 @@ SAVE_INTERVAL = 500
 
 CONTINUE_AT_TABLE = '_ContinueAtVisionId'
 
-URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
-
 #
 # Lists of labels that we use to identify values of interest in HTML tables.
 # - To determine whether these lists need to be updated, run vision_labels.py.
