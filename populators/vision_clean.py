@@ -67,9 +67,9 @@ def calculate_age( year_built ):
 
 
 # Encode hyperlink destined for Excel spreadsheet
-def make_vision_link( town_name, vision_id ):
-    url = vision.URL_BASE.format( town_name ) + str( vision_id )
-    hyperlink_code = '=HYPERLINK("%s", "%s")' % ( url, vision_id )
+def make_vision_link( town_name, row ):
+    url = vision.URL_BASE.format( town_name ) + str( row[VSID] )
+    hyperlink_code = '=HYPERLINK("%s", "%s")' % ( url, row[MBLU] )
     return hyperlink_code
 
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Encode Vision URL as Excel hyperlink
-    df[util.VISION_LINK] = df[VSID].apply( lambda vision_id: make_vision_link( args.town_name, vision_id ) )
+    df[util.VISION_LINK] = df.apply( lambda row: make_vision_link( args.town_name, row ), axis=1 )
 
     # Preserve current progress in database
     util.create_table( args.output_table_name, conn, cur, df=df, alt_column_order='Vision_Clean' )
