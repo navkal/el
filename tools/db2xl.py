@@ -29,9 +29,9 @@ import datetime
 #
 #   - 'table_name': Lists tables to include, in the desired order
 #   - 'tab_name': Lists alternate labels for tabs.  (To keep original table name, leave blank.)
+#   - 'column_map': References a subsequent worksheet describing how to publish the table's columns.  (To keep original columns, leave blank.)
 #
 #   Each (optional) subsequent worksheet describes, for a specific output worksheet, which columns to publish, in what order, and under what names.
-#   It must bear the name of the output tab to which it applies.  It contains the following columns:
 #
 #   - 'old_column_name': Lists columns to include, in the desired order
 #   - 'new_column_name': Lists new name to be used for each column.  During publication, db2xl.py will insert a numeric prefix into each of these names.
@@ -41,6 +41,7 @@ import datetime
 
 TABLE_NAME = 'table_name'
 TAB_NAME = 'tab_name'
+COLUMN_MAP = 'column_map'
 OLD_COLUMN_NAME = 'old_column_name'
 NEW_COLUMN_NAME = 'new_column_name'
 WORKBOOK_STRUCTURE = 'Workbook Structure'
@@ -88,7 +89,14 @@ def read_tabs_file():
             if not isinstance( df_tabs, pd.DataFrame ):
                 df_tabs = df
             else:
-                dc_sheets[sheet_name] = df
+                # Look for table row that references this sheet name as its column map
+                df_sheet_name = df_tabs[ df_tabs[COLUMN_MAP]==sheet_name ]
+                if len( df_sheet_name ):
+                    # Determine output sheet name - either specified tab name or original table name
+                    row = df_sheet_name.iloc[0]
+                    output_sheet_name = row[TAB_NAME] if row[TAB_NAME] != '' else row[TABLE_NAME]
+                    print( sheet_name, '===>', output_sheet_name )
+                    dc_sheets[output_sheet_name] = df
 
     return df_tabs, dc_sheets
 
