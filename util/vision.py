@@ -4,7 +4,6 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
-from bs4 import BeautifulSoup
 import re
 
 import numpy as np

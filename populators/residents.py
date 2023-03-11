@@ -11,7 +11,6 @@ import gender_guesser.detector as gender_detector
 import sys
 sys.path.append( '../util' )
 import util
-import printctl
 
 
 pd.set_option( 'display.max_columns', 500 )

@@ -3,7 +3,6 @@
 import argparse
 import pandas as pd
 pd.options.display.width = 0
-import numpy as np
 import sqlite3
 import sqlalchemy
 import datetime
