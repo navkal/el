@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     # Read census data
     print( '\n=======> Census input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/census.xlsx -n "Res. ID" -s "Res. ID" -t RawCensus -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/census.txt -n "Res. ID" -s "Res. ID" -t RawCensus -v -f "|" -x -o {0}'.format( args.master_filename ) )
 
     # Generate Census table
     print( '\n=======> Census table' )

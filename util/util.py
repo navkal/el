@@ -2843,7 +2843,7 @@ def fix_zip_code( column ):
     dc_repl = {}
     for val in column.value_counts().index:
 
-        if type( val ) in ( int, float ):
+        if ( type( val ) in ( int, float ) ) or ( ( type( val ) == str ) and val.isdigit() ):
             # Convert numeric value to formatted zip code
             zip_plus_four = make_zip_code( int( val ) )
 
