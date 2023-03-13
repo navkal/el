@@ -30,22 +30,19 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Retrieve table from database
-    df = pd.read_sql_table( 'RawCensus', engine, index_col=util.ID, parse_dates=True )
+    df = pd.read_sql_table( 'RawCensus_L', engine, index_col=util.ID, parse_dates=True )
+
+    # Clean up phone numbers
+    df[util.PHONE] = df[util.PHONE].fillna( '' ).astype( str ).replace( '\.0$', '', regex=True )
+    idx_ten_digits = df[df[util.PHONE].str.len() == 10].index
+    sr_phone = df.loc[idx_ten_digits, util.PHONE]
+    df.at[idx_ten_digits, util.PHONE] = sr_phone.str[:3] + '-' + sr_phone.str[3:6] + '-' + sr_phone.str[6:]
 
     # Prepare address fragments for normalization
     df[util.RADDR_STREET_NUMBER] = df[util.RADDR_STREET_NUMBER].fillna(0).astype(int).astype(str)
     df[util.RADDR_STREET_NUMBER_SUFFIX] = df[util.RADDR_STREET_NUMBER_SUFFIX].fillna('').astype(str)
     df[util.RADDR_STREET_NAME] = df[util.RADDR_STREET_NAME].fillna('').astype(str)
     df[util.RADDR_APARTMENT_NUMBER] = df[util.RADDR_APARTMENT_NUMBER].fillna('').astype(str)
-
-    # Complain about timestamps in address fragments
-    # df_complain = df[ df[util.RADDR_STREET_NUMBER_SUFFIX].str.contains( ':' ) | df[util.RADDR_APARTMENT_NUMBER].str.contains( ':' )]
-    # df_complain.to_excel( '../test/census_address_defects.xlsx', index=False )
-    # exit()
-
-    # Clean up address fragments that (inexplicably) contain date or time values
-    df.loc[ df[util.RADDR_STREET_NUMBER_SUFFIX].str.contains( ':' ), util.RADDR_STREET_NUMBER_SUFFIX ] = ''
-    df.loc[ df[util.RADDR_APARTMENT_NUMBER].str.contains( ':' ), util.RADDR_APARTMENT_NUMBER ] = ''
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df[ADDR] = df[util.RADDR_STREET_NUMBER] + df[util.RADDR_STREET_NUMBER_SUFFIX] + ' ' + df[util.RADDR_STREET_NAME] + ' ' + df[util.RADDR_APARTMENT_NUMBER]

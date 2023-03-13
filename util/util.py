@@ -109,6 +109,7 @@ RESIDENT_ID = 'resident_id'
 ELECTION_TYPE = 'election_type'
 VOTER_STATUS = 'voter_status'
 OCCUPATION = 'occupation'
+HEAD_OF_HOUSEHOLD = 'head_of_household'
 
 STREET_NUMBER = '{0}_street_number'
 STREET_NUMBER_SUFFIX = '{0}_street_number_suffix'
@@ -601,7 +602,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Middle Nm': MIDDLE_NAME,
         'D.O.B. (mm/dd/yyyy format)': DATE_OF_BIRTH,
         'Occupation': OCCUPATION,
-        'Mail to Code (Y if HOH; N if Not)': 'head_of_household',
+        'Mail to Code (Y if HOH; N if Not)': HEAD_OF_HOUSEHOLD,
         'Res. - St. #': RADDR_STREET_NUMBER,
         'Res. - St. # Suffix': RADDR_STREET_NUMBER_SUFFIX,
         'Res. - St. Name': RADDR_STREET_NAME,
@@ -979,6 +980,35 @@ CONSISTENT_COLUMN_NAMES = \
         'Num Employees': EMPLOYEES,
         'Business Manager': BUSINESS_MANAGER,
         'SBR#': 'sbr_number',
+    },
+    'RawCensus_L': \
+    {
+        'Census Yr': 'census_year',
+        'Res. ID': RESIDENT_ID,
+        'Last Nm': LAST_NAME,
+        'First Nm': FIRST_NAME,
+        'Middle Nm': MIDDLE_NAME,
+        'Title (Jr, Sr, II, III, etc.)': 'title',
+        'D.O.B. (mm/dd/yyyy format)': DATE_OF_BIRTH,
+        'Occupation': OCCUPATION,
+        'Mail to Code (Y if HOH; N if Not)': HEAD_OF_HOUSEHOLD,
+        'Family Group Code (Within an address)': 'family_group_code',
+        'Res. - St. #': RADDR_STREET_NUMBER,
+        'Res. - St. # Suffix': RADDR_STREET_NUMBER_SUFFIX,
+        'Res. - St. Name': RADDR_STREET_NAME,
+        'Res. - Apt #': RADDR_APARTMENT_NUMBER,
+        'Res. - Zip Code': RADDR_ZIP_CODE,
+        'Mail - Street # and Name': MADDR_STREET,
+        'Mail - Apt #': MADDR_APARTMENT_NUMBER,
+        'Mail - City and Town': MADDR_CITY,
+        'Mail - State': MADDR_STATE,
+        'Mail - Zip Code': MADDR_ZIP_CODE,
+        'Phone #': PHONE,
+        'Party': PARTY_AFFILIATION,
+        'Ward #': 'ward_number',
+        'Precinct #': PRECINCT_NUMBER,
+        'Voter Status (A- Active, I - Inactive (if voter))': VOTER_STATUS,
+        'Vet. flag (Y if vet)': 'veteran',
     },
     'RawCommercial_1': \
     {
@@ -1397,7 +1427,6 @@ CONSISTENT_COLUMN_NAMES = \
     },
 }
 
-CONSISTENT_COLUMN_NAMES['RawCensus'] = CONSISTENT_COLUMN_NAMES['Census']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
 
 
