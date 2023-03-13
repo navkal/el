@@ -96,6 +96,7 @@ METER_ANOMALY = 'anomaly'
 
 # Mappings to reconcile column names
 
+CENSUS_YEAR = 'census_year'
 FIRST_NAME = 'first_name'
 MIDDLE_NAME = 'middle_name'
 LAST_NAME = 'last_name'
@@ -110,6 +111,8 @@ ELECTION_TYPE = 'election_type'
 VOTER_STATUS = 'voter_status'
 OCCUPATION = 'occupation'
 HEAD_OF_HOUSEHOLD = 'head_of_household'
+FAMILY_GROUP_CODE = 'family_group_code'
+VETERAN = 'veteran'
 
 STREET_NUMBER = '{0}_street_number'
 STREET_NUMBER_SUFFIX = '{0}_street_number_suffix'
@@ -169,6 +172,8 @@ MADDR_LINE = MAILING_ADDRESS + '_line_{0}'
 TOWN_CODE = 'town_code'
 TOWN_NAME = 'town_name'
 TOWN_INDICATOR = 'town_indicator'
+
+WARD_NUMBER = 'ward_number'
 
 ELECTION_DATE = 'election_date'
 PARTY_VOTED = 'party_voted'
@@ -595,7 +600,7 @@ CONSISTENT_COLUMN_NAMES = \
     },
     'Census': \
     {
-        'Census Yr': 'census_year',
+        'Census Yr': CENSUS_YEAR,
         'Res. ID': RESIDENT_ID,
         'Last Nm': LAST_NAME,
         'First Nm': FIRST_NAME,
@@ -609,7 +614,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Res. - Apt #': RADDR_APARTMENT_NUMBER,
         'Res. - Zip Code': RADDR_ZIP_CODE,
         'Party': PARTY_AFFILIATION,
-        'Ward #': 'ward_number',
+        'Ward #': WARD_NUMBER,
         'Precinct #': PRECINCT_NUMBER,
         'Voter Status': VOTER_STATUS,
     },
@@ -720,7 +725,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Poll ID Required': 'poll_id_required',
         'Precinct Number': PRECINCT_NUMBER,
         'Rec Sequence Number': 'rec_sequence_number',
-        'Ward Number': 'ward_number',
+        'Ward Number': WARD_NUMBER,
     },
     'ElectricEesRates': \
     {
@@ -983,16 +988,16 @@ CONSISTENT_COLUMN_NAMES = \
     },
     'RawCensus_L': \
     {
-        'Census Yr': 'census_year',
+        'Census Yr': CENSUS_YEAR,
         'Res. ID': RESIDENT_ID,
         'Last Nm': LAST_NAME,
         'First Nm': FIRST_NAME,
         'Middle Nm': MIDDLE_NAME,
-        'Title (Jr, Sr, II, III, etc.)': 'title',
+        'Title (Jr, Sr, II, III, etc.)': TITLE,
         'D.O.B. (mm/dd/yyyy format)': DATE_OF_BIRTH,
         'Occupation': OCCUPATION,
         'Mail to Code (Y if HOH; N if Not)': HEAD_OF_HOUSEHOLD,
-        'Family Group Code (Within an address)': 'family_group_code',
+        'Family Group Code (Within an address)': FAMILY_GROUP_CODE,
         'Res. - St. #': RADDR_STREET_NUMBER,
         'Res. - St. # Suffix': RADDR_STREET_NUMBER_SUFFIX,
         'Res. - St. Name': RADDR_STREET_NAME,
@@ -1005,10 +1010,10 @@ CONSISTENT_COLUMN_NAMES = \
         'Mail - Zip Code': MADDR_ZIP_CODE,
         'Phone #': PHONE,
         'Party': PARTY_AFFILIATION,
-        'Ward #': 'ward_number',
+        'Ward #': WARD_NUMBER,
         'Precinct #': PRECINCT_NUMBER,
         'Voter Status (A- Active, I - Inactive (if voter))': VOTER_STATUS,
-        'Vet. flag (Y if vet)': 'veteran',
+        'Vet. flag (Y if vet)': VETERAN,
     },
     'RawCommercial_1': \
     {
@@ -1765,7 +1770,32 @@ COLUMN_ORDER = \
         LAST_NAME,
         FIRST_NAME,
         MIDDLE_NAME,
+        TITLE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
+        DATE_OF_BIRTH,
+        AGE,
+        OCCUPATION,
+        VETERAN,
+        HEAD_OF_HOUSEHOLD,
+        FAMILY_GROUP_CODE,
+        RADDR_STREET_NUMBER,
+        RADDR_STREET_NUMBER_SUFFIX,
+        RADDR_STREET_NAME,
+        RADDR_APARTMENT_NUMBER,
+        RADDR_ZIP_CODE,
+        MADDR_STREET,
+        MADDR_APARTMENT_NUMBER,
+        MADDR_CITY,
+        MADDR_STATE,
+        MADDR_ZIP_CODE,
+        PHONE,
+        PARTY_AFFILIATION,
+        VOTER_STATUS,
+        WARD_NUMBER,
+        PRECINCT_NUMBER,
+        ACCOUNT_NUMBER,
+        CENSUS_YEAR,
+        CONFIDENCE,
     ],
     'Contracts':
     [

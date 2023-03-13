@@ -32,15 +32,6 @@ if __name__ == '__main__':
     # Retrieve table from database
     df = pd.read_sql_table( 'RawCensus_L', engine, index_col=util.ID, parse_dates=True )
 
-    # Clean up phone numbers
-    df[util.PHONE] = df[util.PHONE].fillna( '' ).astype( str ).replace( '\.0$', '', regex=True )
-    idx_ten_digits = df[df[util.PHONE].str.len() == 10].index
-    sr_phone = df.loc[idx_ten_digits, util.PHONE]
-    df.at[idx_ten_digits, util.PHONE] = sr_phone.str[:3] + '-' + sr_phone.str[3:6] + '-' + sr_phone.str[6:]
-
-    # Calculate age
-    df[util.AGE] = df[util.DATE_OF_BIRTH].apply( lambda date_of_birth: util.calculate_age( date_of_birth ) )
-
     # Prepare address fragments for normalization
     df[util.RADDR_STREET_NUMBER] = df[util.RADDR_STREET_NUMBER].fillna(0).astype(int).astype(str)
     df[util.RADDR_STREET_NUMBER_SUFFIX] = df[util.RADDR_STREET_NUMBER_SUFFIX].fillna('').astype(str)
@@ -54,6 +45,21 @@ if __name__ == '__main__':
     # Merge census dataframe with assessment data
     table_name = 'Census_L'
     df = util.merge_with_assessment_data( table_name, df, engine=engine, sort_by=[util.RESIDENT_ID, util.ACCOUNT_NUMBER], drop_subset=[util.RESIDENT_ID] )
+
+    # Drop older entries that appear to represent the same person
+    df[util.CENSUS_YEAR] = df[util.CENSUS_YEAR].fillna( 0 ).astype( int )
+    df = df.sort_values( by=[util.CENSUS_YEAR] )
+    df = df.drop_duplicates( subset=[util.FIRST_NAME, util.LAST_NAME, util.DATE_OF_BIRTH], keep='last' )
+    df = df.sort_values( by=[util.RESIDENT_ID, util.ACCOUNT_NUMBER] )
+
+    # Clean up phone numbers
+    df[util.PHONE] = df[util.PHONE].fillna( '' ).astype( str ).replace( '\.0$', '', regex=True )
+    idx_ten_digits = df[df[util.PHONE].str.len() == 10].index
+    sr_phone = df.loc[idx_ten_digits, util.PHONE]
+    df.at[idx_ten_digits, util.PHONE] = sr_phone.str[:3] + '-' + sr_phone.str[3:6] + '-' + sr_phone.str[6:]
+
+    # Calculate age
+    df[util.AGE] = df[util.DATE_OF_BIRTH].apply( lambda date_of_birth: util.calculate_age( date_of_birth ) )
 
     # Save table in database
     util.create_table( table_name, conn, cur, df=df )
