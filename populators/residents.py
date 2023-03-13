@@ -70,14 +70,6 @@ def report_gender_findings():
     print( 'Gender found for {0}% of voters'.format( pct_mf ) )
 
 
-def calculate_age( row ):
-
-    birth_year = row[util.DATE_OF_BIRTH].split( '-' )[0]
-    age = datetime.date.today().year - int( birth_year )
-
-    return age
-
-
 def get_zoning_code( row ):
 
     # If zoning code not already present...
@@ -452,7 +444,7 @@ if __name__ == '__main__':
     print( '' )
 
     # Calculate age
-    df_residents[util.AGE] = df_residents.apply( lambda row: calculate_age( row ), axis=1 )
+    df_residents[util.AGE] = df_residents[util.DATE_OF_BIRTH].apply( lambda date_of_birth: util.calculate_age( date_of_birth ) )
 
     # Insert zoning codes
     t = time.time()

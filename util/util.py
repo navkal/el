@@ -1430,6 +1430,12 @@ CONSISTENT_COLUMN_NAMES = \
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
 
 
+# Calculate age of a person
+def calculate_age( date_of_birth ):
+    age = datetime.date.today().year - int( date_of_birth.split( '-' )[0] ) if date_of_birth else 0
+    return int( age )
+
+
 # Clean  residential land use codes for reliable matching
 def clean_residential_land_use_codes( sr_res_codes ):
     sr_res_codes = sr_res_codes.astype(str).str.zfill( 4 )

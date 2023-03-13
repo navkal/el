@@ -38,6 +38,9 @@ if __name__ == '__main__':
     sr_phone = df.loc[idx_ten_digits, util.PHONE]
     df.at[idx_ten_digits, util.PHONE] = sr_phone.str[:3] + '-' + sr_phone.str[3:6] + '-' + sr_phone.str[6:]
 
+    # Calculate age
+    df[util.AGE] = df[util.DATE_OF_BIRTH].apply( lambda date_of_birth: util.calculate_age( date_of_birth ) )
+
     # Prepare address fragments for normalization
     df[util.RADDR_STREET_NUMBER] = df[util.RADDR_STREET_NUMBER].fillna(0).astype(int).astype(str)
     df[util.RADDR_STREET_NUMBER_SUFFIX] = df[util.RADDR_STREET_NUMBER_SUFFIX].fillna('').astype(str)
