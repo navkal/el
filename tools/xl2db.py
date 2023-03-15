@@ -4,6 +4,8 @@ import argparse
 import pandas as pd
 import sqlite3
 
+import warnings
+warnings.filterwarnings( 'ignore', category=UserWarning, module='pandas' )
 
 ######################
 #
@@ -38,7 +40,7 @@ if __name__ == '__main__':
     # Read the spreadsheet and clean up column labels
     df = pd.read_excel( args.input_filename, skiprows=skiprows )
     df.columns = df.columns.astype( str )
-    df.columns = df.columns.str.replace( ' ', '' )
+    df.columns = df.columns.str.replace( '\s+', ' ', regex=True ).str.strip()
 
     # Convert float columns to integer
     if args.float_to_int:
