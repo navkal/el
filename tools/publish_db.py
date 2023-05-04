@@ -3,9 +3,14 @@
 import argparse
 import pandas as pd
 pd.options.display.width = 0
+
 import sqlite3
 import sqlalchemy
+
 import datetime
+import os
+
+import warnings
 
 
 ######################
@@ -154,7 +159,7 @@ def read_database():
                     tab_name = ''
 
             if tab_name:
-                print( 'Reading table "{}" for worksheet "{}" at position {}'.format( table_name, tab_name, tab_position ) )
+                print( 'Reading table "{}" for output as "{}" at position {}'.format( table_name, tab_name, tab_position ) )
                 input_db[tab_name] = pd.read_sql_table( table_name, engine, parse_dates=True )
                 tab_order[tab_position] = tab_name
             else:
@@ -188,7 +193,7 @@ def edit_database( input_db, dc_sheets ):
                 input_db[sheet_name] = input_db[sheet_name].rename( columns={ column_name: str( col_idx ).zfill( num_width ) + ': ' + column_name } )
 
             print( '' )
-            print( 'Editing worksheet "{}"'.format( sheet_name ) )
+            print( 'Editing table "{}"'.format( sheet_name ) )
             print( '', 'Selecting columns:' )
             print( '', list( dc_rename.keys() ) )
             print( '', 'Publishing as:')
@@ -231,7 +236,6 @@ def write_workbook():
     with pd.ExcelWriter( args.output_filename, engine='xlsxwriter', engine_kwargs={ 'options': {'strings_to_numbers': True} } ) as writer:
 
         # Write structure table to Excel
-        print( '' )
         print( 'Creating worksheet "{}"'.format( WORKBOOK_STRUCTURE ) )
         df_structure.to_excel( writer, sheet_name=WORKBOOK_STRUCTURE, index=False )
 
@@ -250,6 +254,82 @@ def write_workbook():
         df_copyright.to_excel( writer, sheet_name=COPYRIGHT, index=False )
 
 
+# Save results to output database
+def write_database():
+
+    # Open the database
+    conn = sqlite3.connect( args.output_filename )
+    cur = conn.cursor()
+
+    for tab_key in tab_keys:
+
+        # Get name and dataframe for next table
+        table_name = make_table_name( tab_key )
+        df = input_db[tab_order[tab_key]]
+
+        # Write the table to the database
+        write_table( table_name, df, cur, conn )
+
+    # Add the copyright notice
+    write_table( '_About', make_copyright(), cur, conn )
+
+
+# Save a table to the output database
+def write_table( table_name, df, cur, conn ):
+
+    print( 'Creating table "{}"'.format( table_name ) )
+
+    # Drop table if it already exists
+    cur.execute( 'DROP TABLE IF EXISTS ' + table_name )
+
+    # Fix numeric columns
+    df = fix_numeric_columns( df )
+
+    # Generate SQL command to create table
+    create_sql = 'CREATE TABLE ' + table_name + ' ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
+    for col_name in df.columns:
+        sqltype = pdtype_to_sqltype( df, col_name )
+        create_sql += ', "{0}" {1}'.format( col_name, sqltype )
+    create_sql += ' )'
+
+    # Create the empty table
+    cur.execute( create_sql )
+
+    # Load data into table
+    warnings.filterwarnings( 'ignore', category=UserWarning, module='pandas' )
+    df.to_sql( table_name, conn, if_exists='append', index=False )
+    warnings.resetwarnings()
+
+
+# Fix numeric columns in specified dataframe
+def fix_numeric_columns( df ):
+
+    for column_name in df.columns:
+
+        if ( column_name.lower().find( 'zip' ) == -1 ) and df[column_name].dtype == object:
+            df[column_name] = pd.to_numeric( df[column_name], errors='ignore' )
+
+    return df
+
+
+# Map pandas datatype to SQL datatype
+def pdtype_to_sqltype( df, col_name ):
+
+    if df is None:
+        sqltype = 'TEXT'
+    else:
+        pdtype = str( df[col_name].dtype )
+
+        if pdtype.startswith( 'float' ):
+            sqltype = 'FLOAT'
+        elif pdtype.startswith( 'int' ):
+            sqltype = 'INT'
+        else:
+            sqltype = 'TEXT'
+
+    return sqltype
+
+
 # Generate a tab name, adhering to MS Excel's length restriction
 def make_tab_name( tab_key ):
     num_width = len( str( len( tab_order ) ) )
@@ -258,22 +338,40 @@ def make_tab_name( tab_key ):
     return truncated_tab_name
 
 
+# Generate a table name, adhering to SQLite constraints
+def make_table_name( tab_key ):
+    tab_name = make_tab_name( tab_key )
+    table_name = '_'.join( tab_name.split()[1:] )
+    return table_name
+
+
 # Main program
 if __name__ == '__main__':
 
     # Read arguments
     parser = argparse.ArgumentParser( description='Generate Excel file from SQLite database' )
     parser.add_argument( '-i', dest='input_filename',  help='Input filename - Name of SQLite database file', required=True )
-    parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of MS Excel file', required=True )
+    parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of Excel workbook or SQLite database', required=True )
     parser.add_argument( '-t', dest='tabs_filename',  help='Tabs filename - Name of CSV file specifying order and naming tabs in output Excel file' )
     args = parser.parse_args()
 
+    output_ext = os.path.splitext( args.output_filename )[1]
+    if output_ext == '.xlsx':
+        b_xl = True
+    elif output_ext == '.sqlite':
+        b_xl = False
+    else:
+        print( 'Output file extension "{}" is not supported.  Please use ".xlsx" or ".sqlite".  '.format( output_ext ) )
+        exit()
+
     # Report
+    print( '' )
     print( 'Input filename:', args.input_filename )
     print( 'Output filename:', args.output_filename )
 
     # Report and read optional Tabs file
     if args.tabs_filename != None:
+        print( '' )
         print( 'Tabs filename:', args.tabs_filename )
         df_tabs, dc_sheets = read_tabs_file()
     else:
@@ -293,8 +391,14 @@ if __name__ == '__main__':
     # Create copyright dataframe
     df_copyright = make_copyright()
 
-    # Write Excel workboook
-    write_workbook()
+    print( '' )
+
+    if b_xl:
+        # Write Excel workboook
+        write_workbook()
+    else:
+        # Write SQLite database
+        write_database()
 
     print( '' )
     print( 'Done' )

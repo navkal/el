@@ -83,6 +83,10 @@ if __name__ == '__main__':
     print( '\n=======> Cost per Saved MWh' )
     os.system( 'python mass_save_cost_per_saved_mwh.py -t CostPerSavedMwh -d {0}'.format( args.output_filename ) )
 
+    # Generate copyright notice
+    print( '\n=======> Copyright' )
+    util.create_about_table( 'MassSave', util.make_df_about_energize_lawrence(), args.output_filename )
+
     #
     # Publish database
     #
