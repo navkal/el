@@ -33,7 +33,7 @@ def clean_string( col, remove_all_spaces=False ):
     return col
 
 def clean_float( col ):
-    col = col.str.strip().replace( r'^\(', '', regex=True ).replace( r'\)$', '', regex=True )
+    col = col.replace( r'^\(', '', regex=True ).replace( r'\)$', '', regex=True )
     col = col.replace( r'^\s*$', np.nan, regex=True)
     col = col.fillna( '0' ).astype( float )
     return col
