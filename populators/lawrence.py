@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     # Read siding building permit data
     print( '\n=======> Siding Building Permit input' )
-    os.system( 'python xl_to_db.py -d ../xl/lawrence/building_permits/siding/ -p "Site Contact,Use of Property,Use Group" -t RawBuildingPermits_Siding -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -d ../xl/lawrence/building_permits/siding -p "Site Contact,Use of Property,Use Group" -t RawBuildingPermits_Siding -o {0}'.format( args.master_filename ) )
 
     # Generate Siding Building Permits table
     print( '\n=======> Siding Building Permits table' )
