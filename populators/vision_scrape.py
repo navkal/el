@@ -351,11 +351,12 @@ if __name__ == '__main__':
     # Prepare URL base
     url_base = vision.URL_BASE.format( municipality )
 
-    # Initialize counter
+    # Initialize counters
     n_processed = 0 if args.refresh else len( df )
     n_last_reported = -1
     n_tried = 0
     n_saved = n_processed
+    ls_could_not_refresh = []
 
     # Set condition handler
     signal.signal( signal.SIGINT, save_and_exit )
@@ -367,7 +368,7 @@ if __name__ == '__main__':
             util.report_elapsed_time( prefix='' )
             s_status = ' Tried {} ({}%) and processed {} ({}%) of {}; requesting VISION ID {}'.format( n_tried, round( 100 * n_tried / len( id_range ), 2 ), n_processed, round( 100 * n_processed / len( id_range ), 2 ), len( id_range ), vision_id )
             if args.refresh and ( n_tried != n_processed ):
-                s_status += '\n !!! Refresh could not process all requested VISION IDs'
+                s_status += '\n !!! Refresh could not process {} VISION IDs: {}'.format( len( ls_could_not_refresh ), ls_could_not_refresh )
             print( s_status )
 
             # Save current vision ID at which to continue if this process is interrupted
@@ -441,6 +442,9 @@ if __name__ == '__main__':
             if n_processed - n_saved >= SAVE_INTERVAL:
                 save_progress( df )
                 n_saved = n_processed if args.refresh else len( df )
+
+        elif args.refresh:
+            ls_could_not_refresh.append( vision_id )
 
         # Increment count
         n_tried += 1
