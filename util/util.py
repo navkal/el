@@ -415,9 +415,13 @@ PERMIT_NUMBER_LINK = PERMIT_NUMBER + _LINK
 PERMIT_TYPE = 'permit_type'
 TOTAL_FEE = 'total_fee_$'
 PROJECT_COST = 'project_cost_$'
+TOTAL_PROJECT_COST = 'total_' + PROJECT_COST
 ELECTRICAL_PERMIT_NUMBER = 'electrical_' + PERMIT_NUMBER
 INSPECTION_NOTES = 'inspection_notes'
 PERMIT_SUBTYPE = 'permit_subtype'
+PROJECT_COUNT = 'project_count'
+PROJECT_TYPE = 'project_type'
+PERMIT_REGEX = 'permit_regex'
 
 WATTS_PER_MODULE = 'watts_per_module'
 MODULES ='number_of_solar_pv_modules'
