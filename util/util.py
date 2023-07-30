@@ -439,6 +439,8 @@ DATE_DUE_FOR_INSPECTION = 'date_due_for_inspection'
 INSPECTION_STATUS = 'inspection_status'
 PROPERTY_MANAGER = 'property_manager'
 
+APPLIANCE = 'appliance'
+
 ENTIRE_ROOF = 'entire_roof'
 STRIPPING = 'stripping'
 ROOF_LAYERS = 'roof_layers'
@@ -799,6 +801,32 @@ CONSISTENT_COLUMN_NAMES = \
         'Date': DATE,
         'General Notes': 'general_notes',
         'Insp Notes': INSPECTION_NOTES,
+    },
+    'RawBuildingPermits_Plumbing': \
+    {
+        'PERMIT#': PERMIT_NUMBER,
+        'FILE#': FILE_NUMBER,
+        'Address of the property': ADDRESS,
+        'Property Owner': OWNER_NAME,
+        'Work Description': WORK_DESCRIPTION,
+        'Applicant': APPLICANT,
+        'Status': PERMIT_STATUS,
+        'Permit Fees': TOTAL_FEE,
+        'Application Date': APPLICATION_DATE,
+        'Approval Date': APPROVAL_DATE,
+        'Issue Date': DATE_ISSUED,
+        'Expiration Date': EXPIRATION_DATE,
+        'Close Date': CLOSED_DATE,
+        'Last Inspection': LAST_INSPECTION_DATE,
+        'Inspection Type': INSPECTION_TYPE,
+        'Assigned to': ASSIGNED_TO,
+        'Due (for inspection)': DATE_DUE_FOR_INSPECTION,
+        'Status.1': INSPECTION_STATUS,
+        'Appliance 1': APPLIANCE + '_1',
+        'Appliance 2': APPLIANCE + '_2',
+        'Appliance 3': APPLIANCE + '_3',
+        'Appliance 4': APPLIANCE + '_4',
+        'Appliance 5': APPLIANCE + '_5',
     },
     'RawBuildingPermits_Roof': \
     {
@@ -1435,7 +1463,7 @@ CONSISTENT_COLUMN_NAMES = \
         'service_type': SERVICE_TYPE,
     },
 }
-
+CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Gas'] = CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Plumbing']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
 
 
@@ -2275,7 +2303,7 @@ def expand_address_ranges( df ):
 
         # Extract street
         words = row[NORMALIZED_ADDRESS].split()[1:]
-        num_suffix = words.pop() if re.search( '^[A-Z]$', words[-1] ) else ''
+        num_suffix = words.pop() if ( len( words ) and re.search( '^[A-Z]$', words[-1] ) ) else ''
         street = ' '.join( words )
 
         # Iterate over all numbers in the address range, incrementing by 2

@@ -16,6 +16,8 @@ ACCT = util.ACCOUNT_NUMBER
 PERMIT_TYPES = \
 [
     'cga',
+    'gas',
+    'plumbing',
     'roof',
     'siding',
     'solar',
