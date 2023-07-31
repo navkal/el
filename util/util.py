@@ -2926,15 +2926,6 @@ def reorder_columns( table_name, columns ):
     any_order = [ x for x in columns if ( ( x not in leading_order ) and ( x not in trailing_order ) ) ]
     preferred_order = leading_order + any_order + trailing_order
 
-    if len( trailing_order ):
-        print( '' )
-        print( '=DEBUG=> columns', len( columns ), columns )
-        print( '=DEBUG=> leading_order', len( leading_order), leading_order )
-        print( '=DEBUG=> any_order', len( any_order ), any_order )
-        print( '=DEBUG=> trailing_order', len( trailing_order ), trailing_order )
-        print( '=DEBUG=> preferred_order', len( preferred_order ), preferred_order )
-        print( '' )
-
     # Initialize list of remaining columns
     remaining = columns.copy()
 
