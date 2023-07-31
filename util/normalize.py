@@ -121,6 +121,7 @@ EXPECTED_KEYS = \
     'SubaddressType',
     'SubaddressIdentifier',
     'SecondStreetNamePreDirectional',
+    'SecondStreetNamePreType',
     'StreetNamePostModifier',
     'BuildingName',
     'Recipient',
@@ -375,7 +376,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
     original = row[col_name]
 
     # Initialize return value
-    address = original.strip().upper()
+    address = original.strip().upper() if ( original != None ) else ''
 
     if verbose:
         print( '' )

@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="create_all" type="PythonConfigurationType" factoryName="Python" folderName="andover">
+    <output_file path="$PROJECT_DIR$/console/create_all.txt" is_save="true" />
     <module name="elections" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

@@ -89,6 +89,14 @@ if __name__ == '__main__':
     print( '\n=======> Columbia Gas Building Permits table' )
     os.system( 'python lawrence_building_permits_cga.py -m {0}'.format( args.master_filename ) )
 
+    # Read electrical building permit data
+    print( '\n=======> Electrical Building Permit input' )
+    os.system( 'python xl_to_db.py -d ../xl/lawrence/building_permits/electrical -p "Permit Type,Subtype" -t RawBuildingPermits_Electrical -o {0}'.format( args.master_filename ) )
+
+    # Generate Electrical Building Permits table
+    print( '\n=======> Electrical Building Permits table' )
+    os.system( 'python lawrence_building_permits.py -p Electrical -m {0}'.format( args.master_filename ) )
+
     # Read gas building permit data
     print( '\n=======> Gas Building Permit input' )
     os.system( 'python xl_to_db.py -d ../xl/lawrence/building_permits/gas -p "Permit Type,Subtype" -t RawBuildingPermits_Gas -o {0}'.format( args.master_filename ) )
@@ -188,6 +196,7 @@ if __name__ == '__main__':
             'Assessment_L_Residential_Merged',
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
+            'RawBuildingPermits_Electrical',
             'RawBuildingPermits_Gas',
             'RawBuildingPermits_Plumbing',
             'RawBuildingPermits_Roof',
