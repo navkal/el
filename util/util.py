@@ -1594,6 +1594,29 @@ def populate_mei_column_names( dict, start_year, end_year ):
 
 COLUMN_GROUP = \
 {
+    'PERMIT_IDS':
+    [
+        PERMIT_NUMBER,
+        FILE_NUMBER,
+    ],
+    'PERMIT_DATES':
+    [
+        APPLICATION_DATE,
+        APPROVAL_DATE,
+        DATE_ISSUED,
+        DATE_DUE_FOR_INSPECTION,
+        LAST_INSPECTION_DATE,
+        CLOSED_DATE,
+        EXPIRATION_DATE,
+    ],
+    'PERMIT_DATES_1':
+    [
+        APPLICATION_DATE,
+        APPROVAL_DATE,
+        DATE_ISSUED,
+        CLOSED_DATE,
+        EXPIRATION_DATE,
+    ],
     'RESIDENT':
     [
         RESIDENT_ID,
@@ -1761,14 +1784,32 @@ COLUMN_ORDER = \
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
         TOWN_NAME,
     ],
+    'BuildingPermits_L_Electrical':
+    [
+        * COLUMN_GROUP['PERMIT_IDS'],
+    ],
+    'BuildingPermits_L_Gas':
+    [
+        * COLUMN_GROUP['PERMIT_IDS'],
+    ],
+    'BuildingPermits_L_Plumbing':
+    [
+        * COLUMN_GROUP['PERMIT_IDS'],
+    ],
+    'BuildingPermits_L_Roof':
+    [
+        * COLUMN_GROUP['PERMIT_IDS'],
+    ],
+    'BuildingPermits_L_Siding':
+    [
+        * COLUMN_GROUP['PERMIT_IDS'],
+    ],
     'BuildingPermits_L_Solar':
     [
-        PERMIT_NUMBER,
-        FILE_NUMBER,
+        * COLUMN_GROUP['PERMIT_IDS'],
         ADDRESS,
         APPLICANT,
         PERMIT_STATUS,
-        DATE_ISSUED,
         KW_DC,
         MODULES,
         WATTS_PER_MODULE,
@@ -1777,17 +1818,11 @@ COLUMN_ORDER = \
         TOTAL_FEE,
         PROJECT_COST,
         PROPERTY_USE_GROUP,
-        APPLICATION_DATE,
         POWER_RATINGS_EACH,
         OWNER_NAME,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
-        APPROVAL_DATE,
-        EXPIRATION_DATE,
-        CLOSED_DATE,
-        LAST_INSPECTION_DATE,
         INSPECTION_TYPE,
         ASSIGNED_TO,
-        DATE_DUE_FOR_INSPECTION,
         INSPECTION_STATUS,
         WORK_DESCRIPTION,
         ACCOUNT_NUMBER,
@@ -1803,8 +1838,7 @@ COLUMN_ORDER = \
     ],
     'BuildingPermits_L_Wx':
     [
-        PERMIT_NUMBER,
-        FILE_NUMBER,
+        * COLUMN_GROUP['PERMIT_IDS'],
         NORMALIZED_STREET_NAME,
         NORMALIZED_STREET_NUMBER,
         PERMIT_TYPE,
@@ -2149,6 +2183,43 @@ COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['BuildingPermits_L_Solar_Summary'] = COLUMN_ORDER['BuildingPermits_L_Solar']
 COLUMN_ORDER['Assessment_L_Residential'] = COLUMN_ORDER['Assessment_L_Commercial']
+
+COLUMN_ORDER_TRAILING = \
+{
+    'BuildingPermits_L_Electrical':
+    [
+        * COLUMN_GROUP['PERMIT_DATES'],
+    ],
+    'BuildingPermits_L_Gas':
+    [
+        * COLUMN_GROUP['PERMIT_DATES'],
+    ],
+    'BuildingPermits_L_Plumbing':
+    [
+        * COLUMN_GROUP['PERMIT_DATES'],
+    ],
+    'BuildingPermits_L_Roof':
+    [
+        * COLUMN_GROUP['PERMIT_DATES_1'],
+    ],
+    'BuildingPermits_L_Siding':
+    [
+        * COLUMN_GROUP['PERMIT_DATES_1'],
+    ],
+    'BuildingPermits_L_Solar':
+    [
+        * COLUMN_GROUP['PERMIT_DATES'],
+    ],
+    'BuildingPermits_L_Solar_Summary':
+    [
+        * COLUMN_GROUP['PERMIT_DATES'],
+    ],
+    'BuildingPermits_L_Wx':
+    [
+        * COLUMN_GROUP['PERMIT_DATES_1'],
+    ],
+}
+
 
 # Information on how to publish databases
 PUBLISH_INFO = \
@@ -2840,11 +2911,32 @@ def create_table( table_name, conn, cur, columns=None, df=None, alt_column_order
 
 def reorder_columns( table_name, columns ):
 
+    # Get leading and trailing column orders for this table
+    leading_order = COLUMN_ORDER[table_name] if table_name in COLUMN_ORDER else []
+    trailing_order = COLUMN_ORDER_TRAILING[table_name] if table_name in COLUMN_ORDER_TRAILING else []
+
+    # Check for conflicts
+    conflicts = list( set( leading_order ).intersection( set( trailing_order ) ) )
+    if conflicts:
+        print( '' )
+        print( '!!! COLUMN_ORDER and COLUMN_ORDER_TRAILING for "{0}" contain {1} conflicts: "{2}"'.format( table_name, len( conflicts), conflicts ) )
+        exit()
+
+    # Create list of columns in preferred order
+    any_order = [ x for x in columns if ( ( x not in leading_order ) and ( x not in trailing_order ) ) ]
+    preferred_order = leading_order + any_order + trailing_order
+
+    if len( trailing_order ):
+        print( '' )
+        print( '=DEBUG=> columns', len( columns ), columns )
+        print( '=DEBUG=> leading_order', len( leading_order), leading_order )
+        print( '=DEBUG=> any_order', len( any_order ), any_order )
+        print( '=DEBUG=> trailing_order', len( trailing_order ), trailing_order )
+        print( '=DEBUG=> preferred_order', len( preferred_order ), preferred_order )
+        print( '' )
+
     # Initialize list of remaining columns
     remaining = columns.copy()
-
-    # Get column names listed in preferred order
-    preferred_order = COLUMN_ORDER[table_name] if table_name in COLUMN_ORDER else []
 
     # Initialize empty result
     result = []
@@ -2861,7 +2953,8 @@ def reorder_columns( table_name, columns ):
             remaining.remove( col_name )
 
         else:
-            print( '!!! COLUMN_ORDER for "{0}" table lists unexpected column name: "{1}"'.format( table_name, col_name ) )
+            print( '' )
+            print( '!!! COLUMN_ORDER or COLUMN_ORDER_TRAILING for "{0}" table lists unexpected column name: "{1}"'.format( table_name, col_name ) )
             exit()
 
     # Append remaining remaining to result

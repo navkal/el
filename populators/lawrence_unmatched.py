@@ -24,6 +24,9 @@ TABLE_NAMES = \
 [
     'BuildingPermits_L',
     'BuildingPermits_L_Cga',
+    'BuildingPermits_L_Electrical',
+    'BuildingPermits_L_Gas',
+    'BuildingPermits_L_Plumbing',
     'BuildingPermits_L_Roof',
     'BuildingPermits_L_Siding',
     'BuildingPermits_L_Solar',
