@@ -36,6 +36,7 @@ if __name__ == '__main__':
 
     # Retrieve table from database
     df_left = pd.read_sql_table( 'RawBuildingPermits' + suffix, engine, index_col=util.ID, parse_dates=True )
+    df_left = df_left.drop_duplicates( subset=[util.PERMIT_NUMBER], keep='last' )
 
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_left[ADDR] = df_left[util.ADDRESS]
@@ -43,7 +44,7 @@ if __name__ == '__main__':
 
     # Merge left dataframe with assessment data
     table_name = 'BuildingPermits_L' + suffix
-    df_result = util.merge_with_assessment_data( table_name, df_left, engine=engine )
+    df_result = util.merge_with_assessment_data( table_name, df_left, drop_subset=[util.PERMIT_NUMBER], engine=engine )
 
     # Create table in database
     util.create_table( table_name, conn, cur, df=df_result )

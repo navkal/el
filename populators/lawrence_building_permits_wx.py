@@ -33,6 +33,7 @@ if __name__ == '__main__':
     df_permits = pd.read_sql_table( 'RawBuildingPermits_Wx', engine, index_col=util.ID, parse_dates=True )
     df_past = pd.read_sql_table( 'RawBuildingPermits_Wx_Past', engine, index_col=util.ID, parse_dates=True )
     df_2023 = pd.read_sql_table( 'RawBuildingPermits_Wx_Ongoing', engine, index_col=util.ID, parse_dates=True )
+    df_2023 = df_2023.drop_duplicates( subset=[util.PERMIT_NUMBER], keep='last' )
 
     # Combine official and past permits in one dataframe, preserving source information
     df_permits = util.combine_dataframes( df_permits, df_past, [util.PERMIT_NUMBER], 'first', [util.PERMIT_NUMBER] )
