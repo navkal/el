@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     # Analyze contractor activity recorded in specified permit tables
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', util.BUSINESS_NAME, 'wx' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar_Summary', util.APPLICANT, 'solar' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', util.APPLICANT, 'solar' )
     df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
     df[util.PROJECT_COUNT] = df[util.PROJECT_COUNT].astype(int)
 

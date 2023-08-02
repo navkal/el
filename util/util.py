@@ -2181,7 +2181,6 @@ COLUMN_ORDER = \
 
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
-COLUMN_ORDER['BuildingPermits_L_Solar_Summary'] = COLUMN_ORDER['BuildingPermits_L_Solar']
 COLUMN_ORDER['Assessment_L_Residential'] = COLUMN_ORDER['Assessment_L_Commercial']
 
 COLUMN_ORDER_TRAILING = \
@@ -2207,10 +2206,6 @@ COLUMN_ORDER_TRAILING = \
         * COLUMN_GROUP['PERMIT_DATES_1'],
     ],
     'BuildingPermits_L_Solar':
-    [
-        * COLUMN_GROUP['PERMIT_DATES'],
-    ],
-    'BuildingPermits_L_Solar_Summary':
     [
         * COLUMN_GROUP['PERMIT_DATES'],
     ],
@@ -2654,7 +2649,7 @@ def merge_with_assessment_data( table_name, df_left, sort_by=[PERMIT_NUMBER, ACC
     df_result = df_result.sort_values( by=sort_by )
 
     # Report final statistics
-    len_unmatched = len( df_result[df_result[ACCOUNT_NUMBER].isna() ] )
+    len_unmatched = len( df_result[df_result[ACCOUNT_NUMBER].isna()] )
     len_result = len( df_result )
     len_matched = len_result - len_unmatched
     print( '---' )

@@ -39,18 +39,16 @@ if __name__ == '__main__':
     df_permits = util.combine_dataframes( df_permits, df_past, [util.PERMIT_NUMBER], 'first', [util.PERMIT_NUMBER] )
     df_permits = util.combine_dataframes( df_permits, df_2023, [util.PERMIT_NUMBER], 'last', [util.PERMIT_NUMBER] )
 
+    # Clean up before processing
+    df_permits = df_permits.drop_duplicates( subset=[util.PERMIT_NUMBER], keep='last' )
+
     # Normalize addresses.  Use result_type='expand' to load multiple columns!
     df_permits[ADDR] = df_permits[util.ADDRESS].str.strip()
     df_permits[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_permits.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
     # Merge permits dataframe with assessment data
     table_name = 'BuildingPermits_L_Wx'
-    df_permits = util.merge_with_assessment_data( table_name, df_permits, engine=engine, sort_by=[util.ACCOUNT_NUMBER] )
-
-    # Clean up
-    df_permits = df_permits.dropna( axis='columns', how='all' )
-    df_permits = df_permits.drop_duplicates( subset=[util.PERMIT_NUMBER], keep='first' )
-    df_permits = df_permits.sort_values( by=[util.PERMIT_NUMBER] )
+    df_permits = util.merge_with_assessment_data( table_name, df_permits, sort_by=[util.PERMIT_NUMBER], drop_subset=[util.PERMIT_NUMBER], engine=engine )
 
     # Create table in database
     util.create_table( table_name, conn, cur, df=df_permits )

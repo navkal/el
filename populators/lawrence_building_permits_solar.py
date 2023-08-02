@@ -33,6 +33,9 @@ if __name__ == '__main__':
     # Retrieve table from database
     df_left = pd.read_sql_table( 'RawBuildingPermits_Solar', engine, index_col=util.ID, parse_dates=True )
 
+    # Clean up before processing
+    df_left = df_left.drop_duplicates( subset=[util.PERMIT_NUMBER], keep='last' )
+
     # Clean text suffixes out of numeric column
     df_left[util.WATTS_PER_MODULE] = df_left[util.WATTS_PER_MODULE].str.extract( r'([0-9]+\.?[0-9]*|\.[0-9]+)' )
     df_left[util.WATTS_PER_MODULE] = df_left[util.WATTS_PER_MODULE].astype( float )
@@ -55,13 +58,9 @@ if __name__ == '__main__':
 
     # Merge left dataframe with assessment data
     table_name = 'BuildingPermits_L_Solar'
-    df_result = util.merge_with_assessment_data( table_name, df_left, engine=engine, sort_by=[util.PERMIT_NUMBER, util.FILE_NUMBER, util.DATE_DUE_FOR_INSPECTION] )
+    df_result = util.merge_with_assessment_data( table_name, df_left, sort_by=[util.PERMIT_NUMBER], drop_subset=[util.PERMIT_NUMBER], engine=engine )
 
     # Create table in database
     util.create_table( table_name, conn, cur, df=df_result )
-
-    # Create summary table in database
-    df_result = df_result.drop_duplicates( subset=[util.PERMIT_NUMBER], keep='last' )
-    util.create_table( table_name + '_Summary', conn, cur, df=df_result )
 
     util.report_elapsed_time()
