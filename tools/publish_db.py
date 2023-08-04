@@ -15,30 +15,33 @@ import warnings
 
 ######################
 #
-# db2xl.py publishes a sqlite database as an Excel workbook, each table corresponding to a single worksheet in the output file.
+# publish_db.py publishes all or selected parts of a sqlite database, saving the output to an Excel workbook or sqlite database.
+# Each table published from the input database corresponds in the output to a single (Excel) worksheet or single (sqlite) table.
 #
 # Sample parameter sequence:
 #
-# -i input_db.sqlite -o output_workbook.xlsx [-t tables.xlsx]
+#   -i input_db.sqlite -o output_workbook.<xlsx|sqlite> [-t tables.xlsx]
 #
 # Tables file
-#   By default (i.e., if the tables file is not supplied), db2xl.py publishes the entire database.
+#
+#   By default (i.e., if the tables file is not supplied), publish_db.py publishes the entire input database.
 #   The tables file allows you to specify which tables to publish, in what order, and under what names.
 #   It also allows you to specify, for individual tables, which columns to publish, in what order, and under what names.
 #
 #   The tables file consists of one or more worksheets (tabs).
 #
 #   The first worksheet specifies which tables to publish, in what order, and under what names.
-#   It contains the following columns:
+#   It must contain the following columns:
 #
 #   - 'table_name': Lists tables to include, in the desired order
 #   - 'tab_name': Lists alternate labels for tabs.  (To keep original table name, leave blank.)
 #   - 'column_map': References a subsequent worksheet describing how to publish the table's columns.  (To keep original columns, leave blank.)
 #
-#   Each (optional) subsequent worksheet describes, for a specific output worksheet, which columns to publish, in what order, and under what names.
+#   Each (optional) subsequent worksheet bears the name of a specific output worksheet (or table),
+#   and describes, for that worksheet (or table), which columns to publish, in what order, and under what names.
 #
 #   - 'old_column_name': Lists columns to include, in the desired order
-#   - 'new_column_name': Lists new name to be used for each column.  During publication, db2xl.py will insert a numeric prefix into each of these names.
+#   - 'new_column_name': Lists new name to be used for each column.  During publication, publish_db.py will insert a numeric prefix into each of these names.
 #
 ######################
 
