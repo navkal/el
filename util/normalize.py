@@ -159,6 +159,7 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     address = re.sub( r' BICKNELL$', ' BICKNELL TER', address )
     address = re.sub( r' HAYDEN$', ' HAYDEN AVE', address )
     address = re.sub( r'^197-999 BRUCE ST$', '197-199 BRUCE ST', address )
+    address = re.sub( r'^100 WATER ST\)$', '100 WATER ST', address )
 
     # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )
