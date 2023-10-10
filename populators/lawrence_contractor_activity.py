@@ -31,6 +31,8 @@ def analyze_contractor_activity( df, table_name, contractor_column, project_type
     df_permits = pd.read_sql_table( table_name, engine, index_col=util.ID, parse_dates=True )
     df_permits[util.YEAR] = '20' + df_permits[util.PERMIT_NUMBER].str.split( '-', expand=True )[0].str[-2:]
     df_permits[util.CONTRACTOR_NAME] = df_permits[contractor_column]
+    if util.PROJECT_COST not in df_permits.columns:
+        df_permits[util.PROJECT_COST] = 0
 
     # Analyze per-year activity for each contractor
     for idx, df_group in df_permits.groupby( by=[util.CONTRACTOR_NAME, util.YEAR] ):
@@ -66,6 +68,8 @@ if __name__ == '__main__':
 
     # Analyze contractor activity recorded in specified permit tables
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Electrical', util.APPLICANT, 'electrical' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Gas', util.APPLICANT, 'gas' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Plumbing', util.APPLICANT, 'plumbing' )
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', util.APPLICANT, 'solar' )
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', util.BUSINESS_NAME, 'wx' )
     df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
