@@ -65,10 +65,14 @@ if __name__ == '__main__':
     df = pd.DataFrame( columns=COLUMNS )
 
     # Analyze contractor activity recorded in specified permit tables
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', util.BUSINESS_NAME, 'wx' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Electrical', util.APPLICANT, 'electrical' )
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', util.APPLICANT, 'solar' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', util.BUSINESS_NAME, 'wx' )
     df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
     df[util.PROJECT_COUNT] = df[util.PROJECT_COUNT].astype(int)
+
+    # Sort final result
+    df = df.sort_values( by=[util.PROJECT_TYPE, util.YEAR, util.PROJECT_COUNT], ascending=[True, False, False] )
 
     # Save final table of commercial assessments
     util.create_table( 'ContractorActivity_L', conn, cur, df=df )

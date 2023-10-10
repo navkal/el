@@ -812,7 +812,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Applicant': APPLICANT,
         'Status': PERMIT_STATUS,
         'Permit Fees': TOTAL_FEE,
-        'Estimated Cost of Work': 'estimated_cost_$',
+        'Estimated Cost of Work': PROJECT_COST,
         'Application Date': APPLICATION_DATE,
         'Approval Date': APPROVAL_DATE,
         'Issue Date': DATE_ISSUED,
