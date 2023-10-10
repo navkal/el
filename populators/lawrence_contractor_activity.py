@@ -35,7 +35,7 @@ def analyze_contractor_activity( df, table_name, contractor_columns, project_typ
 
     # Construct contractor name
     df_permits = df_permits.dropna( subset=contractor_columns, how='all' )
-    df_permits[contractor_columns] = df_permits[contractor_columns].fillna( '' ).astype( str )
+    df_permits[contractor_columns] = df_permits[contractor_columns].fillna( 'None' ).astype( str )
     df_permits[util.CONTRACTOR_NAME] = df_permits[contractor_columns].apply( lambda row: ' | '.join( row.values ), axis=1 )
 
     # Handle absence of project cost column
