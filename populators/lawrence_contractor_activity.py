@@ -25,12 +25,20 @@ ROW = dict( ( el, 0 ) for el in COLUMNS )
 
 
 # Analyze contractor activity recorded in specified permit table
-def analyze_contractor_activity( df, table_name, contractor_column, project_type ):
+def analyze_contractor_activity( df, table_name, contractor_columns, project_type ):
 
     # Read specified table of building permits
     df_permits = pd.read_sql_table( table_name, engine, index_col=util.ID, parse_dates=True )
+
+    # Extract year from permit nmber
     df_permits[util.YEAR] = '20' + df_permits[util.PERMIT_NUMBER].str.split( '-', expand=True )[0].str[-2:]
-    df_permits[util.CONTRACTOR_NAME] = df_permits[contractor_column]
+
+    # Construct contractor name
+    df_permits = df_permits.dropna( subset=contractor_columns, how='all' )
+    df_permits[contractor_columns] = df_permits[contractor_columns].fillna( '' ).astype( str )
+    df_permits[util.CONTRACTOR_NAME] = df_permits[contractor_columns].apply( lambda row: ' | '.join( row.values ), axis=1 )
+
+    # Handle absence of project cost column
     if util.PROJECT_COST not in df_permits.columns:
         df_permits[util.PROJECT_COST] = 0
 
@@ -67,11 +75,13 @@ if __name__ == '__main__':
     df = pd.DataFrame( columns=COLUMNS )
 
     # Analyze contractor activity recorded in specified permit tables
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Electrical', util.APPLICANT, 'electrical' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Gas', util.APPLICANT, 'gas' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Plumbing', util.APPLICANT, 'plumbing' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', util.APPLICANT, 'solar' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', util.BUSINESS_NAME, 'wx' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Electrical', [util.APPLICANT], 'electrical' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Gas', [util.APPLICANT], 'gas' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Plumbing', [util.APPLICANT], 'plumbing' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Roof', [util.BUSINESS_NAME, util.APPLICANT], 'roof' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Siding', [util.BUSINESS_NAME, util.APPLICANT], 'siding' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', [util.APPLICANT], 'solar' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', [util.BUSINESS_NAME], 'wx' )
     df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
     df[util.PROJECT_COUNT] = df[util.PROJECT_COUNT].astype(int)
 
