@@ -22,7 +22,7 @@ if __name__ == '__main__':
     print( 'Looking for changed mappings from "{}" to "{}"'.format( VISION_ID, MAPPED_VALUE ) )
 
     # Read old and new CSV files
-    df_old = pd.read_csv( './in/Parcels_L_old.csv' )
+    df_old = pd.read_csv( './in/Parcels_L_2023-10-18.csv' )
     df_new = pd.read_csv( '../test/Parcels_L.csv' )
 
     # Isolate useful columns
