@@ -64,9 +64,11 @@ if __name__ == '__main__':
     # Determine whether any Vision IDs are mapped to changed values
 
     parser = argparse.ArgumentParser( description='Compare results of two Vision scrapes' )
-    parser.add_argument( '-o', dest='old_csv',  help='Old CSV file', required=True )
-    parser.add_argument( '-n', dest='new_csv',  help='New CSV file', required=True )
+    parser.add_argument( '-o', dest='old_csv',  help='Old CSV filename', required=True )
+    parser.add_argument( '-n', dest='new_csv',  help='New CSV filename', required=True )
     parser.add_argument( '-c', dest='columns',  help='List of columns to include in comparison', required=True )
+    parser.add_argument( '-r', dest='result_xl',  help='Result Excel filename', required=True )
+
     args = parser.parse_args()
 
     # Read old and new CSV files
@@ -96,4 +98,6 @@ if __name__ == '__main__':
 
     print( '' )
     print( df_result )
+
+    df_result.to_excel( args.result_xl, index=False )
 
