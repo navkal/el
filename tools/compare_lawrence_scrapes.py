@@ -1,5 +1,6 @@
 # Copyright 2023 Energize Andover.  All rights reserved.
 
+import argparse
 import pandas as pd
 
 pd.set_option('display.max_columns', 500)
@@ -9,9 +10,9 @@ pd.set_option('display.width', 1000)
 # Column name mappings
 VISION_ID = 'vision_id'
 
-COLUMNS = ['normalized_address', 'occupancy_households', 'total_occupancy']
 _OLD = '_old'
 _NEW = '_new'
+
 
 # Compare old and new mappings from Vision ID to specified column
 def compare( df_old, df_new, column ):
@@ -62,9 +63,15 @@ if __name__ == '__main__':
     # Compare results of two Vision scrapes:
     # Determine whether any Vision IDs are mapped to changed values
 
+    parser = argparse.ArgumentParser( description='Compare results of two Vision scrapes' )
+    parser.add_argument( '-o', dest='old_csv',  help='Old CSV file', required=True )
+    parser.add_argument( '-n', dest='new_csv',  help='New CSV file', required=True )
+    parser.add_argument( '-c', dest='columns',  help='List of columns to include in comparison', required=True )
+    args = parser.parse_args()
+
     # Read old and new CSV files
-    df_old = pd.read_csv( './in/Parcels_L_2023-10-18.csv' )
-    df_new = pd.read_csv( '../test/Parcels_L.csv' )
+    df_old = pd.read_csv( args.old_csv )
+    df_new = pd.read_csv( args.new_csv )
 
     # Select Vision IDs that are common between the two dataframes
     df_common = pd.merge( df_old, df_new, how='inner', on=[VISION_ID] )
@@ -72,21 +79,21 @@ if __name__ == '__main__':
     vids_common = set( df_common[VISION_ID] )
 
     # Compare old and new with respect to specified column
-    print( 'Looking for changed mappings from "{}" to {}'.format( VISION_ID, COLUMNS ) )
+    ls_columns = args.columns.split( ',' )
+    print( 'Comparing columns {} in {} and {}:'.format( ls_columns, args.old_csv, args.new_csv ) )
     df_result = df_common
-    for column in COLUMNS:
+    for column in ls_columns:
         df_changed = compare( df_old, df_new, column )
         df_result = pd.merge( df_result, df_changed, on=[VISION_ID], how='outer' )
 
     # Isolate rows with changed mappings
     drop_subset = set( df_result.columns ) - set( [VISION_ID] )
     df_result = df_result.dropna( subset=drop_subset, how='all' )
-    df_result = df_result.fillna( '' )
+    df_result = df_result.dropna( axis='columns', how='all' )
     df_result = df_result.sort_values( by=[VISION_ID] )
     df_result = df_result.reset_index( drop=True )
+    df_result = df_result.fillna( '' )
 
-    print( '' )
-    print( 'Result' )
     print( '' )
     print( df_result )
 
