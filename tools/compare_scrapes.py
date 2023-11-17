@@ -33,10 +33,7 @@ def compare( df_old, df_new, column ):
     vids_changed = list( vids_common - vids_same )
 
     # Report findings
-    print( '' )
-    print( '{}:'.format( column ) )
-    print( 'Number of Vision IDs with unchanged mappings: {}'.format( len( df_same ) ) )
-    print( 'Number of Vision IDs with changed mappings: {}'.format( len( vids_changed ) ) )
+    print( 'Number of changed "{}" mappings: {}'.format( column, len( vids_changed ) ) )
 
     # Load changes into a dataframe
     df_changed = pd.DataFrame()
@@ -75,14 +72,17 @@ if __name__ == '__main__':
     df_old = pd.read_csv( args.old_csv )
     df_new = pd.read_csv( args.new_csv )
 
+    # Extract the list of column names
+    ls_columns = args.columns.split( ',' )
+    print( 'Comparing columns {} in {} and {}:'.format( ls_columns, args.old_csv, args.new_csv ) )
+
     # Select Vision IDs that are common between the two dataframes
     df_common = pd.merge( df_old, df_new, how='inner', on=[VISION_ID] )
     df_common = df_common[[VISION_ID]]
     vids_common = set( df_common[VISION_ID] )
+    print( 'Number of common "{}" values: {}'.format( VISION_ID, len( df_common ) ) )
 
     # Compare old and new with respect to specified column
-    ls_columns = args.columns.split( ',' )
-    print( 'Comparing columns {} in {} and {}:'.format( ls_columns, args.old_csv, args.new_csv ) )
     df_result = df_common
     for column in ls_columns:
         df_changed = compare( df_old, df_new, column )
@@ -91,13 +91,15 @@ if __name__ == '__main__':
     # Isolate rows with changed mappings
     drop_subset = set( df_result.columns ) - set( [VISION_ID] )
     df_result = df_result.dropna( subset=drop_subset, how='all' )
-    df_result = df_result.dropna( axis='columns', how='all' )
     df_result = df_result.sort_values( by=[VISION_ID] )
     df_result = df_result.reset_index( drop=True )
-    df_result = df_result.fillna( '' )
 
+    # Write result to file
+    df_result.to_excel( args.result_xl, index=False )
+
+    # Write result to console
     print( '' )
+    df_result = df_result.fillna( '<No change>' )
     print( df_result )
 
-    df_result.to_excel( args.result_xl, index=False )
 
