@@ -13,6 +13,12 @@ VISION_ID = 'vision_id'
 _OLD = '_old'
 _NEW = '_new'
 
+URL_BASE = 'https://gis.vgsi.com/{}ma/parcel.aspx?pid='
+
+def make_vision_link( vision_id ):
+    url = URL_BASE.format( 'lawrence' ) + str( vision_id )
+    hyperlink_code = '=HYPERLINK("%s", "%s")' % ( url, vision_id )
+    return hyperlink_code
 
 # Compare old and new mappings from Vision ID to specified column
 def compare( df_old, df_new, column ):
@@ -94,12 +100,10 @@ if __name__ == '__main__':
     df_result = df_result.sort_values( by=[VISION_ID] )
     df_result = df_result.reset_index( drop=True )
 
+    # Convert Vision ID to hyperlink
+    df_result[VISION_ID] = df_result[VISION_ID].apply( lambda vision_id: make_vision_link( vision_id ) )
+
     # Write result to file
     df_result.to_excel( args.result_xl, index=False )
-
-    # Write result to console
-    print( '' )
-    df_result = df_result.fillna( '<No change>' )
-    print( df_result )
 
 
