@@ -414,6 +414,7 @@ FILE_NUMBER_LINK = 'file_number' + _LINK
 PERMIT_NUMBER_LINK = PERMIT_NUMBER + _LINK
 PERMIT_TYPE = 'permit_type'
 TOTAL_FEE = 'total_fee_$'
+ELECTRICAL_PERMIT_FEE = 'electrical_permit_fee_$'
 PROJECT_COST = 'project_cost_$'
 TOTAL_PROJECT_COST = 'total_' + PROJECT_COST
 ELECTRICAL_PERMIT_NUMBER = 'electrical_' + PERMIT_NUMBER
@@ -964,6 +965,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Applicant': APPLICANT,
         'Status': PERMIT_STATUS,
         'Permit Fees': TOTAL_FEE,
+        'Electrical Permit Fees': ELECTRICAL_PERMIT_FEE,
         'Use Group': PROPERTY_USE_GROUP,
         'Total project cost': PROJECT_COST,
         'Number of solar PV modules': MODULES,
@@ -1816,6 +1818,7 @@ COLUMN_ORDER = \
         INTERACTIVE_INVERTERS,
         ELECTRICAL_PERMIT_NUMBER,
         TOTAL_FEE,
+        ELECTRICAL_PERMIT_FEE,
         PROJECT_COST,
         PROPERTY_USE_GROUP,
         POWER_RATINGS_EACH,
