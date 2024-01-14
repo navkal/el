@@ -89,6 +89,19 @@ if __name__ == '__main__':
     os.system( 'python mass_energy_insight_totals.py -i Mei_A -o Mei_A_Totals -d {0}'.format( args.master_filename ) )
     os.system( 'python mass_energy_insight_totals.py -i Mei_L -o Mei_L_Totals -d {0}'.format( args.master_filename ) )
 
+
+    # Read National Grid electric meter data - Lawrence
+    print( '\n=======> National Grid electric meters input - Lawrence' )
+    csv_directory = '../xl/mass_energy_insight/electric_meters_l'
+    raw_table_name = 'RawElectricMeters_L'
+    os.system( 'python xl_to_db.py -d {} -v -l account_number -s account_number,readDate -t {} -o {}'.format( csv_directory, raw_table_name, args.master_filename ) )
+
+    # Summarize National Grid electric meter data - Lawrence
+    print( '\n=======> National Grid electric meters summary - Lawrence' )
+    table_name = 'ElectricMeters_L'
+    os.system( 'python mass_energy_insight_meters.py -i {} -o {} -d {}'.format( raw_table_name, table_name, args.master_filename ) )
+
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     util.create_about_table( 'MassEnergyInsight', util.make_df_about_energize_lawrence(), args.master_filename )
@@ -100,6 +113,7 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
+            'RawElectricMeters_L',
             'RawExternalSuppliersElectric_L',
             'RawExternalSuppliersGas_L',
             'RawIsoZones_L',

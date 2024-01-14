@@ -485,10 +485,17 @@ OCCUPANCY_ = 'occupancy_'
 MBLU = 'mblu' # Stands for Map, Block, Lot, Unit
 
 READ_DATE = 'read_date'
-READ_FROM_DATE = 'read_from_date'
-START_DATE = 'start_date'
-END_DATE = 'end_date'
-ELAPSED_MONTHS = 'elapsed_months'
+READ_DAYS = 'read_days'
+TOTAL_KWH = 'total_kwh'
+BILLED_PEAK_KW = 'billed_peak_kw'
+BILLED_ON_PEAK_KW = 'billed_on_peak_kw'
+TOU_ON_PEAK_KWH = 'tou_on_peak_kwh'
+TOU_OFF_PEAK_KWH = 'tou_off_peak_kwh'
+RKVA = 'rkva'
+UTILITY_CHARGES = 'utility_charges'
+SUPPLIER_CHARGES = 'supplier_charges'
+TOTAL_CHARGES = 'total_charges'
+LATE_PAYMENT = 'late_payment'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1176,27 +1183,27 @@ CONSISTENT_COLUMN_NAMES = \
     'RawElectricMeters_L': \
     {
         'account_number': ACCOUNT_NUMBER,
-        'BilledOnPeakKw': 'billed_on_peak_kw',
+        'BilledOnPeakKw': BILLED_ON_PEAK_KW,
         'avgDailyUsage': 'avg_daily_usage',
-        'billedPeakKw': 'billed_peak_kw',
-        'latePayment': 'late_payment',
+        'billedPeakKw': BILLED_PEAK_KW,
+        'latePayment': LATE_PAYMENT,
         'loadFactor': 'load_factor',
         'meteredOnPeakKw': 'metered_on_peak_kw',
         'meteredPeakKw': 'metered_peak_kw',
         'readDate': READ_DATE,
-        'readDays': 'read_days',
-        'readFromDate': READ_FROM_DATE,
+        'readDays': READ_DAYS,
+        'readFromDate': 'read_from_date',
         'readType': 'read_type',
         'relativeMonthBillDate': 'relative_month_bill_date',
-        'rkva': 'rkva',
-        'supplierCharges': 'supplier_charges',
+        'rkva': RKVA,
+        'supplierCharges': SUPPLIER_CHARGES,
         'timestamp': 'timestamp',
-        'totalCharges': 'total_charges',
-        'totalKwh': 'total_kwh',
-        'touOffPeakKwh': 'tou_off_peak_kwh',
-        'touOnPeakKwh': 'tou_on_peak_kwh',
+        'totalCharges': TOTAL_CHARGES,
+        'totalKwh': TOTAL_KWH,
+        'touOffPeakKwh': TOU_OFF_PEAK_KWH,
+        'touOnPeakKwh': TOU_ON_PEAK_KWH,
         'type': 'type',
-        'utilityCharges': 'utility_charges',
+        'utilityCharges': UTILITY_CHARGES,
     },
     'RawElectricUsage': \
     {
