@@ -484,6 +484,8 @@ OCCUPANCY_ = 'occupancy_'
 
 MBLU = 'mblu' # Stands for Map, Block, Lot, Unit
 
+READ_DATE = 'read_date'
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \
@@ -1177,7 +1179,7 @@ CONSISTENT_COLUMN_NAMES = \
         'loadFactor': 'load_factor',
         'meteredOnPeakKw': 'metered_on_peak_kw',
         'meteredPeakKw': 'metered_peak_kw',
-        'readDate': 'read_date',
+        'readDate': READ_DATE,
         'readDays': 'read_days',
         'readFromDate': 'read_from_date',
         'readType': 'read_type',
@@ -2083,6 +2085,7 @@ COLUMN_ORDER = \
     'RawElectricMeters_L':
     [
         ACCOUNT_NUMBER,
+        READ_DATE,
     ],
     'RawElectricUsage':
     [
