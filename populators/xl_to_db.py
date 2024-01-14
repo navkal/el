@@ -49,11 +49,14 @@ if __name__ == '__main__':
 
     skiprows = range( args.skip_rows ) if ( args.skip_rows != None ) else None
 
+    # Determine field separator for CSV format.  Default is comma.
+    csv_sep = bytes( args.field_separator, 'utf-8' ).decode( 'unicode_escape' ) if args.field_separator != None else ','
+
     # Read input
     if args.input_directory != None:
 
         # Read multiple input files
-        df_xl = util.read_excel_files( args.input_directory, args.column_labels, skiprows )
+        df_xl = util.read_excel_files( args.input_directory, args.column_labels, skiprows, args.csv, csv_sep )
 
     elif args.input_filename != None:
 
@@ -62,15 +65,12 @@ if __name__ == '__main__':
         if args.csv:
             # Extract dataframe from a delimited text file
 
-            # Determine field separator.  Default is comma - i.e., CSV format.
-            sep = bytes( args.field_separator, 'utf-8' ).decode( 'unicode_escape' ) if args.field_separator != None else ','
-
             # Detect encoding of input file
             with open( args.input_filename, 'rb' ) as rawdata:
                 encoding_info = chardet.detect( rawdata.read( 10000 ) )
 
             # Get the dataframe from the input file
-            df_xl = pd.read_csv( args.input_filename, encoding=encoding_info['encoding'], sep=sep, dtype=object, skiprows=skiprows )
+            df_xl = pd.read_csv( args.input_filename, encoding=encoding_info['encoding'], sep=csv_sep, dtype=object, skiprows=skiprows )
 
         elif args.hyperlinks:
             # Get dataframe with hyperlinks

@@ -5,6 +5,7 @@ import sqlite3
 import sqlalchemy
 import pandas as pd
 import openpyxl
+import chardet
 import re
 import string
 import datetime
@@ -1166,6 +1167,31 @@ CONSISTENT_COLUMN_NAMES = \
         'Vendor': VENDOR,
         'Dept': DEPARTMENT,
     },
+    'RawElectricMeters_L': \
+    {
+        'account_number': ACCOUNT_NUMBER,
+        'BilledOnPeakKw': 'billed_on_peak_kw',
+        'avgDailyUsage': 'avg_daily_usage',
+        'billedPeakKw': 'billed_peak_kw',
+        'latePayment': 'late_payment',
+        'loadFactor': 'load_factor',
+        'meteredOnPeakKw': 'metered_on_peak_kw',
+        'meteredPeakKw': 'metered_peak_kw',
+        'readDate': 'read_date',
+        'readDays': 'read_days',
+        'readFromDate': 'read_from_date',
+        'readType': 'read_type',
+        'relativeMonthBillDate': 'relative_month_bill_date',
+        'rkva': 'rkva',
+        'supplierCharges': 'supplier_charges',
+        'timestamp': 'timestamp',
+        'totalCharges': 'total_charges',
+        'totalKwh': 'total_kwh',
+        'touOffPeakKwh': 'tou_off_peak_kwh',
+        'touOnPeakKwh': 'tou_on_peak_kwh',
+        'type': 'type',
+        'utilityCharges': 'utility_charges',
+    },
     'RawElectricUsage': \
     {
         'year': YEAR,
@@ -2054,6 +2080,10 @@ COLUMN_ORDER = \
     'Precincts':
     [
     ],
+    'RawElectricMeters_L':
+    [
+        ACCOUNT_NUMBER,
+    ],
     'RawElectricUsage':
     [
         YEAR,
@@ -2738,7 +2768,7 @@ def read_excel_with_hyperlinks( input_filename, skiprows ):
 
 
 # Read series of input files in specified directory
-def read_excel_files( input_directory, column_labels, skiprows ):
+def read_excel_files( input_directory, column_labels, skiprows, csv, csv_sep ):
 
     # Initialize empty dataframe
     df_xl = pd.DataFrame()
@@ -2749,10 +2779,21 @@ def read_excel_files( input_directory, column_labels, skiprows ):
         input_path = input_directory + '/' + filename
         print( 'Reading "{0}"'.format( input_path ) )
 
-        # Filter warning apparently caused by unorthodox sheet name
-        warnings.filterwarnings( 'ignore', category=UserWarning, module='openpyxl' )
-        df = pd.read_excel( input_path, dtype=object, skiprows=skiprows )
-        warnings.resetwarnings()
+        if csv:
+            # Extract dataframe from a delimited text file
+
+            # Detect encoding of input file
+            with open( input_path, 'rb' ) as rawdata:
+                encoding_info = chardet.detect( rawdata.read( 10000 ) )
+
+            # Get the dataframe from the input file
+            df = pd.read_csv( input_path, encoding=encoding_info['encoding'], sep=csv_sep, dtype=object, skiprows=skiprows )
+
+        else:
+            # Filter warning caused, apparently, by unorthodox sheet name
+            warnings.filterwarnings( 'ignore', category=UserWarning, module='openpyxl' )
+            df = pd.read_excel( input_path, dtype=object, skiprows=skiprows )
+            warnings.resetwarnings()
 
         # Optionally add extra columns and populate with filename fragments delimited by underscore - e.g., given input file moo_1234.xlsx, column value will be 'moo'
         if column_labels:
