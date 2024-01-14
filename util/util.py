@@ -485,6 +485,10 @@ OCCUPANCY_ = 'occupancy_'
 MBLU = 'mblu' # Stands for Map, Block, Lot, Unit
 
 READ_DATE = 'read_date'
+READ_FROM_DATE = 'read_from_date'
+START_DATE = 'start_date'
+END_DATE = 'end_date'
+ELAPSED_MONTHS = 'elapsed_months'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1181,7 +1185,7 @@ CONSISTENT_COLUMN_NAMES = \
         'meteredPeakKw': 'metered_peak_kw',
         'readDate': READ_DATE,
         'readDays': 'read_days',
-        'readFromDate': 'read_from_date',
+        'readFromDate': READ_FROM_DATE,
         'readType': 'read_type',
         'relativeMonthBillDate': 'relative_month_bill_date',
         'rkva': 'rkva',
