@@ -99,6 +99,9 @@ if __name__ == '__main__':
         # Append row to dataframe
         df_summary = df_summary.append( summary_row, ignore_index=True )
 
+    # Make sure numeric values are not saved as text
+    df_summary = util.fix_numeric_columns( df_summary )
+
     # Save result to database
     util.create_table( args.output_table, conn, cur, df=df_summary )
 
