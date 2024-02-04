@@ -61,6 +61,18 @@ def get_essex_heating_fuel_table():
 
 if __name__ == '__main__':
 
+    #
+    # Note:
+    #
+    # We have two working API keys.
+    #
+    # Original, from Viraj:
+    #   74b18fd2c3bbd964bb2c7c525a26fd182f7e0b23
+    #
+    # Obtained 2/3/2024:
+    #   62c44de0a5a3d75f4d8f7ff60f02236d922eed49
+    #
+
     # Read arguments
     parser = argparse.ArgumentParser( description='Retrieve US Census data' )
     parser.add_argument( '-k', dest='api_key',  help='Credentials required by census API', required=True )
