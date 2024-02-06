@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import pandas as pd
 
 import sys
 sys.path.append( '../util' )
@@ -17,13 +16,12 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
-    # Read raw parcels data
+    # Read cleaned parcels data
     print( '\n=======> Parcels input' )
-    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f Vision_Raw_Lawrence -t Vision_Raw_Lawrence -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f Parcels_L -t Parcels_L -o {0} -c'.format( args.master_filename ) )
 
-    # Clean and summarize parcels data
+    # Summarize parcels data
     print( '\n=======> Parcels table and summary' )
-    os.system( 'python vision_clean.py -i Vision_Raw_Lawrence -o Parcels_L -l ../xl/residential_land_use_codes.xlsx -t Lawrence -n -m {0}'.format( args.master_filename ) )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
 
     # Read census data
@@ -217,7 +215,6 @@ if __name__ == '__main__':
             'RawResidential_3',
             'RawResidential_4',
             'RawResidential_5',
-            'Vision_Raw_Lawrence',
          ],
         'encipher_column_names':
         [

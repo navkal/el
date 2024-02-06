@@ -10,6 +10,7 @@ import re
 import string
 import datetime
 import warnings
+from geopy.geocoders import Nominatim
 
 import time
 START_TIME = time.time()
@@ -126,6 +127,14 @@ NORMALIZED_STREET_NUMBER = 'street_number'
 NORMALIZED_STREET_NAME = 'street_name'
 NORMALIZED_OCCUPANCY = 'occupancy'
 NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
+
+LATITUDE = 'latitude'
+LONGITUDE = 'longitude'
+NO_LOCATION = \
+{
+    LATITUDE: None,
+    LONGITUDE: None,
+}
 
 LEFT_ADDR_FULL = 'left_addr_full'
 LEFT_ADDR_TRUNC = 'left_addr_trunc'
@@ -2071,6 +2080,8 @@ COLUMN_ORDER = \
         NORMALIZED_STREET_NUMBER,
         NORMALIZED_OCCUPANCY,
         NORMALIZED_ADDITIONAL_INFO,
+        LATITUDE,
+        LONGITUDE
     ],
     'LocalElectionResults':
     [
@@ -2708,6 +2719,72 @@ def merge_with_assessment_data( table_name, df_left, sort_by=[PERMIT_NUMBER, ACC
     return df_result
 
 
+# Initialize geolocator for remote geolocation requests
+def get_geolocator():
+    return Nominatim( user_agent='energize_andover' )
+
+
+n_located = 0
+n_failed = 0
+# Geolocate street address in specified city and state
+def geolocate_address( row, addr_col_name, city, state, geolocator ):
+
+    global n_located, n_failed
+
+    # Initialize input and output
+    street = row[addr_col_name].strip()
+    return_value = NO_LOCATION
+
+    try:
+        # Attempt geolocation request
+        location = geolocator.geocode( ', '.join( [street, city.strip(), state.strip()] ).upper() )
+
+        return_value = \
+        {
+            LATITUDE: location.latitude,
+            LONGITUDE: location.longitude,
+        }
+
+        n_located += 1
+
+        # print( '  (+{},-{}) <{}>: ({},{})'.format( n_located, n_failed, street, return_value[LATITUDE], return_value[LONGITUDE] ) )
+
+    except Exception as e:
+
+        # Attempt to simplify address and retry
+
+        b_retry = True
+
+        # Trailing apartment number, e.g. '7 EASTSIDE ST 2' or '202 BROADWAY 2-1'
+        if re.match( r'^\d+ .+ \d+(\-\d+)*$', street ):
+            row[addr_col_name] = re.sub( ' \d+(\-\d+)*$', '', street )
+
+        # Trailing apartment letter, e.g. '74 WOODLAND ST A' or '19 STORROW ST 1A'
+        elif re.match( r'^\d+ .+ \d*[A-Z]$', street ):
+            row[addr_col_name] = re.sub( ' \d*[A-Z]$', '', street )
+
+        # Hyphenated street number, e.g. '22-24 WOODLAND CT' or '17-17A WOODLAND ST'
+        elif re.match( r'^(\d+[A-Z]*)\-\d+[A-Z]* ', street ):
+            row[addr_col_name] = re.sub( '^(\d+[A-Z]*)\-\d+[A-Z]* ', r'\1 ', street )
+
+        # Street number with trailing letter, e.g. '2A SALEM ST'
+        elif re.match( r'^(\d+)([A-Z]) ', street ):
+            row[addr_col_name] = re.sub( '^(\d+)([A-Z]) ', r'\1 ', street )
+
+        else:
+            b_retry = False
+            n_failed += 1
+
+        # Optionally retry
+        if b_retry:
+            # print( '  Retry: <{}> -> <{}>'.format( street, row[addr_col_name] ) )
+            return_value = geolocate_address( row, addr_col_name, city, state, geolocator )
+        else:
+            print( '  (+{},-{}) <{}> Error: {}'.format( n_located, n_failed, street, type( e ).__name__ ) )
+
+    return return_value
+
+
 # Read single input file with hyperlinks expanded
 def read_excel_with_hyperlinks( input_filename, skiprows ):
 
@@ -2882,7 +2959,7 @@ def synthesize_unmapped_column_names( table_name, not_in ):
 
 
 # Open the SQLite database
-def open_database( filename, b_create):
+def open_database( filename, b_create ):
 
     print( '\nOpening database: ' + filename )
 
