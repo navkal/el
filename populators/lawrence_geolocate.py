@@ -64,36 +64,44 @@ def geolocate_address( row, geolocator ):
 
     except Exception as e:
 
-        # Attempt to simplify address and retry
+        # Attempt to reformat the address to retry
+        retry_street = street
 
-        # Trailing apartment number, e.g. '7 EASTSIDE ST 2' or '202 BROADWAY 2-1'
-        if re.match( r'^\d+ .+ \d+(\-\d+)*$', street ):
-            row[ADDR] = re.sub( ' \d+(\-\d+)*$', '', street )
+        # Trailing apartment number, e.g. '7 EASTSIDE ST 2' or '202 BROADWAY 2-1' or '11-21 LAWRENCE ST 1'
+        if re.match( r'^\d+(\-\d+)* .+ \d+(\-\d+)*$', street ):
+            retry_street = re.sub( ' \d+(\-\d+)*$', '', street )
 
         # Trailing apartment letter, e.g. '74 WOODLAND ST A' or '19 STORROW ST 1A'
         elif re.match( r'^\d+ .+ \d*[A-Z]$', street ):
-            row[ADDR] = re.sub( ' \d*[A-Z]$', '', street )
+            retry_street = re.sub( ' \d*[A-Z]$', '', street )
 
         # Hyphenated street number, e.g. '22-24 WOODLAND CT' or '17-17A WOODLAND ST'
         elif re.match( r'^(\d+[A-Z]*)\-\d+[A-Z]* ', street ):
-            row[ADDR] = re.sub( '^(\d+[A-Z]*)\-\d+[A-Z]* ', r'\1 ', street )
+            retry_street = re.sub( '^(\d+[A-Z]*)\-\d+[A-Z]* ', r'\1 ', street )
 
         # Street number with trailing letter, e.g. '2A SALEM ST'
         elif re.match( r'^(\d+)([A-Z]) ', street ):
-            row[ADDR] = re.sub( '^(\d+)([A-Z]) ', r'\1 ', street )
+            retry_street = re.sub( '^(\d+)([A-Z]) ', r'\1 ', street )
 
         else:
             n_failed += 1
 
-        # If address has been modified, retry
-        if street != row[ADDR]:
-            print( '  Retry: <{}> -> <{}>'.format( street, row[ADDR] ) )
-            return_value = geolocate_address( row, geolocator )
+        # If we have a reformatted address, retry
+        if street != retry_street:
+            print( '  Retry: <{}> -> <{}>'.format( street, retry_street ) )
+            retry_row = row.copy()
+            retry_row[ADDR] = retry_street
+            return_value = geolocate_address( retry_row, geolocator )
 
         else:
             print( '  (+{},-{}) <{}> Error: {}'.format( n_located, n_failed, street, type( e ).__name__ ) )
 
     return return_value
+
+
+def report_unmapped_addresses():
+    print( 'Unmapped addresses: {}'.format( len( df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() ] ) ) )
+
 
 
 # Main program
@@ -106,7 +114,7 @@ if __name__ == '__main__':
 
     # Read parcels data
     conn_parcels, cur_parcels, engine_parcels = util.open_database( args.parcels_filename, False )
-    df_parcels = pd.read_sql_table( 'Vision_Lawrence', engine_parcels, index_col=util.ID, parse_dates=True )
+    df_parcels = pd.read_sql_table( 'PublishedParcels_L', engine_parcels, index_col=util.ID, parse_dates=True )
 
     # Read geolocation data
     conn_cache, cur_cache, engine_cache = util.open_database( args.geo_cache_filename, False )
@@ -125,16 +133,13 @@ if __name__ == '__main__':
     # Select rows lacking coordinates
     df_need_geo = df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() ]
 
-    print( 'need geo', df_need_geo.shape )
+    report_unmapped_addresses()
 
     # Initialize geolocator
     geolocator = Nominatim( user_agent='energize_andover' )
 
     # Process rows that need geolocation
     for index, row in df_need_geo.iterrows():
-
-        # Save address for cache
-        addr = row[ADDR]
 
         # Call geolocator with current address
         geoloc = geolocate_address( row, geolocator )
@@ -150,7 +155,7 @@ if __name__ == '__main__':
             # Save new address-to-geolocation mapping to cache
             cache_row = \
             {
-                ADDR: addr,
+                ADDR: row[ADDR],
                 LAT: geoloc[LAT],
                 LONG: geoloc[LONG]
             }
@@ -158,17 +163,12 @@ if __name__ == '__main__':
             df_cache = df_cache.append( cache_row, ignore_index=True )
 
             # Report progress
-            test = df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() ]
-            print( 'need geo', test.shape )
+            report_unmapped_addresses()
 
     # Save parcels table
-    print( 'parcels', df_parcels.shape )
     util.create_table( 'Parcels_L', conn_parcels, cur_parcels, df=df_parcels )
 
     # Save cache
-    print( 'cache, bf drop_dup', df_cache.shape )
-    df_cache = df_cache.drop_duplicates( subset=[ADDR], keep='last' )
-    print( 'cache, af drop_dup', df_cache.shape )
     df_cache = df_cache.sort_values( by=[ADDR] )
     util.create_table( 'Geo_Cache_L', conn_cache, cur_cache, df=df_cache )
 

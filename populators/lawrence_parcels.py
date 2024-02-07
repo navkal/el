@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # Copy scraped and cleaned Lawrence parcels data to parcels database
     print( '\n=======> Copy published Lawrence scrape' )
-    os.system( 'python db_to_db.py -i ../db/vision_master.sqlite -f Vision_Lawrence -t Vision_Lawrence -o ../db/lawrence_parcels.sqlite -c' )
+    os.system( 'python db_to_db.py -i ../db/vision_master.sqlite -f Vision_Lawrence -t PublishedParcels_L -o ../db/lawrence_parcels.sqlite -c' )
 
     # Generate parcels table with normalized addresses and geolocation data
     print( '\n=======> Generate parcels table with geolocation' )
