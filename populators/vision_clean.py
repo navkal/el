@@ -87,7 +87,6 @@ if __name__ == '__main__':
     parser.add_argument( '-i', dest='input_table_name',  help='Name of source table', required=True )
     parser.add_argument( '-o', dest='output_table_name',  help='Name of destination table', required=True )
     parser.add_argument( '-t', dest='town_name',  help='Name of town', required=True )
-    parser.add_argument( '-n', dest='normalize', action='store_true', help='Normalize addresses?' )
     args = parser.parse_args()
 
     # Open the database
@@ -147,15 +146,6 @@ if __name__ == '__main__':
 
     # Calculate age
     df[util.AGE] = df[YEAR].apply( lambda year_built: calculate_age( year_built ) )
-
-    # Optionally normalize and geolocate addresses.  Use result_type='expand' to load multiple columns!
-    if args.normalize:
-        print( 'Normalizing addresses' )
-        df[ADDR] = df[LOCN]
-        df[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
-        print( 'Geolocating addresses' )
-        geolocator = util.get_geolocator()
-        df[[LAT,LONG]] = df.apply( lambda row: util.geolocate_address( row, ADDR, 'LAWRENCE', 'MA', geolocator ), axis=1, result_type='expand' )
 
     # Encode Vision URL as Excel hyperlink
     df[util.VISION_LINK] = df.apply( lambda row: make_vision_link( args.town_name, row ), axis=1 )

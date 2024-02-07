@@ -9,14 +9,14 @@ import util
 # Main program
 if __name__ == '__main__':
 
-    # Add geocoordinates to Lawrence parcel data
+    # Add geolocation to Lawrence parcel data and preserve mappings in geolocation cache
 
-    # Read raw parcels data
-    print( '\n=======> Parcels input' )
-    os.system( 'python db_to_db.py -i ../db/vision_lawrence.sqlite -f Vision_Raw_Lawrence -t Vision_Raw_Lawrence -o ../db/lawrence_parcels.sqlite -c' )
+    # Copy scraped and cleaned Lawrence parcels data to parcels database
+    print( '\n=======> Copy published Lawrence scrape' )
+    os.system( 'python db_to_db.py -i ../db/vision_master.sqlite -f Vision_Lawrence -t Vision_Lawrence -o ../db/lawrence_parcels.sqlite -c' )
 
-    # Clean parcels data
-    print( '\n=======> Parcels table and summary' )
-    os.system( 'python vision_clean.py -i Vision_Raw_Lawrence -o Parcels_L -l ../xl/residential_land_use_codes.xlsx -t Lawrence -n -m ../db/lawrence_parcels.sqlite' )
+    # Generate parcels table with normalized addresses and geolocation data
+    print( '\n=======> Generate parcels table with geolocation' )
+    os.system( 'python lawrence_geolocate.py -p ../db/lawrence_parcels.sqlite -g ../db/lawrence_geo_cache.sqlite' )
 
     util.report_elapsed_time()
