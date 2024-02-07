@@ -136,7 +136,7 @@ if __name__ == '__main__':
     report_unmapped_addresses()
 
     # Initialize geolocator
-    geolocator = Nominatim( user_agent='energize_andover' )
+    geolocator = Nominatim( user_agent='city_of_lawrence_ma' )
 
     # Process rows that need geolocation
     for index, row in df_need_geo.iterrows():
