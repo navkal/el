@@ -16,6 +16,7 @@ import sys
 sys.path.append('../util')
 import util
 import normalize
+import printctl
 
 
 ADDR = util.NORMALIZED_ADDRESS
@@ -36,13 +37,13 @@ NO_LOCATION = \
 }
 
 
-n_located = 0
+n_found = 0
 n_failed = 0
 
 # Geolocate street address
 def geolocate_address( row, geolocator ):
 
-    global n_located, n_failed
+    global n_found, n_failed
 
     # Initialize input and output
     street = row[ADDR]
@@ -58,9 +59,9 @@ def geolocate_address( row, geolocator ):
             LONG: location.longitude,
         }
 
-        n_located += 1
+        n_found += 1
 
-        print( '  (+{},-{}) <{}> Success: ({},{})'.format( n_located, n_failed, street, return_value[LAT], return_value[LONG] ) )
+        print( '  (+{},-{}) <{}> Found: ({},{})'.format( n_found, n_failed, street, return_value[LAT], return_value[LONG] ) )
 
     except Exception as e:
 
@@ -94,14 +95,34 @@ def geolocate_address( row, geolocator ):
             return_value = geolocate_address( retry_row, geolocator )
 
         else:
-            print( '  (+{},-{}) <{}> Error: {}'.format( n_located, n_failed, street, type( e ).__name__ ) )
+            print( '  (+{},-{}) <{}> Error: {}'.format( n_found, n_failed, street, type( e ).__name__ ) )
 
     return return_value
 
 
 def report_unmapped_addresses():
+    print( '' )
     print( 'Unmapped addresses: {}'.format( len( df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() ] ) ) )
 
+
+# Save parcels table and geolocation cache
+def save_progress():
+
+    global df_cache
+
+    # Prepare to save
+    df_cache = df_cache.drop_duplicates( subset=[ADDR], keep='last' )
+    df_cache = df_cache.sort_values( by=[ADDR] )
+
+    # Save parcels table and cache
+    printctl.off()
+    util.create_table( 'Parcels_L', conn_parcels, cur_parcels, df=df_parcels )
+    util.create_table( 'Geo_Cache_L', conn_cache, cur_cache, df=df_cache )
+    printctl.on()
+
+    # Report current status
+    report_unmapped_addresses()
+    util.report_elapsed_time()
 
 
 # Main program
@@ -148,7 +169,6 @@ if __name__ == '__main__':
         if geoloc != NO_LOCATION:
 
             # Save geolocation in parcels table
-            print( '--> Updating parcels:', geoloc )
             df_parcels.at[index, LAT] = geoloc[LAT]
             df_parcels.at[index, LONG] = geoloc[LONG]
 
@@ -159,17 +179,11 @@ if __name__ == '__main__':
                 LAT: geoloc[LAT],
                 LONG: geoloc[LONG]
             }
-            print( '--> Saving to cache:', cache_row )
             df_cache = df_cache.append( cache_row, ignore_index=True )
 
-            # Report progress
-            report_unmapped_addresses()
+        # Save intermediate result
+        if ( n_found + 1 ) % 20 == 0:
+            save_progress()
 
-    # Save parcels table
-    util.create_table( 'Parcels_L', conn_parcels, cur_parcels, df=df_parcels )
-
-    # Save cache
-    df_cache = df_cache.sort_values( by=[ADDR] )
-    util.create_table( 'Geo_Cache_L', conn_cache, cur_cache, df=df_cache )
-
-    util.report_elapsed_time()
+    # Save final result
+    save_progress()
