@@ -22,31 +22,39 @@ LAWRENCE_MAX = 251899
 
 LAT = util.LATITUDE
 LONG = util.LONGITUDE
+GEO_ID = util.CENSUS_GEO_ID
 TRACT = util.CENSUS_TRACT
 BLOCK_GROUP = util.CENSUS_BLOCK_GROUP
 
+GEOID = 'GEOID'
 TRACTCE = 'TRACTCE'
 BLKGRPCE = 'BLKGRPCE'
 GEOMETRY = 'geometry'
 
 BG_COLUMNS = \
 [
+    GEOID,
     TRACTCE,
     BLKGRPCE,
     GEOMETRY,
 ]
 
 
-def get_tract_block_group( point ):
+def get_block_group( point ):
 
-    tbg = None
+    bg = None
 
     for index, row in df_bg.iterrows():
         if row[GEOMETRY].contains( point ):
-            tbg = ( row[TRACTCE], row[BLKGRPCE] )
+            bg = \
+            {
+                GEO_ID: row[GEOID],
+                TRACT: row[TRACTCE],
+                BLOCK_GROUP: row[BLKGRPCE]
+            }
             break
 
-    return tbg
+    return bg
 
 
 def get_block_groups_table():
@@ -100,19 +108,22 @@ if __name__ == '__main__':
     print( 'Mapping {} geolocations to census block groups'.format( len( df_geo ) ) )
 
     for index, row in df_geo.iterrows():
-        point = Point( row[LONG], row[LAT] )
-        tbg = get_tract_block_group( point )
-        if tbg != None:
+        bg = get_block_group( Point( row[LONG], row[LAT] ) )
+        if bg != None:
             n_found += 1
-            df_parcels.at[index, TRACT] = tbg[0]
-            df_parcels.at[index, BLOCK_GROUP] = tbg[1]
+            df_parcels.at[index, GEO_ID] = bg[GEO_ID]
+            df_parcels.at[index, TRACT] = bg[TRACT]
+            df_parcels.at[index, BLOCK_GROUP] = bg[BLOCK_GROUP]
         else:
             n_failed += 1
 
-        # print( '(+{},-{}) ({},{}): <{}>'.format( n_found, n_failed, df_parcels.loc[index][TRACT], df_parcels.loc[index][BLOCK_GROUP], df_parcels.loc[index][util.NORMALIZED_ADDRESS] ) )
+        # print( '(+{},-{}) ({},{},{}): <{}>'.format( n_found, n_failed, df_parcels.loc[index][GEO_ID], df_parcels.loc[index][TRACT], df_parcels.loc[index][BLOCK_GROUP], df_parcels.loc[index][util.NORMALIZED_ADDRESS] ) )
 
 
     # Save to database
+    df_parcels[GEO_ID] = df_parcels[GEO_ID].fillna(0).astype('int64')
+    df_parcels[TRACT] = df_parcels[TRACT].fillna(0).astype(int)
+    df_parcels[BLOCK_GROUP] = df_parcels[BLOCK_GROUP].fillna(0).astype(int)
     util.create_table( 'Parcels_L', conn, cur, df=df_parcels )
 
     util.report_elapsed_time()
