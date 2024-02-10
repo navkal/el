@@ -18,15 +18,19 @@ if __name__ == '__main__':
 
     # Read cleaned parcels data
     print( '\n=======> Parcels input' )
-    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f Parcels_L -t Parcels_L -o {0} -c'.format( args.master_filename ) )
+    os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f GeoParcels_L -t GeoParcels_L -o {0} -c'.format( args.master_filename ) )
+
+    # Map parcel geolocations to census block groups
+    print( '\n=======> Parcels table' )
+    os.system( 'python lawrence_block_groups.py -b ../xl/lawrence/census/block_groups.sqlite -o {0}'.format( args.master_filename ) )
 
     # Summarize parcels data
-    print( '\n=======> Parcels table and summary' )
+    print( '\n=======> Parcels summary' )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
 
     # Read census data
     print( '\n=======> Census input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/census.txt -n "Res. ID" -s "Res. ID" -t RawCensus_L -v -f "|" -x -o {0}'.format( args.master_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/census/census.txt -n "Res. ID" -s "Res. ID" -t RawCensus_L -v -f "|" -x -o {0}'.format( args.master_filename ) )
 
     # Generate Census table
     print( '\n=======> Census table' )
@@ -192,6 +196,7 @@ if __name__ == '__main__':
         [
             'Assessment_L_Commercial_Merged',
             'Assessment_L_Residential_Merged',
+            'GeoParcels_L',
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
             'RawBuildingPermits_Electrical',

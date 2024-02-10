@@ -130,6 +130,8 @@ NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
 
 LATITUDE = 'latitude'
 LONGITUDE = 'longitude'
+CENSUS_TRACT = 'census_tract'
+CENSUS_BLOCK_GROUP = 'census_block_group'
 
 
 LEFT_ADDR_FULL = 'left_addr_full'
@@ -2034,7 +2036,7 @@ COLUMN_ORDER = \
         KITCHENS_ + TOTAL,
         OCCUPANCY_ + TOTAL,
     ],
-    'Parcels_L':
+    'GeoParcels_L':
     [
         VISION_ID,
         ACCOUNT_NUMBER,
@@ -2236,6 +2238,8 @@ COLUMN_ORDER = \
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Assessment_L_Residential'] = COLUMN_ORDER['Assessment_L_Commercial']
+COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ CENSUS_TRACT, CENSUS_BLOCK_GROUP ]
+
 
 COLUMN_ORDER_TRAILING = \
 {

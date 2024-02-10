@@ -89,7 +89,7 @@ def geolocate_address( row, geolocator ):
 
         # If we have a reformatted address, retry
         if street != retry_street:
-            print( '  Retry: <{}> -> <{}>'.format( street, retry_street ) )
+            print( '   Retry: <{}> -> <{}>'.format( street, retry_street ) )
             retry_row = row.copy()
             retry_row[ADDR] = retry_street
             return_value = geolocate_address( retry_row, geolocator )
@@ -116,8 +116,8 @@ def save_progress():
 
     # Save parcels table and cache
     printctl.off()
-    util.create_table( 'Parcels_L', conn_parcels, cur_parcels, df=df_parcels )
-    util.create_table( 'Geo_Cache_L', conn_cache, cur_cache, df=df_cache )
+    util.create_table( 'GeoParcels_L', conn_parcels, cur_parcels, df=df_parcels )
+    util.create_table( 'GeoCache_L', conn_cache, cur_cache, df=df_cache )
     printctl.on()
 
     # Report current status
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     # Read geolocation data
     conn_cache, cur_cache, engine_cache = util.open_database( args.geo_cache_filename, False )
     try:
-        df_cache = pd.read_sql_table( 'Geo_Cache_L', engine_cache, index_col=util.ID )
+        df_cache = pd.read_sql_table( 'GeoCache_L', engine_cache, index_col=util.ID )
     except:
         df_cache = pd.DataFrame( columns=[ADDR,LAT,LONG] )
 
