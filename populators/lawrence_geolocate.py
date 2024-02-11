@@ -9,6 +9,7 @@ pd.set_option( 'display.width', 1000 )
 import re
 
 from geopy.geocoders import Nominatim
+from geopy.geocoders import AzureMaps
 
 import os
 
@@ -36,14 +37,13 @@ NO_LOCATION = \
     LONG: None,
 }
 
+USER_AGENT = 'City of Lawrence, MA - Office of Energy, Environment, and Sustainability - anil.navkal@CityOfLawrence.com'
+AZURE_KEY_1 = 'yIhyUj5MKX8rSoGu05XJBSDfmsq3wdrFeEiYngg4DfE'
+AZURE_KEY_2 = 'y-XGnBsGEHCl-jKDK8zc50_XwjptEf8bBZy-tYnpneE'
 
-n_found = 0
-n_failed = 0
 
 # Geolocate street address
 def geolocate_address( row, geolocator ):
-
-    global n_found, n_failed
 
     # Initialize input and output
     street = row[ADDR]
@@ -58,10 +58,6 @@ def geolocate_address( row, geolocator ):
             LAT: location.latitude,
             LONG: location.longitude,
         }
-
-        n_found += 1
-
-        print( '  (+{},-{}) <{}> Found: ({},{})'.format( n_found, n_failed, street, return_value[LAT], return_value[LONG] ) )
 
     except Exception as e:
 
@@ -84,18 +80,12 @@ def geolocate_address( row, geolocator ):
         elif re.match( r'^(\d+)([A-Z]) ', street ):
             retry_street = re.sub( '^(\d+)([A-Z]) ', r'\1 ', street )
 
-        else:
-            n_failed += 1
-
         # If we have a reformatted address, retry
         if street != retry_street:
             print( '   Retry: <{}> -> <{}>'.format( street, retry_street ) )
             retry_row = row.copy()
             retry_row[ADDR] = retry_street
             return_value = geolocate_address( retry_row, geolocator )
-
-        else:
-            print( '  (+{},-{}) <{}> Error: {}'.format( n_found, n_failed, street, type( e ).__name__ ) )
 
     return return_value
 
@@ -156,14 +146,25 @@ if __name__ == '__main__':
 
     report_unmapped_addresses()
 
-    # Initialize geolocator
-    geolocator = Nominatim( user_agent='City of Lawrence, MA - Office of Energy, Environment, and Sustainability - anil.navkal@CityOfLawrence.com' )
+    # Initialize geolocators
+    geo_service_1 = Nominatim( user_agent=USER_AGENT )
+    geo_service_2 = AzureMaps( AZURE_KEY_1, user_agent=USER_AGENT )
+
+
+    n_found = 0
+    n_failed = 0
 
     # Process rows that need geolocation
     for index, row in df_need_geo.iterrows():
+        print( '=1=> Trying service 1' )
 
-        # Call geolocator with current address
-        geoloc = geolocate_address( row, geolocator )
+        # Call default geolocator with current address
+        geoloc = geolocate_address( row, geo_service_1 )
+
+        # If first geolocator failed, try again with alternate geolocator
+        if geoloc == NO_LOCATION:
+            print( '=2=> Trying service 2' )
+            geoloc = geolocate_address( row, geo_service_2 )
 
         # Save non-empty results
         if geoloc != NO_LOCATION:
@@ -180,6 +181,13 @@ if __name__ == '__main__':
                 LONG: geoloc[LONG]
             }
             df_cache = df_cache.append( cache_row, ignore_index=True )
+
+            n_found += 1
+            print( '  (+{},-{}) <{}> Found: ({},{})'.format( n_found, n_failed, row[ADDR], geoloc[LAT], geoloc[LONG] ) )
+
+        else:
+            n_failed += 1
+            print( '  (+{},-{}) <{}> Error: {}'.format( n_found, n_failed, row[ADDR], type( e ).__name__ ) )
 
         # Save intermediate result
         if ( n_found + 1 ) % 20 == 0:
