@@ -31,7 +31,10 @@ if __name__ == '__main__':
     # Read and process motor vehicle data
     print( '\n=======> Motor vehicles input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/motor_vehicles/motor_vehicles.csv -t RawMotorVehicles_L -v -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Motor vehicles table' )
     os.system( 'python lawrence_motor_vehicles.py -m {0}'.format( args.master_filename ) )
+    print( '\n=======> Motor vehicles summary' )
+    os.system( 'python lawrence_motor_vehicles_summarize.py -m {0}'.format( args.master_filename ) )
 
     # Read census data
     print( '\n=======> Census input' )
