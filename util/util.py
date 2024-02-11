@@ -505,6 +505,17 @@ SUPPLIER_CHARGES = 'supplier_charges'
 TOTAL_CHARGES = 'total_charges'
 LATE_PAYMENT = 'late_payment'
 
+MPO = 'mpo'
+GARAGE_CODE = 'garage_code'
+VEHICLE_TYPE = 'vehicle_type'
+ADVANCED_VEHICLE_TYPE = 'advanced_vehicle_type'
+FUEL_CLASS = 'fuel_class'
+VEHICLE_USE = 'vehicle_use'
+MODEL_YEAR = 'model_year'
+GVWR_CATEGORY = 'gvwr_category'
+COUNT = 'count'
+DAILY_VMT = 'daily_vmt'
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \
@@ -1352,6 +1363,22 @@ CONSISTENT_COLUMN_NAMES = \
         'Provider': 'provider',
         'Unnamed: 8': COST_OR_USE,
     },
+    'RawMotorVehicles_L': \
+    {
+        'Date': DATE,
+        'MPO': MPO,
+        'GarageCode': GARAGE_CODE,
+        'Municipality': TOWN_NAME,
+        'BlockGroup': CENSUS_GEO_ID,
+        'VehicleType': VEHICLE_TYPE,
+        'AdvancedVehicleType': ADVANCED_VEHICLE_TYPE,
+        'FuelClass': FUEL_CLASS,
+        'VehicleUse': VEHICLE_USE,
+        'ModelYear': MODEL_YEAR,
+        'GVWRCategory': GVWR_CATEGORY,
+        'Count': COUNT,
+        'DailyVMT': DAILY_VMT,
+    },
     'RawResidential_1': \
     {
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
@@ -2017,6 +2044,22 @@ COLUMN_ORDER = \
     [
         JOB_NUMBER,
         PERMIT_NUMBER,
+    ],
+    'MotorVehicles_L':
+    [
+        DATE,
+        CENSUS_GEO_ID,
+        CENSUS_TRACT,
+        VEHICLE_TYPE,
+        FUEL_CLASS,
+        ADVANCED_VEHICLE_TYPE,
+        GVWR_CATEGORY,
+        VEHICLE_USE,
+        MODEL_YEAR,
+        COUNT,
+        DAILY_VMT,
+        CENSUS_BLOCK_GROUP,
+        GARAGE_CODE,
     ],
     'ParcelSummary_L':
     [

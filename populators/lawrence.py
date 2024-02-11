@@ -22,11 +22,16 @@ if __name__ == '__main__':
 
     # Map parcel geolocations to census block groups
     print( '\n=======> Parcels table' )
-    os.system( 'python lawrence_block_groups.py -b ../xl/lawrence/census/block_groups.sqlite -o {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_block_groups.py -b ../xl/lawrence/census/block_groups.sqlite -m {0}'.format( args.master_filename ) )
 
     # Summarize parcels data
     print( '\n=======> Parcels summary' )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
+
+    # Read and process motor vehicle data
+    print( '\n=======> Motor vehicles input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/motor_vehicles/motor_vehicles.csv -t RawMotorVehicles_L -v -o {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_motor_vehicles.py -m {0}'.format( args.master_filename ) )
 
     # Read census data
     print( '\n=======> Census input' )
@@ -215,6 +220,7 @@ if __name__ == '__main__':
             'RawCommercial_1',
             'RawCommercial_2',
             'RawGlcacJobs',
+            'RawMotorVehicles_L',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',

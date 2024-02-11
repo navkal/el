@@ -65,7 +65,7 @@ def get_block_groups_table():
 
     # Extract rows pertaining to Lawrence
     df[TRACTCE] = df[TRACTCE].astype( int )
-    df = df[ (df[TRACTCE] >= 250100) & (df[TRACTCE] <= 251899) ]
+    df = df[ ( df[TRACTCE] >= LAWRENCE_MIN ) & ( df[TRACTCE] <= LAWRENCE_MAX ) ]
     df[TRACTCE] = ( df[TRACTCE] / 100 ).astype( int )
 
     # Convert polygon string expression to data structure
@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Map parcel geolocations to US Census block groups' )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Block group database filename ', required=True )
-    parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of master database file', required=True )
+    parser.add_argument( '-m', dest='output_filename',  help='Output filename - Name of master database file', required=True )
     args = parser.parse_args()
 
     df_bg = get_block_groups_table()
