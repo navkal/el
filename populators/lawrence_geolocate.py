@@ -38,8 +38,11 @@ NO_LOCATION = \
 }
 
 USER_AGENT = 'City of Lawrence, MA - Office of Energy, Environment, and Sustainability - anil.navkal@CityOfLawrence.com'
-AZURE_KEY_1 = 'yIhyUj5MKX8rSoGu05XJBSDfmsq3wdrFeEiYngg4DfE'
-AZURE_KEY_2 = 'y-XGnBsGEHCl-jKDK8zc50_XwjptEf8bBZy-tYnpneE'
+
+
+def load_azure_key():
+    with open( '../xl/lawrence/census/azure_key_1.txt' ) as f:
+        return f.read()
 
 
 # Geolocate street address
@@ -148,7 +151,7 @@ if __name__ == '__main__':
 
     # Initialize geolocators
     geo_service_1 = Nominatim( user_agent=USER_AGENT )
-    geo_service_2 = AzureMaps( AZURE_KEY_1, user_agent=USER_AGENT )
+    geo_service_2 = AzureMaps( load_azure_key(), user_agent=USER_AGENT )
 
 
     n_found = 0
@@ -156,14 +159,12 @@ if __name__ == '__main__':
 
     # Process rows that need geolocation
     for index, row in df_need_geo.iterrows():
-        print( '=1=> Trying service 1' )
 
         # Call default geolocator with current address
         geoloc = geolocate_address( row, geo_service_1 )
 
         # If first geolocator failed, try again with alternate geolocator
         if geoloc == NO_LOCATION:
-            print( '=2=> Trying service 2' )
             geoloc = geolocate_address( row, geo_service_2 )
 
         # Save non-empty results

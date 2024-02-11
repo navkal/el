@@ -119,6 +119,7 @@ if __name__ == '__main__':
 
         # print( '(+{},-{}) ({},{},{}): <{}>'.format( n_found, n_failed, df_parcels.loc[index][GEO_ID], df_parcels.loc[index][TRACT], df_parcels.loc[index][BLOCK_GROUP], df_parcels.loc[index][util.NORMALIZED_ADDRESS] ) )
 
+    print( 'Mapped {} geolocations to census block groups'.format( n_found ) )
 
     # Save to database
     df_parcels[GEO_ID] = df_parcels[GEO_ID].fillna(0).astype('int64')
