@@ -75,9 +75,9 @@ def geolocate_address( row, geolocator ):
         elif re.match( r'^\d+ .+ \d*[A-Z]$', street ):
             retry_street = re.sub( ' \d*[A-Z]$', '', street )
 
-        # Hyphenated street number, e.g. '22-24 WOODLAND CT' or '17-17A WOODLAND ST'
-        elif re.match( r'^(\d+[A-Z]*)\-\d+[A-Z]* ', street ):
-            retry_street = re.sub( '^(\d+[A-Z]*)\-\d+[A-Z]* ', r'\1 ', street )
+        # Hyphenated street number, e.g. '22-24 WOODLAND CT' or '17-17A WOODLAND ST' or '5-7-7A STEVENS ST' or '36-36A-36B KENDALL ST'
+        elif re.match( r'^(\d+[A-Z]*)(\-\d+[A-Z]*)+ ', street ):
+            retry_street = re.sub( '^(\d+[A-Z]*)(\-\d+[A-Z]*)+ ', r'\1 ', street )
 
         # Street number with trailing letter, e.g. '2A SALEM ST'
         elif re.match( r'^(\d+)([A-Z]) ', street ):
@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     # Initialize geolocators
     geo_service_1 = Nominatim( user_agent=USER_AGENT )
-    geo_service_2 = AzureMaps( load_azure_key(), user_agent=USER_AGENT )
+    # geo_service_2 = AzureMaps( load_azure_key(), user_agent=USER_AGENT )
 
 
     n_found = 0
@@ -164,8 +164,8 @@ if __name__ == '__main__':
         geoloc = geolocate_address( row, geo_service_1 )
 
         # If first geolocator failed, try again with alternate geolocator
-        if geoloc == NO_LOCATION:
-            geoloc = geolocate_address( row, geo_service_2 )
+        # if geoloc == NO_LOCATION:
+            # geoloc = geolocate_address( row, geo_service_2 )
 
         # Save non-empty results
         if geoloc != NO_LOCATION:
