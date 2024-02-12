@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
         else:
             n_failed += 1
-            print( '  (+{},-{}) <{}> Error: {}'.format( n_found, n_failed, row[ADDR], type( e ).__name__ ) )
+            print( '  (+{},-{}) <{}> Error'.format( n_found, n_failed, row[ADDR] ) )
 
         # Save intermediate result
         if ( n_found + 1 ) % 20 == 0:

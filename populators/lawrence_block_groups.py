@@ -81,6 +81,10 @@ def get_parcels_table():
     conn, cur, engine = util.open_database( args.output_filename, False )
     df = pd.read_sql_table( 'GeoParcels_L', engine, index_col=util.ID )
 
+    # Ensure proper datatype for shapely operations
+    df[LONG] = df[LONG].astype( 'float' )
+    df[LAT] = df[LAT].astype( 'float' )
+
     # Initialize new columns
     df[TRACT] = None
     df[BLOCK_GROUP] = None
