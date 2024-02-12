@@ -21,13 +21,12 @@ if __name__ == '__main__':
 
     # Retrieve arguments
     parser = argparse.ArgumentParser( description='Extract data on motor vehicles in Lawrence' )
+    parser.add_argument( '-v', dest='vehicle_filename',  help='Vehicle database filename' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
-    # Open database
-    conn, cur, engine = util.open_database( args.master_filename, False )
-
-    # Read table from database
+    # Get raw table from vehicles database
+    conn, cur, engine = util.open_database( args.vehicle_filename, False )
     df = pd.read_sql_table( 'RawMotorVehicles_L', engine, index_col=util.ID, parse_dates=True )
 
     # Extract rows pertaining to Lawrence
@@ -51,7 +50,8 @@ if __name__ == '__main__':
     # Sort
     df = df.sort_values( by=[util.CENSUS_GEO_ID, util.VEHICLE_TYPE, util.ADVANCED_VEHICLE_TYPE] )
 
-    # Save to database
+    # Save to master database
+    conn, cur, engine = util.open_database( args.master_filename, False )
     util.create_table( 'MotorVehicles_L', conn, cur, df=df )
 
     # Report elapsed time

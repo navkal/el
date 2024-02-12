@@ -28,11 +28,15 @@ if __name__ == '__main__':
     print( '\n=======> Parcels summary' )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
 
-    # Read and process motor vehicle data
+    # Optionally save raw motor vehicles data to persistent database
     print( '\n=======> Motor vehicles input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/motor_vehicles/motor_vehicles.csv -t RawMotorVehicles_L -v -o {0}'.format( args.master_filename ) )
+    vehicle_db_filename = '../db/lawrence_motor_vehicles.sqlite'
+    if not os.path.isfile( vehicle_db_filename ):
+        os.system( 'python xl_to_db.py -i ../xl/lawrence/motor_vehicles/motor_vehicles.csv -t RawMotorVehicles_L -v -o {0}'.format( vehicle_db_filename ) )
+
+    # Process motor vehicles data
     print( '\n=======> Motor vehicles table' )
-    os.system( 'python lawrence_motor_vehicles.py -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_motor_vehicles.py -v {0} -m {1}'.format( vehicle_db_filename, args.master_filename ) )
     print( '\n=======> Motor vehicles summary' )
     os.system( 'python lawrence_motor_vehicles_summarize.py -m {0}'.format( args.master_filename ) )
 
@@ -223,7 +227,6 @@ if __name__ == '__main__':
             'RawCommercial_1',
             'RawCommercial_2',
             'RawGlcacJobs',
-            'RawMotorVehicles_L',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',
