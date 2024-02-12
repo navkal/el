@@ -40,7 +40,7 @@ COLUMNS= \
 if __name__ == '__main__':
 
     # Retrieve arguments
-    parser = argparse.ArgumentParser( description='Process data on motor vehicles in Lawrence' )
+    parser = argparse.ArgumentParser( description='Summarize data on motor vehicles in Lawrence' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 

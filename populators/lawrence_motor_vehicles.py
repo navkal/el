@@ -20,7 +20,7 @@ LAWRENCE_MAX = 250092518999
 if __name__ == '__main__':
 
     # Retrieve arguments
-    parser = argparse.ArgumentParser( description='Process data on motor vehicles in Lawrence' )
+    parser = argparse.ArgumentParser( description='Extract data on motor vehicles in Lawrence' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
@@ -34,15 +34,22 @@ if __name__ == '__main__':
     df[util.CENSUS_GEO_ID] = df[util.CENSUS_GEO_ID].fillna(0).astype( 'int64' )
     df = df[ ( df[util.CENSUS_GEO_ID] >= LAWRENCE_MIN ) & ( df[util.CENSUS_GEO_ID] <= LAWRENCE_MAX ) ]
 
+    # Extract rows pertaining to the most recent year
+    a_dates = []
+    for idx, df_group in df.groupby( by=[util.DATE] ):
+        a_dates.append( df_group.iloc[0][util.DATE] )
+    a_dates.sort( reverse=True )
+    df = df[ df[util.DATE] == a_dates[0] ]
+
     # Drop unwanted columns
-    df = df.drop( columns=[util.MPO, util.TOWN_NAME] )
+    df = df.drop( columns=[util.DATE, util.MPO, util.TOWN_NAME] )
 
     # Unpack census Geo ID
     df[util.CENSUS_TRACT] = df[util.CENSUS_GEO_ID].astype(str).str[5:9].astype(int)
     df[util.CENSUS_BLOCK_GROUP] = df[util.CENSUS_GEO_ID].astype(str).str[9:].astype(int)
 
     # Sort
-    df = df.sort_values( by=[util.DATE, util.CENSUS_GEO_ID, util.VEHICLE_TYPE, util.ADVANCED_VEHICLE_TYPE] )
+    df = df.sort_values( by=[util.CENSUS_GEO_ID, util.VEHICLE_TYPE, util.ADVANCED_VEHICLE_TYPE] )
 
     # Save to database
     util.create_table( 'MotorVehicles_L', conn, cur, df=df )

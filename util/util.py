@@ -2047,7 +2047,6 @@ COLUMN_ORDER = \
     ],
     'MotorVehicles_L':
     [
-        DATE,
         CENSUS_GEO_ID,
         CENSUS_TRACT,
         VEHICLE_TYPE,
