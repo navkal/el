@@ -30,23 +30,46 @@ LOCN = util.LOCATION
 
 LAT = util.LATITUDE
 LONG = util.LONGITUDE
+ZIP = util.ZIP
 
 NO_LOCATION = \
 {
     LAT: None,
     LONG: None,
+    ZIP: None,
 }
-
-USER_AGENT = 'City of Lawrence, MA - Office of Energy, Environment, and Sustainability - anil.navkal@CityOfLawrence.com'
-
 
 def load_azure_key():
     with open( '../xl/lawrence/census/azure_key_1.txt' ) as f:
         return f.read()
 
+USER_AGENT = 'City of Lawrence, MA - Office of Energy, Environment, and Sustainability - anil.navkal@CityOfLawrence.com'
+GEO_SERVICE_AZURE = AzureMaps( load_azure_key(), user_agent=USER_AGENT )
+GEO_SERVICE_NOMINATIM = Nominatim( user_agent=USER_AGENT )
+
+LAWRENCE_ZIPS = ['01840','01841','01842','01843']
+
+# Validate geolocation based on returned street namd and zip
+def validate_geo( d_addr, street_name ):
+
+    # Prepare address parts to be tested
+    # street_part = ' '.join( street_name.split()[:-1] ).upper()
+    # street_part = max( street_name.upper().split(), key=len )
+    # road = ( d_addr['streetName'] if 'streetName' in d_addr else d_addr['road'] ).upper()
+
+    # Extract and validate zip code
+    zip = d_addr['postalCode'] if 'postalCode' in d_addr else d_addr['postcode']
+    valid_zip = zip if zip in LAWRENCE_ZIPS else None
+
+    # if not valid_zip:
+        # print( '====> VALIDATION FAILED' )
+        # print( f'====> zip: {zip}' )
+
+    return valid_zip
+
 
 # Geolocate street address
-def geolocate_address( row, geolocator ):
+def geolocate_address( row, geolocator, addressdetails=None ):
 
     # Initialize input and output
     street = row[ADDR]
@@ -54,13 +77,21 @@ def geolocate_address( row, geolocator ):
 
     try:
         # Attempt geolocation request
-        location = geolocator.geocode( ', '.join( [street, 'LAWRENCE', 'MA'] ).upper() )
+        request = ', '.join( [street, 'LAWRENCE', 'MA'] ).upper()
+        if addressdetails:
+            location = geolocator.geocode( request, addressdetails=addressdetails )
+        else:
+            location = geolocator.geocode( request )
 
-        return_value = \
-        {
-            LAT: location.latitude,
-            LONG: location.longitude,
-        }
+        # Validate returned location
+        zip = validate_geo( location.raw['address'], row[STREET_NAME] )
+        if zip:
+            return_value = \
+            {
+                LAT: location.latitude,
+                LONG: location.longitude,
+                ZIP: zip,
+            }
 
     except Exception as e:
 
@@ -88,14 +119,14 @@ def geolocate_address( row, geolocator ):
             print( '   Retry: <{}> -> <{}>'.format( street, retry_street ) )
             retry_row = row.copy()
             retry_row[ADDR] = retry_street
-            return_value = geolocate_address( retry_row, geolocator )
+            return_value = geolocate_address( retry_row, geolocator, addressdetails )
 
     return return_value
 
 
 def report_unmapped_addresses():
     print( '' )
-    print( 'Unmapped addresses: {}'.format( len( df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() ] ) ) )
+    print( 'Unmapped addresses: {}'.format( len( df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() | df_parcels[ZIP].isnull() ] ) ) )
 
 
 # Save parcels table and geolocation cache
@@ -135,7 +166,7 @@ if __name__ == '__main__':
     try:
         df_cache = pd.read_sql_table( 'GeoCache_L', engine_cache, index_col=util.ID )
     except:
-        df_cache = pd.DataFrame( columns=[ADDR,LAT,LONG] )
+        df_cache = pd.DataFrame( columns=[ADDR,LAT,LONG,ZIP] )
 
     # Normalize parcel addresses
     df_parcels[ADDR] = df_parcels[LOCN]
@@ -144,15 +175,10 @@ if __name__ == '__main__':
     # Merge parcels with coordinates from geolocation cache
     df_parcels = pd.merge( df_parcels, df_cache, how='left', on=[ADDR] )
 
-    # Select rows lacking coordinates
-    df_need_geo = df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() ]
+    # Select rows with null coordinates and addresses that begin with digits
+    df_need_geo = df_parcels.loc[ ( df_parcels[LAT].isnull() | df_parcels[LONG].isnull() | df_parcels[ZIP].isnull() ) & df_parcels[ADDR].str[0].str.isdigit() ]
 
     report_unmapped_addresses()
-
-    # Initialize geolocators
-    geo_service_1 = Nominatim( user_agent=USER_AGENT )
-    # geo_service_2 = AzureMaps( load_azure_key(), user_agent=USER_AGENT )
-
 
     n_found = 0
     n_failed = 0
@@ -161,11 +187,11 @@ if __name__ == '__main__':
     for index, row in df_need_geo.iterrows():
 
         # Call default geolocator with current address
-        geoloc = geolocate_address( row, geo_service_1 )
+        geoloc = geolocate_address( row, GEO_SERVICE_AZURE )
 
         # If first geolocator failed, try again with alternate geolocator
-        # if geoloc == NO_LOCATION:
-            # geoloc = geolocate_address( row, geo_service_2 )
+        if geoloc == NO_LOCATION:
+            geoloc = geolocate_address( row, GEO_SERVICE_NOMINATIM, addressdetails=True )
 
         # Save non-empty results
         if geoloc != NO_LOCATION:
@@ -173,18 +199,20 @@ if __name__ == '__main__':
             # Save geolocation in parcels table
             df_parcels.at[index, LAT] = geoloc[LAT]
             df_parcels.at[index, LONG] = geoloc[LONG]
+            df_parcels.at[index, ZIP] = geoloc[ZIP]
 
             # Save new address-to-geolocation mapping to cache
             cache_row = \
             {
                 ADDR: row[ADDR],
                 LAT: geoloc[LAT],
-                LONG: geoloc[LONG]
+                LONG: geoloc[LONG],
+                ZIP: geoloc[ZIP],
             }
             df_cache = df_cache.append( cache_row, ignore_index=True )
 
             n_found += 1
-            print( '  (+{},-{}) <{}> Found: ({},{})'.format( n_found, n_failed, row[ADDR], geoloc[LAT], geoloc[LONG] ) )
+            print( '  (+{},-{}) <{}> Found: ({},{},{})'.format( n_found, n_failed, row[ADDR], geoloc[LAT], geoloc[LONG], geoloc[ZIP] ) )
 
         else:
             n_failed += 1

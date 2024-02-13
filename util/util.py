@@ -2123,6 +2123,7 @@ COLUMN_ORDER = \
         NORMALIZED_ADDITIONAL_INFO,
         LATITUDE,
         LONGITUDE,
+        ZIP,
     ],
     'LocalElectionResults':
     [
