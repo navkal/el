@@ -130,6 +130,7 @@ NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
 
 LATITUDE = 'latitude'
 LONGITUDE = 'longitude'
+GEO_SERVICE = 'geo_service'
 CENSUS_GEO_ID = 'census_geo_id'
 CENSUS_TRACT = 'census_tract'
 CENSUS_BLOCK_GROUP = 'census_block_group'
@@ -2124,6 +2125,7 @@ COLUMN_ORDER = \
         LATITUDE,
         LONGITUDE,
         ZIP,
+        GEO_SERVICE,
     ],
     'LocalElectionResults':
     [

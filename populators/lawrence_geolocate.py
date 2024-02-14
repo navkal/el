@@ -39,6 +39,10 @@ NO_LOCATION = \
     ZIP: None,
 }
 
+GEO = util.GEO_SERVICE
+
+
+
 def load_azure_key():
     with open( '../xl/lawrence/census/azure_key_1.txt' ) as f:
         return f.read()
@@ -49,22 +53,11 @@ GEO_SERVICE_NOMINATIM = Nominatim( user_agent=USER_AGENT )
 
 LAWRENCE_ZIPS = ['01840','01841','01842','01843']
 
-# Validate geolocation based on returned street namd and zip
+
+# Validate geolocation based on returned zip code
 def validate_geo( d_addr, street_name ):
-
-    # Prepare address parts to be tested
-    # street_part = ' '.join( street_name.split()[:-1] ).upper()
-    # street_part = max( street_name.upper().split(), key=len )
-    # road = ( d_addr['streetName'] if 'streetName' in d_addr else d_addr['road'] ).upper()
-
-    # Extract and validate zip code
     zip = d_addr['postalCode'] if 'postalCode' in d_addr else d_addr['postcode']
     valid_zip = zip if zip in LAWRENCE_ZIPS else None
-
-    # if not valid_zip:
-        # print( '====> VALIDATION FAILED' )
-        # print( f'====> zip: {zip}' )
-
     return valid_zip
 
 
@@ -166,7 +159,7 @@ if __name__ == '__main__':
     try:
         df_cache = pd.read_sql_table( 'GeoCache_L', engine_cache, index_col=util.ID )
     except:
-        df_cache = pd.DataFrame( columns=[ADDR,LAT,LONG,ZIP] )
+        df_cache = pd.DataFrame( columns=[ADDR,LAT,LONG,ZIP,GEO] )
 
     # Normalize parcel addresses
     df_parcels[ADDR] = df_parcels[LOCN]
@@ -187,32 +180,36 @@ if __name__ == '__main__':
     for index, row in df_need_geo.iterrows():
 
         # Call default geolocator with current address
+        geo_service = 'Primary'
         geoloc = geolocate_address( row, GEO_SERVICE_AZURE )
 
         # If first geolocator failed, try again with alternate geolocator
         if geoloc == NO_LOCATION:
+            geo_service = 'Secondary'
             geoloc = geolocate_address( row, GEO_SERVICE_NOMINATIM, addressdetails=True )
 
         # Save non-empty results
         if geoloc != NO_LOCATION:
 
-            # Save geolocation in parcels table
+            # Save result in parcels table
             df_parcels.at[index, LAT] = geoloc[LAT]
             df_parcels.at[index, LONG] = geoloc[LONG]
             df_parcels.at[index, ZIP] = geoloc[ZIP]
+            df_parcels.at[index, GEO] = geo_service
 
-            # Save new address-to-geolocation mapping to cache
+            # Save result in cache
             cache_row = \
             {
                 ADDR: row[ADDR],
                 LAT: geoloc[LAT],
                 LONG: geoloc[LONG],
                 ZIP: geoloc[ZIP],
+                GEO: geo_service,
             }
             df_cache = df_cache.append( cache_row, ignore_index=True )
 
             n_found += 1
-            print( '  (+{},-{}) <{}> Found: ({},{},{})'.format( n_found, n_failed, row[ADDR], geoloc[LAT], geoloc[LONG], geoloc[ZIP] ) )
+            print( '  (+{},-{}) <{}> Found: ({},{},{},{})'.format( n_found, n_failed, row[ADDR], geoloc[LAT], geoloc[LONG], geoloc[ZIP], geo_service ) )
 
         else:
             n_failed += 1
