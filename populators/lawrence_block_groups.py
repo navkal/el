@@ -22,6 +22,9 @@ LAWRENCE_MAX = 251899
 
 LAT = util.LATITUDE
 LONG = util.LONGITUDE
+ZIP = util.ZIP
+GEO = util.GEO_SERVICE
+
 GEO_ID = util.CENSUS_GEO_ID
 TRACT = util.CENSUS_TRACT
 BLOCK_GROUP = util.CENSUS_BLOCK_GROUP
@@ -39,6 +42,8 @@ BG_COLUMNS = \
     GEOMETRY,
 ]
 
+VSID = util.VISION_ID
+ADDRESS = util.ADDRESS
 
 def get_block_group( point ):
 
@@ -79,17 +84,34 @@ def get_parcels_table():
 
     # Get the parcels table
     conn, cur, engine = util.open_database( args.output_filename, False )
-    df = pd.read_sql_table( 'GeoParcels_L', engine, index_col=util.ID )
+    df_parcels = pd.read_sql_table( 'GeoParcels_L', engine, index_col=util.ID )
+
+    # Get manual geolocations
+    df_manual =  pd.read_excel( '../xl/lawrence/census/geo_manual.xlsx' )
+    df_manual[ZIP] = df_manual[ADDRESS].str.split( pat=', ', expand=True )[2].str.split( expand=True )[1]
+
+    # Incorporate manual geolocations into parcels table
+    for index, row in df_manual.iterrows():
+
+        # Find target parcel row
+        vsid = row[VSID]
+        parcels_idx = df_parcels[df_parcels[VSID] == vsid].index
+
+        # Copy values to target row
+        df_parcels.loc[parcels_idx, LAT] = row[LAT]
+        df_parcels.loc[parcels_idx, LONG] = row[LONG]
+        df_parcels.loc[parcels_idx, ZIP] = row[ZIP]
+        df_parcels.loc[parcels_idx, GEO] = 'Manual'
 
     # Ensure proper datatype for shapely operations
-    df[LONG] = df[LONG].astype( 'float' )
-    df[LAT] = df[LAT].astype( 'float' )
+    df_parcels[LONG] = df_parcels[LONG].astype( 'float' )
+    df_parcels[LAT] = df_parcels[LAT].astype( 'float' )
 
     # Initialize new columns
-    df[TRACT] = None
-    df[BLOCK_GROUP] = None
+    df_parcels[TRACT] = None
+    df_parcels[BLOCK_GROUP] = None
 
-    return conn, cur, df
+    return conn, cur, df_parcels
 
 
 # Main program
