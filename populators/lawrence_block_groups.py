@@ -87,7 +87,7 @@ def get_parcels_table():
     df_parcels = pd.read_sql_table( 'GeoParcels_L', engine, index_col=util.ID )
 
     # Get geolocation data that has been encoded manually
-    df_manual =  pd.read_excel( '../xl/lawrence/census/geo_manual.xlsx' )
+    df_manual =  pd.read_excel( '../xl/lawrence/assessment/parcel_gelocation_overrides.xlsx' )
     df_manual[ZIP] = df_manual[ADDRESS].str.extract( r'(\d{5})$' )
 
     # Incorporate manual geolocations into parcels table

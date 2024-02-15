@@ -76,7 +76,7 @@ def get_block_group( point ):
 def get_block_groups_table():
 
     # Get the block groups table
-    conn, cur, engine = util.open_database( '../xl/lawrence/census/block_groups.sqlite', False )
+    conn, cur, engine = util.open_database( '../xl/lawrence/census/us_census_block_group_geometry.sqlite', False )
     df = pd.read_sql_table( 'C2020', engine, columns=BG_COLUMNS )
 
     # Extract rows pertaining to Lawrence

@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # Map parcel geolocations to census block groups
     print( '\n=======> Parcels table' )
-    os.system( 'python lawrence_block_groups.py -b ../xl/lawrence/census/block_groups.sqlite -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_block_groups.py -b ../xl/lawrence/census/us_census_block_group_geometry.sqlite -m {0}'.format( args.master_filename ) )
 
     # Summarize parcels data
     print( '\n=======> Parcels summary' )
