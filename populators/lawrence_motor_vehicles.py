@@ -35,7 +35,7 @@ if __name__ == '__main__':
     df = pd.read_csv( args.input_filename, encoding=encoding_info['encoding'], dtype=object )
 
     # Rename the columns
-    df = util.rename_columns( df, 'RawMotorVehicles_L' )
+    df = util.rename_columns( df, 'RawMotorVehicles_MA' )
 
     # Extract rows pertaining to Lawrence
     df[util.CENSUS_GEO_ID] = df[util.CENSUS_GEO_ID].fillna(0).astype( 'int64' )

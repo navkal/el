@@ -1364,7 +1364,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Provider': 'provider',
         'Unnamed: 8': COST_OR_USE,
     },
-    'RawMotorVehicles_L': \
+    'RawMotorVehicles_MA': \
     {
         'Date': DATE,
         'MPO': MPO,
