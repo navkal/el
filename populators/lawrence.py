@@ -28,15 +28,16 @@ if __name__ == '__main__':
     print( '\n=======> Parcels summary' )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
 
-    # Optionally save raw motor vehicles data to persistent database
+    # Optionally save pertinent raw motor vehicles data to persistent database
     print( '\n=======> Motor vehicles input' )
+    vehicle_csv_filename = '//MOZART/Ayee/big_files/ma_motor_vehicles.csv'
     vehicle_db_filename = '../db/lawrence_motor_vehicles.sqlite'
     if not os.path.isfile( vehicle_db_filename ):
-        os.system( 'python xl_to_db.py -i ../xl/lawrence/motor_vehicles/motor_vehicles.csv -t RawMotorVehicles_L -v -o {0}'.format( vehicle_db_filename ) )
+        os.system( 'python lawrence_motor_vehicles.py -i {0} -o {1}'.format( vehicle_csv_filename, vehicle_db_filename ) )
 
     # Process motor vehicles data
     print( '\n=======> Motor vehicles table' )
-    os.system( 'python lawrence_motor_vehicles.py -v {0} -m {1}'.format( vehicle_db_filename, args.master_filename ) )
+    os.system( 'python db_to_db.py -i {0} -f MotorVehicles_L -t MotorVehicles_L -o {1}'.format( vehicle_db_filename, args.master_filename ) )
     print( '\n=======> Motor vehicles summary' )
     os.system( 'python lawrence_motor_vehicles_summarize.py -m {0}'.format( args.master_filename ) )
 
