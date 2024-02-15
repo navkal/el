@@ -6,9 +6,9 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import geopandas as gpd
+
 from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-import shapely.wkt
 
 import os
 
@@ -64,18 +64,13 @@ def get_block_group( point ):
 
 def get_block_groups_table():
 
-    # Get the block groups table
-    conn, cur, engine = util.open_database( args.block_groups_filename, False )
-    df = pd.read_sql_table( 'C2020', engine, columns=BG_COLUMNS )
+    # Read raw block groups table from the shapefile
+    df = gpd.read_file( args.block_groups_filename )
 
     # Extract rows pertaining to Lawrence
     df[TRACTCE] = df[TRACTCE].astype( int )
     df = df[ ( df[TRACTCE] >= LAWRENCE_MIN ) & ( df[TRACTCE] <= LAWRENCE_MAX ) ]
     df[TRACTCE] = ( df[TRACTCE] / 100 ).astype( int )
-
-    # Convert polygon string expression to data structure
-    for index, row in df.iterrows():
-        df.at[index, GEOMETRY] = shapely.wkt.loads( row[GEOMETRY] )
 
     return df
 
@@ -118,7 +113,7 @@ def get_parcels_table():
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Map parcel geolocations to US Census block groups' )
-    parser.add_argument( '-b', dest='block_groups_filename',  help='Block group database filename ', required=True )
+    parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-m', dest='output_filename',  help='Output filename - Name of master database file', required=True )
     args = parser.parse_args()
 
