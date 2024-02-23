@@ -139,6 +139,9 @@ WATER_AREA_SQ_M = 'water_area_sq_m'
 INTERNAL_POINT_LAT = 'internal_point_lat'
 INTERNAL_POINT_LONG = 'internal_point_long'
 
+LAWRENCE_MIN_GEO_ID = 250092501000
+LAWRENCE_MAX_GEO_ID = 250092518999
+
 LEFT_ADDR_FULL = 'left_addr_full'
 LEFT_ADDR_TRUNC = 'left_addr_trunc'
 LEFT_ADDR_EDIT = 'left_addr_edit'

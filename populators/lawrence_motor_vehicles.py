@@ -13,8 +13,8 @@ sys.path.append('../util')
 import util
 
 
-LAWRENCE_MIN = 250092501000
-LAWRENCE_MAX = 250092518999
+LAWRENCE_MIN = util.LAWRENCE_MIN_GEO_ID
+LAWRENCE_MAX = util.LAWRENCE_MAX_GEO_ID
 
 ######################
 

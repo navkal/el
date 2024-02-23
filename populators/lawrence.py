@@ -16,6 +16,34 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
+    #
+    # --> Process big files -->
+    #
+
+    # Optionally save pertinent US Census EJ data to persistent database
+    print( '\n=======> US Census EJ Screen' )
+    ejscreen_csv_filename = '//MOZART/Ayee/big_files/us_census_ejscreen.csv'
+    ejscreen_db_filename = '../db/lawrence_ejscreen.sqlite'
+    if not os.path.isfile( ejscreen_db_filename ):
+        print( '(Generating database "{}")'.format( ejscreen_db_filename ) )
+        os.system( 'python lawrence_ejscreen.py -i {0} -o {1}'.format( ejscreen_csv_filename, ejscreen_db_filename ) )
+    else:
+        print( '(Using database "{}")'.format( ejscreen_db_filename ) )
+
+    # Optionally save pertinent raw motor vehicles data to persistent database
+    print( '\n=======> Motor vehicles input' )
+    vehicle_csv_filename = '//MOZART/Ayee/big_files/ma_motor_vehicles.csv'
+    vehicle_db_filename = '../db/lawrence_motor_vehicles.sqlite'
+    if not os.path.isfile( vehicle_db_filename ):
+        print( '(Generating database "{}")'.format( vehicle_db_filename ) )
+        os.system( 'python lawrence_motor_vehicles.py -i {0} -o {1}'.format( vehicle_csv_filename, vehicle_db_filename ) )
+    else:
+        print( '(Using database "{}")'.format( vehicle_db_filename ) )
+
+    #
+    # <-- Process big files <--
+    #
+
     # Read cleaned parcels data
     print( '\n=======> Parcels input' )
     os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f GeoParcels_L -t GeoParcels_L -o {0} -c'.format( args.master_filename ) )
@@ -27,13 +55,6 @@ if __name__ == '__main__':
     # Summarize parcels data
     print( '\n=======> Parcels summary' )
     os.system( 'python lawrence_parcels_summarize.py -m {0}'.format( args.master_filename ) )
-
-    # Optionally save pertinent raw motor vehicles data to persistent database
-    print( '\n=======> Motor vehicles input' )
-    vehicle_csv_filename = '//MOZART/Ayee/big_files/ma_motor_vehicles.csv'
-    vehicle_db_filename = '../db/lawrence_motor_vehicles.sqlite'
-    if not os.path.isfile( vehicle_db_filename ):
-        os.system( 'python lawrence_motor_vehicles.py -i {0} -o {1}'.format( vehicle_csv_filename, vehicle_db_filename ) )
 
     # Process motor vehicles data
     print( '\n=======> Motor vehicles table' )
