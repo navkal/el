@@ -134,7 +134,10 @@ GEO_SERVICE = 'geo_service'
 CENSUS_GEO_ID = 'census_geo_id'
 CENSUS_TRACT = 'census_tract'
 CENSUS_BLOCK_GROUP = 'census_block_group'
-
+LAND_AREA_SQ_M = 'land_area_sq_m'
+WATER_AREA_SQ_M = 'water_area_sq_m'
+INTERNAL_POINT_LAT = 'internal_point_lat'
+INTERNAL_POINT_LONG = 'internal_point_long'
 
 LEFT_ADDR_FULL = 'left_addr_full'
 LEFT_ADDR_TRUNC = 'left_addr_trunc'
@@ -812,6 +815,16 @@ CONSISTENT_COLUMN_NAMES = \
         'Precinct': 'precinct',
         'Building': 'building',
         'Address': 'address',
+    },
+    'RawBlockGroups_L': \
+    {
+        'GEOID': CENSUS_GEO_ID,
+        'TRACTCE': CENSUS_TRACT,
+        'BLKGRPCE': CENSUS_BLOCK_GROUP,
+        'ALAND': LAND_AREA_SQ_M,
+        'AWATER': WATER_AREA_SQ_M,
+        'INTPTLAT': INTERNAL_POINT_LAT,
+        'INTPTLON': INTERNAL_POINT_LONG,
     },
     'RawBuildingPermits': \
     {
@@ -2147,6 +2160,16 @@ COLUMN_ORDER = \
     ],
     'Precincts':
     [
+    ],
+    'RawBlockGroups_L':
+    [
+        CENSUS_GEO_ID,
+        CENSUS_TRACT,
+        CENSUS_BLOCK_GROUP,
+        LAND_AREA_SQ_M,
+        WATER_AREA_SQ_M,
+        INTERNAL_POINT_LAT,
+        INTERNAL_POINT_LONG,
     ],
     'RawElectricMeters_L':
     [

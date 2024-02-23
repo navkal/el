@@ -34,14 +34,6 @@ TRACTCE = 'TRACTCE'
 BLKGRPCE = 'BLKGRPCE'
 GEOMETRY = 'geometry'
 
-BG_COLUMNS = \
-[
-    GEOID,
-    TRACTCE,
-    BLKGRPCE,
-    GEOMETRY,
-]
-
 VSID = util.VISION_ID
 ADDRESS = util.ADDRESS
 
@@ -142,7 +134,11 @@ if __name__ == '__main__':
 
     print( 'Mapped {} geolocations to census block groups'.format( n_found ) )
 
-    # Save to database
+    # Save raw block groups table
+    df_bg = util.prepare_for_database( df_bg, 'RawBlockGroups_L', exclude_unmapped=True )
+    util.create_table( 'RawBlockGroups_L', conn, cur, df=df_bg )
+
+    # Save parcels table
     df_parcels[GEO_ID] = df_parcels[GEO_ID].fillna(0).astype('int64')
     df_parcels[TRACT] = df_parcels[TRACT].fillna(0).astype(int)
     df_parcels[BLOCK_GROUP] = df_parcels[BLOCK_GROUP].fillna(0).astype(int)

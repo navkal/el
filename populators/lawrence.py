@@ -210,6 +210,7 @@ if __name__ == '__main__':
             'Assessment_L_Commercial_Merged',
             'Assessment_L_Residential_Merged',
             'GeoParcels_L',
+            'RawBlockGroups_L',
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
             'RawBuildingPermits_Electrical',
