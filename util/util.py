@@ -138,6 +138,7 @@ LAND_AREA_SQ_M = 'land_area_sq_m'
 WATER_AREA_SQ_M = 'water_area_sq_m'
 INTERNAL_POINT_LAT = 'internal_point_lat'
 INTERNAL_POINT_LONG = 'internal_point_long'
+GDB_FIELDNAME = 'gdb_fieldname'
 
 LAWRENCE_MIN_GEO_ID = 250092501000
 LAWRENCE_MAX_GEO_ID = 250092518999

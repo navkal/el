@@ -64,6 +64,10 @@ if __name__ == '__main__':
     print( '\n=======> Motor vehicles summary' )
     os.system( 'python lawrence_motor_vehicles_summarize.py -m {0}'.format( args.master_filename ) )
 
+    # Summarize EJ Screen data
+    print( '\n=======> Ejscreen summary' )
+    os.system( 'python lawrence_ejscreen_summarize.py -e ../db/lawrence_ejscreen.sqlite -m {0}'.format( args.master_filename ) )
+
     # Read census data
     print( '\n=======> Census input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/census/census.txt -n "Res. ID" -s "Res. ID" -t RawCensus_L -v -f "|" -x -o {0}'.format( args.master_filename ) )

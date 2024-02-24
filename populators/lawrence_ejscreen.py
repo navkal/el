@@ -46,7 +46,6 @@ if __name__ == '__main__':
 
     # Read list of dropped columns and prepare for merge
     df_drop = pd.read_excel( args.drop_filename )
-    df_drop = df_drop.rename( columns={ 'id': 'gdb_fieldname', 'Drop (Y/N)': 'dropped' } )
     df_drop[df_drop.columns] = df_drop.apply( lambda x: x.str.strip() )
 
     # Save documentation in database
@@ -57,20 +56,19 @@ if __name__ == '__main__':
         df_sheet = xl_doc.parse( sheet_name, skiprows=1 )
 
         # Strip spaces
-        string_cols = df_sheet.select_dtypes( object ).columns
-        df_sheet[string_cols] = df_sheet[string_cols].apply( lambda x: x.str.strip() )
+        df_sheet = df_sheet.fillna( '' )
+        df_sheet[df_sheet.columns] = df_sheet[df_sheet.columns].astype(str).apply( lambda x: x.str.strip() )
 
-        # Rename the columns
+        # Rename columns
         for col_name in df_sheet.columns:
-            fixed_name = '_'.join( col_name.split() ).lower()
-            df_sheet = df_sheet.rename( columns={ col_name: fixed_name } )
+            df_sheet = df_sheet.rename( columns={ col_name: '_'.join( col_name.split() ).lower() } )
 
         # Rename the table
         table_name = ''.join( sheet_name.split() )
 
         # Merge list of dropped columns
         if table_name == 'StatePercentilesDataset':
-            df_sheet = pd.merge( df_sheet, df_drop, on=['gdb_fieldname'], how='left' )
+            df_sheet = pd.merge( df_sheet, df_drop, on=[util.GDB_FIELDNAME], how='left' )
             df_sheet['dropped'] = df_sheet['dropped'].fillna( '' )
 
         # Save the table to the database
