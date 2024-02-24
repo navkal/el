@@ -40,6 +40,9 @@ if __name__ == '__main__':
     # Sort
     df = df.sort_values( by=[util.CENSUS_GEO_ID] )
 
+    # Fix datatype of numeric columns
+    df = util.fix_numeric_columns( df )
+
     # Save data to output database
     conn, cur, engine = util.open_database( args.output_filename, True )
     util.create_table( 'Ejscreen_L', conn, cur, df=df )

@@ -16,9 +16,9 @@ if __name__ == '__main__':
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     args = parser.parse_args()
 
-    #
-    # --> Process big files -->
-    #
+    # --------------------------------------------------------
+    # --> Preprocess: Extract relevant data from big files -->
+    # --------------------------------------------------------
 
     # Optionally save pertinent US Census EJ data to persistent database
     print( '\n=======> US Census EJ Screen' )
@@ -42,9 +42,14 @@ if __name__ == '__main__':
     else:
         print( '(Using database "{}")'.format( vehicle_db_filename ) )
 
-    #
-    # <-- Process big files <--
-    #
+    # --------------------------------------------------------
+    # <-- Preprocess: Extract relevant data from big files <--
+    # --------------------------------------------------------
+
+
+    # --------------------------------------------------
+    # --> Lawrence master database build starts here -->
+    # --------------------------------------------------
 
     # Read cleaned parcels data
     print( '\n=======> Parcels input' )
@@ -226,6 +231,11 @@ if __name__ == '__main__':
     # Generate copyright notice
     print( '\n=======> Copyright' )
     util.create_about_table( 'Lawrence', util.make_df_about_energize_lawrence(), args.master_filename )
+
+
+    # ----------------------------------------------------
+    # --> Lawrence research database build starts here -->
+    # ----------------------------------------------------
 
     # Publish research copy of database
     input_db = util.read_database( args.master_filename )
