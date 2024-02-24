@@ -24,10 +24,11 @@ if __name__ == '__main__':
     print( '\n=======> US Census EJ Screen' )
     ejscreen_csv_filename = '//MOZART/Ayee/big_files/us_census_ejscreen.csv'
     ejscreen_doc_filename = '../xl/lawrence/census/us_census_ejscreen_documentation.xlsx'
+    ejscreen_drop_filename = '../xl/lawrence/census/ejscreen_columns_to_drop.xlsx'
     ejscreen_db_filename = '../db/lawrence_ejscreen.sqlite'
     if not os.path.isfile( ejscreen_db_filename ):
         print( '(Generating database "{}")'.format( ejscreen_db_filename ) )
-        os.system( 'python lawrence_ejscreen.py -i {0} -d {1} -o {2}'.format( ejscreen_csv_filename, ejscreen_doc_filename, ejscreen_db_filename ) )
+        os.system( 'python lawrence_ejscreen.py -i {0} -d {1} -p {2} -o {3}'.format( ejscreen_csv_filename, ejscreen_doc_filename, ejscreen_drop_filename, ejscreen_db_filename ) )
     else:
         print( '(Using database "{}")'.format( ejscreen_db_filename ) )
 
@@ -232,7 +233,6 @@ if __name__ == '__main__':
             'Assessment_L_Commercial_Merged',
             'Assessment_L_Residential_Merged',
             'GeoParcels_L',
-            'RawBlockGroups_L',
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
             'RawBuildingPermits_Electrical',

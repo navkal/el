@@ -819,16 +819,6 @@ CONSISTENT_COLUMN_NAMES = \
         'Building': 'building',
         'Address': 'address',
     },
-    'RawBlockGroups_L': \
-    {
-        'GEOID': CENSUS_GEO_ID,
-        'TRACTCE': CENSUS_TRACT,
-        'BLKGRPCE': CENSUS_BLOCK_GROUP,
-        'ALAND': LAND_AREA_SQ_M,
-        'AWATER': WATER_AREA_SQ_M,
-        'INTPTLAT': INTERNAL_POINT_LAT,
-        'INTPTLON': INTERNAL_POINT_LONG,
-    },
     'RawBuildingPermits': \
     {
         'Permit#': PERMIT_NUMBER,
@@ -2163,16 +2153,6 @@ COLUMN_ORDER = \
     ],
     'Precincts':
     [
-    ],
-    'RawBlockGroups_L':
-    [
-        CENSUS_GEO_ID,
-        CENSUS_TRACT,
-        CENSUS_BLOCK_GROUP,
-        LAND_AREA_SQ_M,
-        WATER_AREA_SQ_M,
-        INTERNAL_POINT_LAT,
-        INTERNAL_POINT_LONG,
     ],
     'RawElectricMeters_L':
     [
