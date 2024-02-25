@@ -13,19 +13,6 @@ import util
 ACCT = util.ACCOUNT_NUMBER
 
 
-PERMIT_TYPES = \
-[
-    'cga',
-    'electrical',
-    'gas',
-    'plumbing',
-    'roof',
-    'siding',
-    'solar',
-    'wx',
-]
-
-
 # Merge permit numbers of specified type to parcels dataframe
 def merge_permit_numbers( df_parcels, permit_type ):
 
@@ -112,7 +99,7 @@ if __name__ == '__main__':
     df_parcels = pd.read_sql_table( 'Parcels_L', engine, index_col=util.ID, parse_dates=True )
 
     # Merge permit numbers from specified permit tables
-    for s_type in PERMIT_TYPES:
+    for s_type in util.BUILDING_PERMIT_TYPES:
         df_parcels = merge_permit_numbers( df_parcels, s_type )
 
     # Merge GLCAC job numbers

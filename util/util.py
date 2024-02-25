@@ -457,6 +457,18 @@ DATE_DUE_FOR_INSPECTION = 'date_due_for_inspection'
 INSPECTION_STATUS = 'inspection_status'
 PROPERTY_MANAGER = 'property_manager'
 
+BUILDING_PERMIT_TYPES = \
+[
+    'cga',
+    'electrical',
+    'gas',
+    'plumbing',
+    'roof',
+    'siding',
+    'solar',
+    'wx',
+]
+
 APPLIANCE = 'appliance'
 
 ENTIRE_ROOF = 'entire_roof'
