@@ -20,11 +20,11 @@ LAWRENCE_MAX = util.LAWRENCE_MAX_GEO_ID
 if __name__ == '__main__':
 
     # Retrieve arguments
-    parser = argparse.ArgumentParser( description='Extract US Census EJSCREEN data pertinent to Lawrence' )
-    parser.add_argument( '-i', dest='input_filename',  help='EJSCREEN input - csv filename' )
-    parser.add_argument( '-d', dest='doc_filename',  help='EJSCREEN documentation - xlsx filename' )
+    parser = argparse.ArgumentParser( description='Extract US Census EJScreen data pertinent to Lawrence' )
+    parser.add_argument( '-i', dest='input_filename',  help='EJScreen input - csv filename' )
+    parser.add_argument( '-d', dest='doc_filename',  help='EJScreen documentation - xlsx filename' )
     parser.add_argument( '-p', dest='drop_filename',  help='List of columns to drop - xlsx filename' )
-    parser.add_argument( '-o', dest='output_filename',  help='EJSCREEN output - database filename' )
+    parser.add_argument( '-o', dest='output_filename',  help='EJScreen output - database filename' )
     args = parser.parse_args()
 
     # Get raw table from input csv file
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     # Save data to output database
     conn, cur, engine = util.open_database( args.output_filename, True )
-    util.create_table( 'Ejscreen_L', conn, cur, df=df )
+    util.create_table( 'EJScreen_L', conn, cur, df=df )
 
     # Read list of dropped columns and prepare for merge
     df_drop = pd.read_excel( args.drop_filename )

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # --------------------------------------------------------
 
     # Optionally save pertinent US Census EJ data to persistent database
-    print( '\n=======> US Census EJ Screen' )
+    print( '\n=======> US Census EJScreen' )
     ejscreen_csv_filename = '//MOZART/Ayee/big_files/us_census_ejscreen.csv'
     ejscreen_doc_filename = '../xl/lawrence/census/us_census_ejscreen_documentation.xlsx'
     ejscreen_drop_filename = '../xl/lawrence/census/ejscreen_columns_to_drop.xlsx'
@@ -68,10 +68,6 @@ if __name__ == '__main__':
     os.system( 'python db_to_db.py -i {0} -f MotorVehicles_L -t MotorVehicles_L -o {1}'.format( vehicle_db_filename, args.master_filename ) )
     print( '\n=======> Motor vehicles summary' )
     os.system( 'python lawrence_motor_vehicles_summarize.py -m {0}'.format( args.master_filename ) )
-
-    # Summarize EJ Screen data
-    print( '\n=======> Ejscreen summary' )
-    os.system( 'python lawrence_ejscreen_summarize.py -e ../db/lawrence_ejscreen.sqlite -m {0}'.format( args.master_filename ) )
 
     # Read census data
     print( '\n=======> Census input' )
@@ -219,6 +215,10 @@ if __name__ == '__main__':
     # Correlate parcels with building permits and GLCAC jobs
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
+
+    # Summarize EJScreen data
+    print( '\n=======> EJScreen summary' )
+    os.system( 'python lawrence_ejscreen_summarize.py -e ../db/lawrence_ejscreen.sqlite -m {0}'.format( args.master_filename ) )
 
     # Analyze building contractor activity
     print( '\n=======> Contractor activity' )
