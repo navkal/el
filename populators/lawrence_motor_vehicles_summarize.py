@@ -11,27 +11,18 @@ sys.path.append('../util')
 import util
 
 
-FOSSIL_FUEL = 'fossil_fuel'
-HEAVY_DUTY = 'heavy_duty'
-MEDIUM_DUTY = 'medium_duty'
-LIGHT_DUTY = 'light_duty'
-HYBRID = 'hybrid'
-ZERO_EMISSION = 'zero_emission'
-EV = 'ev'
-PHEV = 'phev'
-
 COLUMNS= \
 [
     util.CENSUS_TRACT,
-    util.TOTAL,
-    HEAVY_DUTY,
-    MEDIUM_DUTY,
-    LIGHT_DUTY,
-    FOSSIL_FUEL,
-    HYBRID,
-    ZERO_EMISSION,
-    EV,
-    PHEV,
+    util.TOTAL_MV,
+    util.HEAVY_DUTY_MV,
+    util.MEDIUM_DUTY_MV,
+    util.LIGHT_DUTY_MV,
+    util.FOSSIL_FUEL_MV,
+    util.HYBRID_MV,
+    util.ZERO_EMISSION_MV,
+    util.EV,
+    util.PHEV,
 ]
 
 ######################
@@ -61,21 +52,21 @@ if __name__ == '__main__':
 
         # Load summary row
         summary_row[util.CENSUS_TRACT] = idx
-        summary_row[util.TOTAL] = df_group[util.COUNT].sum()
-
-        col = util.FUEL_CLASS
-        summary_row[FOSSIL_FUEL] = df_group[ df_group[col] == 'Fossil Fuel'][util.COUNT].sum()
-        summary_row[ZERO_EMISSION] = df_group[ df_group[col] == 'Zero-Emission'][util.COUNT].sum()
-        summary_row[HYBRID] = df_group[ df_group[col] == 'Hybrid'][util.COUNT].sum()
+        summary_row[util.TOTAL_MV] = df_group[util.COUNT].sum()
 
         col = util.GVWR_CATEGORY
-        summary_row[HEAVY_DUTY] = df_group[ df_group[col] == 'Heavy Duty'][util.COUNT].sum()
-        summary_row[MEDIUM_DUTY] = df_group[ df_group[col] == 'Medium Duty'][util.COUNT].sum()
-        summary_row[LIGHT_DUTY] = df_group[ df_group[col] == 'Light Duty'][util.COUNT].sum()
+        summary_row[util.HEAVY_DUTY_MV] = df_group[ df_group[col] == 'Heavy Duty'][util.COUNT].sum()
+        summary_row[util.MEDIUM_DUTY_MV] = df_group[ df_group[col] == 'Medium Duty'][util.COUNT].sum()
+        summary_row[util.LIGHT_DUTY_MV] = df_group[ df_group[col] == 'Light Duty'][util.COUNT].sum()
+
+        col = util.FUEL_CLASS
+        summary_row[util.FOSSIL_FUEL_MV] = df_group[ df_group[col] == 'Fossil Fuel'][util.COUNT].sum()
+        summary_row[util.ZERO_EMISSION_MV] = df_group[ df_group[col] == 'Zero-Emission'][util.COUNT].sum()
+        summary_row[util.HYBRID_MV] = df_group[ df_group[col] == 'Hybrid'][util.COUNT].sum()
 
         col = util.ADVANCED_VEHICLE_TYPE
-        summary_row[EV] = df_group[ df_group[col] == 'Electric Vehicle'][util.COUNT].sum()
-        summary_row[PHEV] = df_group[ df_group[col] == 'Plug-in Hybrid Electric Vehicle'][util.COUNT].sum()
+        summary_row[util.EV] = df_group[ df_group[col] == 'Electric Vehicle'][util.COUNT].sum()
+        summary_row[util.PHEV] = df_group[ df_group[col] == 'Plug-in Hybrid Electric Vehicle'][util.COUNT].sum()
 
         df_summary = df_summary.append( summary_row, ignore_index=True )
 

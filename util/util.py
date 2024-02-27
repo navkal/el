@@ -536,6 +536,16 @@ GVWR_CATEGORY = 'gvwr_category'
 COUNT = 'count'
 DAILY_VMT = 'daily_vmt'
 
+TOTAL_MV = TOTAL + '_mv'
+HEAVY_DUTY_MV = 'heavy_duty_mv'
+MEDIUM_DUTY_MV = 'medium_duty_mv'
+LIGHT_DUTY_MV = 'light_duty_mv'
+FOSSIL_FUEL_MV = 'fossil_fuel_mv'
+HYBRID_MV = 'hybrid_mv'
+ZERO_EMISSION_MV = 'zero_emission_mv'
+EV = 'ev'
+PHEV = 'phev'
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \

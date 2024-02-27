@@ -39,6 +39,56 @@ def add_permit_counts( df_ej, df_parcels, s_permit_type ):
     return df_ej
 
 
+MV_COLUMNS= \
+[
+    util.CENSUS_GEO_ID,
+    util.TOTAL_MV,
+    util.HEAVY_DUTY_MV,
+    util.MEDIUM_DUTY_MV,
+    util.LIGHT_DUTY_MV,
+    util.FOSSIL_FUEL_MV,
+    util.HYBRID_MV,
+    util.ZERO_EMISSION_MV,
+    util.EV,
+    util.PHEV,
+]
+
+# Add columns to EJScreen summary table counting vehicle types
+def add_vehicle_counts( df_ej, df_mv ):
+
+    # Initialize table summarizing motor vehicle counts
+    df_mv_summary = pd.DataFrame( columns=MV_COLUMNS )
+
+    for census_geo_id, df_group in df_mv.groupby( by=[util.CENSUS_GEO_ID] ):
+
+        # Initialize empty summary row
+        mv_summary_row = dict( ( el, 0 ) for el in MV_COLUMNS )
+
+        # Load summary row
+        mv_summary_row[util.CENSUS_GEO_ID] = census_geo_id
+        mv_summary_row[util.TOTAL_MV] = df_group[util.COUNT].sum()
+
+        col = util.GVWR_CATEGORY
+        mv_summary_row[util.HEAVY_DUTY_MV] = df_group[ df_group[col] == 'Heavy Duty'][util.COUNT].sum()
+        mv_summary_row[util.MEDIUM_DUTY_MV] = df_group[ df_group[col] == 'Medium Duty'][util.COUNT].sum()
+        mv_summary_row[util.LIGHT_DUTY_MV] = df_group[ df_group[col] == 'Light Duty'][util.COUNT].sum()
+
+        col = util.FUEL_CLASS
+        mv_summary_row[util.FOSSIL_FUEL_MV] = df_group[ df_group[col] == 'Fossil Fuel'][util.COUNT].sum()
+        mv_summary_row[util.ZERO_EMISSION_MV] = df_group[ df_group[col] == 'Zero-Emission'][util.COUNT].sum()
+        mv_summary_row[util.HYBRID_MV] = df_group[ df_group[col] == 'Hybrid'][util.COUNT].sum()
+
+        col = util.ADVANCED_VEHICLE_TYPE
+        mv_summary_row[util.EV] = df_group[ df_group[col] == 'Electric Vehicle'][util.COUNT].sum()
+        mv_summary_row[util.PHEV] = df_group[ df_group[col] == 'Plug-in Hybrid Electric Vehicle'][util.COUNT].sum()
+
+        df_mv_summary = df_mv_summary.append( mv_summary_row, ignore_index=True )
+
+    # Merge motor vehicle summary table to EJScreen summary
+    df_ej = pd.merge( df_ej, df_mv_summary, how='left', on=[util.CENSUS_GEO_ID] )
+
+    return df_ej
+
 ######################
 
 # Main program
@@ -73,6 +123,11 @@ if __name__ == '__main__':
     # Add columns containing per-block-group permit counts
     for s_permit_type in util.BUILDING_PERMIT_TYPES:
         df_ej = add_permit_counts( df_ej, df_parcels, s_permit_type )
+
+    # Add columns containing per-block-group vehicle counts
+    df_mv = pd.read_sql_table( 'MotorVehicles_L', engine, index_col=util.ID, parse_dates=True )
+    df_ej = add_vehicle_counts( df_ej, df_mv )
+
 
     # Save summary table to master database
     util.create_table( 'EJScreenSummary_L', conn, cur, df=df_ej )
