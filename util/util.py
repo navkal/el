@@ -3100,6 +3100,27 @@ def reorder_columns( table_name, columns ):
     return result
 
 
+# Convert all float columns that have no fractional value to int
+def float_to_int( df ):
+
+    for col in df.columns:
+
+        # If the column is float...
+        if pd.api.types.is_float_dtype( df[col].dtype ):
+
+            # Find float and integer sums
+            f_sum = df[col].sum()
+            i_sum = df[col].fillna(0).astype(int).sum()
+
+            # If float and integer sums are equal...
+            if f_sum == i_sum:
+
+                # Convert column to int
+                df[col] = df[col].fillna(0).astype(int)
+
+    return df
+
+
 def pdtype_to_sqltype( df, col_name ):
 
     if df is None:

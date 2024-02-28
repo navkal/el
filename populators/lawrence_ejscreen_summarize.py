@@ -87,10 +87,14 @@ def add_vehicle_counts( df_ej, df_mv ):
     # Ensure numeric datatype
     df_mv_summary = util.fix_numeric_columns( df_mv_summary )
 
-    # Merge motor vehicle summary table to EJScreen summary
-    df_ej = pd.merge( df_ej, df_mv_summary, how='left', on=[util.CENSUS_GEO_ID] )
+    # Merge motor vehicle summary to EJScreen summary ('outer' to capture all possible geo IDs)
+    df_ej = pd.merge( df_ej, df_mv_summary, how='outer', on=[util.CENSUS_GEO_ID] )
+
+    # Now restore integer-type columns that were messed up by the merge
+    df_ej = util.float_to_int( df_ej )
 
     return df_ej
+
 
 ######################
 
