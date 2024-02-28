@@ -84,6 +84,9 @@ def add_vehicle_counts( df_ej, df_mv ):
 
         df_mv_summary = df_mv_summary.append( mv_summary_row, ignore_index=True )
 
+    # Ensure numeric datatype
+    df_mv_summary = util.fix_numeric_columns( df_mv_summary )
+
     # Merge motor vehicle summary table to EJScreen summary
     df_ej = pd.merge( df_ej, df_mv_summary, how='left', on=[util.CENSUS_GEO_ID] )
 
