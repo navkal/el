@@ -90,9 +90,9 @@ def get_parcels_table():
         df_parcels.loc[parcels_idx, ZIP] = row[ZIP]
         df_parcels.loc[parcels_idx, GEO] = 'Manual'
 
-    # Ensure proper datatype for shapely operations
-    df_parcels[LONG] = df_parcels[LONG].astype( 'float' )
-    df_parcels[LAT] = df_parcels[LAT].astype( 'float' )
+    # Ensure proper datatype and precision for shapely operations
+    df_parcels[LONG] = df_parcels[LONG].astype(float).round( decimals=5 )
+    df_parcels[LAT] = df_parcels[LAT].astype(float).round( decimals=5 )
 
     # Initialize new columns
     df_parcels[TRACT] = None
