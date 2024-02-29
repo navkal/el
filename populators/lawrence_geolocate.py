@@ -127,6 +127,12 @@ def save_progress():
 
     global df_cache
 
+    # Clear meaningless excess precision
+    df_parcels[LAT] = df_parcels[LAT].astype(float).round( decimals=5 )
+    df_parcels[LONG] = df_parcels[LONG].astype(float).round( decimals=5 )
+    df_cache[LAT] = df_cache[LAT].astype(float).round( decimals=5 )
+    df_cache[LONG] = df_cache[LONG].astype(float).round( decimals=5 )
+
     # Prepare to save
     df_cache = df_cache.drop_duplicates( subset=[ADDR], keep='last' )
     df_cache = df_cache.sort_values( by=[ADDR] )

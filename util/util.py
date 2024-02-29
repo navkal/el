@@ -3108,15 +3108,30 @@ def float_to_int( df ):
         # If the column is float...
         if pd.api.types.is_float_dtype( df[col].dtype ):
 
-            # Find float and integer sums
-            f_sum = df[col].sum()
-            i_sum = df[col].fillna(0).astype(int).sum()
+            # Establish requisite conditions before we try to convert:
+            # . Column has no null values
+            #   - or -
+            # . Column has mixed null and non-null values, but no zeroes (because converting to int replaces null with zero)
 
-            # If float and integer sums are equal...
-            if f_sum == i_sum:
+            b_all_null = df[col].isna().all()
+            b_no_null = df[col].notna().all()
+            b_mixed_null = ( not b_all_null ) and ( not b_no_null )
+            b_no_zero = not ( df[col] == 0 ).any()
 
-                # Convert column to int
-                df[col] = df[col].fillna(0).astype(int)
+            if b_no_null or ( b_mixed_null and b_no_zero ):
+
+                # Establish final requisite condition:
+                # . Column values have no fractional part
+
+                # Determine presence of fractional part by comparing float and integer sums
+                f_sum = df[col].sum()
+                i_sum = df[col].fillna(0).astype(int).sum()
+                b_no_fraction = ( f_sum == i_sum )
+
+                if b_no_fraction:
+
+                    # Convert column to int
+                    df[col] = df[col].fillna(0).astype(int)
 
     return df
 
@@ -3234,6 +3249,8 @@ def fix_numeric_columns( df ):
 
         elif df[column_name].dtype == object:
             df[column_name] = pd.to_numeric( df[column_name], errors='ignore' )
+
+    df = float_to_int( df )
 
     return df
 
