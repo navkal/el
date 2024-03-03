@@ -11,6 +11,24 @@ sys.path.append('../util')
 import util
 
 
+# Add column to summary table containing per-block-group sums from specified parcels table column
+def add_parcels_sum_column( df_ej, df_parcels, s_parcels_col ):
+
+    # Initialize sum column
+    df_ej[s_parcels_col] = 0
+
+    # Iterate over parcels grouped by census block groups
+    for census_geo_id, df_group in df_parcels.groupby( by=[util.CENSUS_GEO_ID] ):
+
+        # Find corresponding summary row
+        ej_row_index = df_ej.loc[df_ej[util.CENSUS_GEO_ID] == census_geo_id].index[0]
+
+        # Save the sum in summary table
+        df_ej.at[ej_row_index, s_parcels_col] = df_group[s_parcels_col].sum()
+
+    return df_ej
+
+
 # Add column to EJScreen summary table counting permits of specified type
 def add_permit_counts( df_ej, df_parcels, s_permit_type ):
 
@@ -126,6 +144,14 @@ if __name__ == '__main__':
     # Read parcels table from database and select rows with known block groups
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[df_parcels[util.CENSUS_GEO_ID] != 0]
+
+    # Add columns containing per-block-group sums of parcels table columns
+    PARCELS_COLUMNS= \
+    [
+        util.TOTAL_OCCUPANCY,
+    ]
+    for s_parcels_col in PARCELS_COLUMNS:
+        df_ej = add_parcels_sum_column( df_ej, df_parcels, s_parcels_col )
 
     # Add columns containing per-block-group permit counts
     for s_permit_type in util.BUILDING_PERMIT_TYPES:
