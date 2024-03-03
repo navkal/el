@@ -141,9 +141,9 @@ if __name__ == '__main__':
     # Open master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
-    # Read parcels table from database and select rows with known block groups
+    # Read parcels table from database and select residential parcels with known block groups
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
-    df_parcels = df_parcels[df_parcels[util.CENSUS_GEO_ID] != 0]
+    df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.CENSUS_GEO_ID] != 0 )]
 
     # Add columns containing per-block-group sums of parcels table columns
     PARCELS_COLUMNS= \
