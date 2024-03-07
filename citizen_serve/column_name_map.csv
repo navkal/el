@@ -1,0 +1,46 @@
+Internal ID,Pid
+MBLU,Map
+Lot,Lot
+Lot Cut,Lot Cut
+Street Number,St_Num
+Street Name,Street
+Primary Use,Use Code
+Use,Use Descript
+Nhbd,Nhbd
+Legal Area,Legal Area
+Use,Use Descript
+Nbhd,Nhbd
+missing,Legal Area
+Zoning,Zone
+Assessed,Lnd_Value
+VNS_STYLE,Style
+VNS_EXT_WALL1,ext_Wall
+VNS_ROOF_STRUCT,Roof_Struct
+VNS_ROOF_COVER,Roof_Cover
+VNS_INT_WALL1,Int_wall
+VNS_HEAT_TYPE,Heat_Type
+VNS_AC_TYPE,AC Type
+VNS_STORIES,St_Ht
+VNS_BLDG_AREA_GROSS,Gross_Area
+VNS_BLDG_AREA_EFFECTIVE,Eff_Area
+VNS_BLDG_AREA_LIVING,Liv_Area
+VNS_COM_WALL_HEIGHT,Wall_Ht
+VNS_GRADE,Grade
+VNS_NUM_BEDRM,Beds
+VNS_NUM_BATHS,Baths
+VNS_TOT_ROOMS,T_Rooms
+VNS_AYB,Ayb
+VNS_EYB_CODE,B_Cnd
+VNS_PCT_GOOD,%_Good
+Total Assessed Improvements,Imp_Value
+Total Assessed Parcel Value,Parcel_Value
+Sale Price,Sale_Date
+Sale Date,Sale_Price
+Qualified?,Qual
+Validity Code,Nalc
+missing,Parcel_Value
+Owner Full Name,Owner
+Address Line 1,Mailing Address
+City,City
+State,State
+Zip,Zip
