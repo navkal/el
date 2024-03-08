@@ -242,6 +242,8 @@ TOTAL_ASSESSED_VALUE = 'total_assessed_value'
 ZONE = 'zone'
 
 DEPARTMENT = 'department'
+FACILITY = 'facility'
+PROVIDER = 'provider'
 POSITION = 'position'
 
 GENDER = 'gender'
@@ -1385,12 +1387,12 @@ CONSISTENT_COLUMN_NAMES = \
     {
         'Department': DEPARTMENT,
         'Complex': 'complex',
-        'Facility': 'facility',
+        'Facility': FACILITY,
         'Fuel (units)': 'fuel_units',
         'Account #': ACCOUNT_NUMBER,
         'Usage End Date Null': USAGE_END_NULL,
         'One': ONE,
-        'Provider': 'provider',
+        'Provider': PROVIDER,
         'Unnamed: 8': COST_OR_USE,
     },
     'RawMotorVehicles_MA': \
@@ -2063,6 +2065,12 @@ COLUMN_ORDER = \
     'ElectionModel_03':
     [
         RESIDENT_ID,
+    ],
+    'ElectricMeters_L':
+    [
+        ACCOUNT_NUMBER,
+        DEPARTMENT,
+        FACILITY,
     ],
     'Employees':
     [

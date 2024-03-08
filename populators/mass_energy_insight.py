@@ -98,9 +98,9 @@ if __name__ == '__main__':
 
     # Summarize National Grid electric meter data - Lawrence
     print( '\n=======> National Grid electric meters summary - Lawrence' )
+    facility_table_name = 'Mei_L_Totals'
     table_name = 'ElectricMeters_L'
-    os.system( 'python mass_energy_insight_meters.py -i {} -o {} -d {}'.format( raw_table_name, table_name, args.master_filename ) )
-
+    os.system( 'python mass_energy_insight_meters.py -i {} -f {} -o {} -d {}'.format( raw_table_name, facility_table_name, table_name, args.master_filename ) )
 
     # Generate copyright notice
     print( '\n=======> Copyright' )

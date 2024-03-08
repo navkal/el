@@ -42,6 +42,14 @@ for col in CALC_COLUMNS:
     COLUMNS.append( col + _Y2 )
     COLUMNS.append( col + _Y3 )
 
+# Columns describing facility that owns each electric meter
+FACILITY_COLUMNS = \
+[
+    util.ACCOUNT_NUMBER,
+    util.DEPARTMENT,
+    util.FACILITY,
+]
+
 #------------------------------------------------------
 
 if __name__ == '__main__':
@@ -50,6 +58,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Summarize bulk electric meter data obtained from National Grid' )
     parser.add_argument( '-d', dest='db_filename', help='Database filename' )
     parser.add_argument( '-i', dest='input_table', help='Input table name' )
+    parser.add_argument( '-f', dest='facility_table', help='Input table from which to merge facility information' )
     parser.add_argument( '-o', dest='output_table', help='Output table name' )
     args = parser.parse_args()
 
@@ -98,6 +107,18 @@ if __name__ == '__main__':
 
         # Append row to dataframe
         df_summary = df_summary.append( summary_row, ignore_index=True )
+
+    # Read table containing facility information from database
+    df_facility = pd.read_sql_table( args.facility_table, engine, index_col=util.ID )
+
+    # Prepare facility table for merge
+    df_facility = df_facility[ df_facility[util.PROVIDER] == 'National Grid' ]
+    df_facility = df_facility.drop_duplicates( subset=[util.ACCOUNT_NUMBER] )
+    df_facility = df_facility[FACILITY_COLUMNS]
+    df_facility = util.fix_numeric_columns( df_facility )
+
+    # Merge facility information into the summary table
+    df_summary = pd.merge( df_summary, df_facility, how='left', on=[util.ACCOUNT_NUMBER] )
 
     # Make sure numeric values are not saved as text
     df_summary = util.fix_numeric_columns( df_summary )

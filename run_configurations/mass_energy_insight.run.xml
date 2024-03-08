@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="mass_energy_insight" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+  <configuration default="false" name="mass_energy_insight" type="PythonConfigurationType" factoryName="Python" folderName="mass_energy_insight" nameIsGenerated="true">
     <module name="elections" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
