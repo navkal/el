@@ -79,9 +79,9 @@ End With
 ' Save CSV result
 csv_filename = s_dir & "\CitizenServe Import.csv"
 xlFile.SaveAs csv_filename, 6
-xlFile.Close True
 
-' Delete temporary copy of Excel file
+' Close and delete temporary copy of Excel file
+xlFile.Close False
 If fso.FileExists( tmp_filename ) Then
   fso.DeleteFile( tmp_filename )
 End If
