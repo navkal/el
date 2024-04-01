@@ -51,7 +51,7 @@ if __name__ == '__main__':
     start_year = find_start_year( csv_filename )
     b = "util.populate_mei_column_names(util.CONSISTENT_COLUMN_NAMES['{}'],{},2030)".format( table_name, start_year )
     # Pass initialization code to xl-to-db script
-    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -b {} -o {} -c'.format( csv_filename, table_name, b, args.master_filename ) )
+    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -m -b {} -o {} -c'.format( csv_filename, table_name, b, args.master_filename ) )
 
     # Read Mass Energy Insight data - Lawrence
     print( '\n=======> Mass Energy Insight input - Lawrence' )
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     start_year = find_start_year( csv_filename )
     b = "util.populate_mei_column_names(util.CONSISTENT_COLUMN_NAMES['{}'],{},2030)".format( table_name, start_year )
     # Pass initialization code to xl-to-db script
-    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -b {} -o {}'.format( csv_filename, table_name, b, args.master_filename ) )
+    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -m -b {} -o {}'.format( csv_filename, table_name, b, args.master_filename ) )
 
 
     # Read external suppliers data
