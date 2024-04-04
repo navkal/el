@@ -90,6 +90,19 @@ if __name__ == '__main__':
     os.system( 'python mass_energy_insight_totals.py -i Mei_L -o Mei_L_Totals -d {0}'.format( args.master_filename ) )
 
 
+
+    # Read National Grid electric meter data - Andover
+    print( '\n=======> National Grid electric meters input - Andover' )
+    csv_directory = '../xl/mass_energy_insight/electric_meters_a'
+    raw_table_name = 'RawElectricMeters_A'
+    os.system( 'python xl_to_db.py -d {} -v -l account_number -s account_number,readDate -t {} -o {}'.format( csv_directory, raw_table_name, args.master_filename ) )
+
+    # Summarize National Grid electric meter data - Andover
+    print( '\n=======> National Grid electric meters summary - Andover' )
+    facility_table_name = 'Mei_A_Totals'
+    table_name = 'ElectricMeters_A'
+    os.system( 'python mass_energy_insight_meters.py -i {} -f {} -o {} -d {}'.format( raw_table_name, facility_table_name, table_name, args.master_filename ) )
+
     # Read National Grid electric meter data - Lawrence
     print( '\n=======> National Grid electric meters input - Lawrence' )
     csv_directory = '../xl/mass_energy_insight/electric_meters_l'
@@ -113,6 +126,7 @@ if __name__ == '__main__':
         'number_columns': True,
         'drop_table_names':
         [
+            'RawElectricMeters_A',
             'RawElectricMeters_L',
             'RawExternalSuppliersElectric_L',
             'RawExternalSuppliersGas_L',

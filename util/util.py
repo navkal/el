@@ -1231,7 +1231,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Vendor': VENDOR,
         'Dept': DEPARTMENT,
     },
-    'RawElectricMeters_L': \
+    'RawElectricMeters_A': \
     {
         'account_number': ACCOUNT_NUMBER,
         'BilledOnPeakKw': BILLED_ON_PEAK_KW,
@@ -1634,6 +1634,7 @@ CONSISTENT_COLUMN_NAMES = \
 }
 CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Gas'] = CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Plumbing']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
+CONSISTENT_COLUMN_NAMES['RawElectricMeters_L'] = CONSISTENT_COLUMN_NAMES['RawElectricMeters_A']
 
 
 # Calculate age of a person
@@ -2066,7 +2067,7 @@ COLUMN_ORDER = \
     [
         RESIDENT_ID,
     ],
-    'ElectricMeters_L':
+    'ElectricMeters_A':
     [
         ACCOUNT_NUMBER,
         DEPARTMENT,
@@ -2185,7 +2186,7 @@ COLUMN_ORDER = \
     'Precincts':
     [
     ],
-    'RawElectricMeters_L':
+    'RawElectricMeters_A':
     [
         ACCOUNT_NUMBER,
         READ_DATE,
@@ -2322,6 +2323,8 @@ COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Assessment_L_Residential'] = COLUMN_ORDER['Assessment_L_Commercial']
 COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ CENSUS_GEO_ID, CENSUS_TRACT, CENSUS_BLOCK_GROUP ]
+COLUMN_ORDER['ElectricMeters_L'] = COLUMN_ORDER['ElectricMeters_A']
+COLUMN_ORDER['RawElectricMeters_L'] = COLUMN_ORDER['RawElectricMeters_A']
 
 
 COLUMN_ORDER_TRAILING = \
