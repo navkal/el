@@ -10,7 +10,6 @@ Nhbd,Nhbd
 Legal Area,Legal Area
 Use,Use Descript
 Nbhd,Nhbd
-missing,Legal Area
 Zoning,Zone
 Assessed,Lnd_Value
 VNS_STYLE,Style
@@ -38,7 +37,6 @@ Sale Price,Sale_Price
 Sale Date,Sale_Date
 Qualified?,Qual
 Validity Code,Nalc
-missing,Parcel_Value
 Owner Full Name,Owner
 Address Line 1,Mailing Address
 City,City
