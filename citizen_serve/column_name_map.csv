@@ -34,8 +34,8 @@ VNS_EYB_CODE,B_Cnd
 VNS_PCT_GOOD,%_Good
 Total Assessed Improvements,Imp_Value
 Total Assessed Parcel Value,Parcel_Value
-Sale Price,Sale_Date
-Sale Date,Sale_Price
+Sale Price,Sale_Price
+Sale Date,Sale_Date
 Qualified?,Qual
 Validity Code,Nalc
 missing,Parcel_Value

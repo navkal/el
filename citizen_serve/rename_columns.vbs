@@ -76,8 +76,19 @@ With xlFile.ActiveSheet
 
 End With
 
+' Format date, to be used as suffix in filename
+Dim dd, mm, yy, s_date
+s_date_time = Now()
+dd = Right( "00" & Day( s_date_time ), 2 )
+mm = Right( "00" & Month( s_date_time ), 2 )
+yy = Year( s_date_time )
+s_date = yy & "-" & mm & "-" & dd
+
 ' Save CSV result
-csv_filename = s_dir & "\CitizenServe Import.csv"
+csv_filename = s_dir & "\CitizenServe Import " & s_date & ".csv"
+stdout.WriteLine
+stdout.WriteLine "Saving result file '" & csv_filename & "'"
+stdout.WriteLine
 xlFile.SaveAs csv_filename, 6
 
 ' Close and delete temporary copy of Excel file
