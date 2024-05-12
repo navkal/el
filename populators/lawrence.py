@@ -69,6 +69,16 @@ if __name__ == '__main__':
     print( '\n=======> Motor vehicles summary' )
     os.system( 'python lawrence_motor_vehicles_summarize.py -m {0}'.format( args.master_filename ) )
 
+    # Read and combine city vehicles data
+    print( '\n=======> VIN dictionary input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/city_vehicles/vin_dictionary.csv -t VinDictionary_L -v -o {0}'.format( args.master_filename ) )
+    print( '\n=======> DPW vehicles input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/city_vehicles/dpw_vehicles.xlsx -t RawDpwVehicles_L -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Vehicle excise tax input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/city_vehicles/vehicle_excise_tax.xlsx -p COMMITMENT -t RawVehicleExciseTax_L -o {0}'.format( args.master_filename ) )
+    print( '\n=======> City vehicles table' )
+    os.system( 'python lawrence_city_vehicles.py -m {0}'.format( args.master_filename ) )
+
     # Read census data
     print( '\n=======> Census input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/census/census.txt -n "Res. ID" -s "Res. ID" -t RawCensus_L -v -f "|" -x -o {0}'.format( args.master_filename ) )
@@ -264,12 +274,15 @@ if __name__ == '__main__':
             'RawCensus_L',
             'RawCommercial_1',
             'RawCommercial_2',
+            'RawDpwVehicles_L',
             'RawGlcacJobs',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',
             'RawResidential_4',
             'RawResidential_5',
+            'RawVehicleExciseTax_L',
+            'VinDictionary_L',
          ],
         'encipher_column_names':
         [

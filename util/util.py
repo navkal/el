@@ -273,6 +273,7 @@ COST = 'Cost'
 
 
 ZIP = 'zip_code'
+ZIP_2 = ZIP + '_2'
 ZIP_CODES = 'zip_codes'
 YEAR = 'year'
 COUNTY = 'county'
@@ -547,6 +548,20 @@ HYBRID_MV = 'hybrid_mv'
 ZERO_EMISSION_MV = 'zero_emission_mv'
 EV = 'ev'
 PHEV = 'phev'
+
+REG_ID_PLATE = 'reg_id_plate'
+VIN = 'vin'
+YEAR_OF_MANUFACTURE = 'year_of_manufacture'
+MAKE = 'make'
+MODEL = 'model'
+DEPARTMENT = 'department'
+PLATE_TYPE = 'plate_type'
+COLOR = 'color'
+REG_EXPIRATION_DATE = 'reg_expiration_date'
+TAX_YEAR = 'tax_year'
+BILL_NUMBER = 'bill_number'
+VEHICLE_VALUE = 'vehicle_value_$'
+TAX_PAID = 'tax_paid_$'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1231,6 +1246,15 @@ CONSISTENT_COLUMN_NAMES = \
         'Vendor': VENDOR,
         'Dept': DEPARTMENT,
     },
+    'RawDpwVehicles_L': \
+    {
+        'Year': YEAR_OF_MANUFACTURE,
+        'Make': MAKE,
+        'Model': MODEL,
+        'Plate #': REG_ID_PLATE,
+        'VIN': VIN,
+        'Department': DEPARTMENT,
+    },
     'RawElectricMeters_A': \
     {
         'account_number': ACCOUNT_NUMBER,
@@ -1580,6 +1604,26 @@ CONSISTENT_COLUMN_NAMES = \
         'Bldg Cond': BUILDING_CONDITION,
         'Usrfld 101 Desc': BUILDING_CONDITION + _DESC,
     },
+    'RawVehicleExciseTax_L': \
+    {
+        'FIRST': OWNER_NAME,
+        'ADDRESS': ADDR_1,
+        'ADDRESS2': ADDR_2,
+        'CITY': CITY,
+        'ST': STREET,
+        'ZIP': ZIP,
+        'ZIP4': ZIP_2,
+        'PLATE': PLATE_TYPE,
+        'REGIS': REG_ID_PLATE,
+        'COLOR': COLOR,
+        'EXPIRE': REG_EXPIRATION_DATE,
+        'VYEAR': YEAR_OF_MANUFACTURE,
+        'VMAKE': MAKE,
+        'YEAR': TAX_YEAR,
+        'BILLNUMB': BILL_NUMBER,
+        'VALUE': VEHICLE_VALUE,
+        'TAXDUE': TAX_PAID,
+    },
     'RawVendors': \
     {
         'VDR NUM': VENDOR_NUMBER,
@@ -1610,6 +1654,11 @@ CONSISTENT_COLUMN_NAMES = \
         'EST_KWH_CN': 'estimated_kwh',
         'MAX_BEHAV_SCORE': 'max_behavior_score',
         'PHONE': PHONE,
+    },
+    'VinDictionary_L': \
+    {
+        'reg_id': REG_ID_PLATE,
+        'vin': VIN,
     },
     'Water': \
     {
@@ -2033,6 +2082,29 @@ COLUMN_ORDER = \
         ACCOUNT_NUMBER,
         CENSUS_YEAR,
         CONFIDENCE,
+    ],
+    'CityVehicles_L':
+    [
+        OWNER_NAME,
+        ADDR_1,
+        ADDR_2,
+        CITY,
+        STREET,
+        ZIP,
+        ZIP_2,
+        PLATE_TYPE,
+        REG_ID_PLATE,
+        COLOR,
+        REG_EXPIRATION_DATE,
+        YEAR_OF_MANUFACTURE,
+        MAKE,
+        VIN,
+        MODEL,
+        VEHICLE_VALUE,
+        DEPARTMENT,
+        TAX_YEAR,
+        BILL_NUMBER,
+        TAX_PAID,
     ],
     'Contracts':
     [
