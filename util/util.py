@@ -551,9 +551,11 @@ PHEV = 'phev'
 
 REG_ID_PLATE = 'reg_id_plate'
 VIN = 'vin'
-YEAR_OF_MANUFACTURE = 'year_of_manufacture'
 MAKE = 'make'
+MAKE_ID = 'make_id'
 MODEL = 'model'
+MODEL_ID = 'model_id'
+TRIM = 'trim'
 DEPARTMENT = 'department'
 PLATE_TYPE = 'plate_type'
 COLOR = 'color'
@@ -562,6 +564,9 @@ TAX_YEAR = 'tax_year'
 BILL_NUMBER = 'bill_number'
 VEHICLE_VALUE = 'vehicle_value_$'
 TAX_PAID = 'tax_paid_$'
+BATTERY_AMPS = 'battery_amps'
+BATTERY_VOLTS = 'battery_volts'
+BATTERY_KWH = 'battery_kwh'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1248,7 +1253,7 @@ CONSISTENT_COLUMN_NAMES = \
     },
     'RawDpwVehicles_L': \
     {
-        'Year': YEAR_OF_MANUFACTURE,
+        'Year': MODEL_YEAR,
         'Make': MAKE,
         'Model': MODEL,
         'Plate #': REG_ID_PLATE,
@@ -1604,6 +1609,19 @@ CONSISTENT_COLUMN_NAMES = \
         'Bldg Cond': BUILDING_CONDITION,
         'Usrfld 101 Desc': BUILDING_CONDITION + _DESC,
     },
+    'RawVehicleAttributes_L': \
+    {
+        '4_vin': VIN,
+        '26_model': MODEL,
+        '0_Dept': DEPARTMENT,
+        '33_trim': TRIM,
+        '34_vehicletype': VEHICLE_TYPE,
+        '1_makeid': MAKE_ID,
+        '2_modelid': MODEL_ID,
+        '44_batterya': BATTERY_AMPS,
+        '45_batteryv': BATTERY_VOLTS,
+        '46_batterykwh': BATTERY_KWH,
+    },
     'RawVehicleExciseTax_L': \
     {
         'FIRST': OWNER_NAME,
@@ -1617,7 +1635,7 @@ CONSISTENT_COLUMN_NAMES = \
         'REGIS': REG_ID_PLATE,
         'COLOR': COLOR,
         'EXPIRE': REG_EXPIRATION_DATE,
-        'VYEAR': YEAR_OF_MANUFACTURE,
+        'VYEAR': MODEL_YEAR,
         'VMAKE': MAKE,
         'YEAR': TAX_YEAR,
         'BILLNUMB': BILL_NUMBER,
@@ -2096,7 +2114,7 @@ COLUMN_ORDER = \
         REG_ID_PLATE,
         COLOR,
         REG_EXPIRATION_DATE,
-        YEAR_OF_MANUFACTURE,
+        MODEL_YEAR,
         MAKE,
         VIN,
         MODEL,

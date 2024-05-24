@@ -76,6 +76,9 @@ if __name__ == '__main__':
     os.system( 'python xl_to_db.py -i ../xl/lawrence/city_vehicles/dpw_vehicles.xlsx -t RawDpwVehicles_L -o {0}'.format( args.master_filename ) )
     print( '\n=======> Vehicle excise tax input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/city_vehicles/vehicle_excise_tax.xlsx -p COMMITMENT -t RawVehicleExciseTax_L -o {0}'.format( args.master_filename ) )
+    print( '\n=======> Vehicle attributes' )
+    keep_columns = ','.join( list( util.CONSISTENT_COLUMN_NAMES['RawVehicleAttributes_L'].keys() ) )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/city_vehicles/vehicle_attributes.xlsx -k {0} -t RawVehicleAttributes_L -o {1}'.format( keep_columns, args.master_filename ) )
     print( '\n=======> City vehicles table' )
     os.system( 'python lawrence_city_vehicles.py -m {0}'.format( args.master_filename ) )
 
@@ -281,6 +284,7 @@ if __name__ == '__main__':
             'RawResidential_3',
             'RawResidential_4',
             'RawResidential_5',
+            'RawVehicleAttributes_L',
             'RawVehicleExciseTax_L',
             'VinDictionary_L',
          ],

@@ -18,6 +18,17 @@ DPW_COLUMNS = \
     util.REG_ID_PLATE,
 ]
 
+
+# Combine '_x' and '_y' columns produced by merge
+def combine_columns( df, col_name ):
+
+    df = df.rename( columns={ col_name + '_x': col_name } )
+    df[col_name] = df[col_name].combine_first( df[col_name + '_y'] )
+    df = df.drop( columns=[col_name + '_y'] )
+
+    return df
+
+
 ######################
 
 # Main program
@@ -35,10 +46,16 @@ if __name__ == '__main__':
     df_tax = pd.read_sql_table( 'RawVehicleExciseTax_L', engine, index_col=util.ID, parse_dates=True )
     df_dpw = pd.read_sql_table( 'RawDpwVehicles_L', engine, index_col=util.ID, parse_dates=True, columns=DPW_COLUMNS )
     df_vin = pd.read_sql_table( 'VinDictionary_L', engine, index_col=util.ID, parse_dates=True )
+    df_atr = pd.read_sql_table( 'RawVehicleAttributes_L', engine, index_col=util.ID, parse_dates=True )
 
     # Merge
     df = pd.merge( df_tax, df_dpw, how='left', on=[util.REG_ID_PLATE] )
     df = pd.merge( df, df_vin, how='left', on=[util.REG_ID_PLATE] )
+    df = pd.merge( df, df_atr, how='left', on=[util.VIN] )
+
+    # Fill in sparse columns
+    df = combine_columns( df, util.MODEL )
+    df = combine_columns( df, util.DEPARTMENT )
 
     # Sort
     df = df.sort_values( by=list( df.columns ) )
