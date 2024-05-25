@@ -1612,8 +1612,10 @@ CONSISTENT_COLUMN_NAMES = \
     'RawVehicleAttributes_L': \
     {
         '4_vin': VIN,
+        '27_modelyear': MODEL_YEAR,
         '26_model': MODEL,
         '0_Dept': DEPARTMENT,
+        '24_make': MAKE,
         '33_trim': TRIM,
         '34_vehicletype': VEHICLE_TYPE,
         '1_makeid': MAKE_ID,
