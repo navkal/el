@@ -29,6 +29,7 @@ if __name__ == '__main__':
     # Read arguments
     parser = argparse.ArgumentParser( description='Load Excel sheet into SQLite database' )
     parser.add_argument( '-i', dest='input_filename',  help='Input filename - Name of MS Excel file', required=True )
+    parser.add_argument( '-s', dest='sheet_name',  help='Input spreadsheet' )
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     parser.add_argument( '-t', dest='output_table_name',  help='Output table name - Name of target table in SQLite database file', required=True )
     parser.add_argument( '-n', dest='float_to_int',  help='Convert float to int?', action='store_true' )
@@ -37,8 +38,16 @@ if __name__ == '__main__':
 
     skiprows = range( args.skip_rows ) if ( args.skip_rows != None ) else None
 
-    # Read the spreadsheet and clean up column labels
-    df = pd.read_excel( args.input_filename, skiprows=skiprows )
+    # Read the Excel sheet
+    if args.sheet_name != None:
+        # Specific sheet
+        xl_doc = pd.ExcelFile( args.input_filename )
+        df = xl_doc.parse( args.sheet_name, skiprows=skiprows )
+    else:
+        # Default sheet
+        df = pd.read_excel( args.input_filename, skiprows=skiprows )
+
+    # Clean up column labels
     df.columns = df.columns.astype( str )
     df.columns = df.columns.str.replace( '\s+', ' ', regex=True ).str.strip()
 
