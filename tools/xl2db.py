@@ -14,10 +14,13 @@ warnings.filterwarnings( 'ignore', category=UserWarning, module='pandas' )
 # Default behavior:
 # -i example.xlsx -o example.sqlite -t Example
 #
+# Select specific sheet by name:
+# -i xl2db_sheet.xlsx -s "Sheet Name" -o xl2db_sheet.sqlite -t Example
+#
 # Convert floating point columns to int:
 # -i xl2db_int.xlsx -o xl2db_int.sqlite -t Example -n
 #
-# Skip leading rows of input file:
+# Skip leading rows of input sheet:
 # -i xl2db_int.xlsx -o xl2db_int.sqlite -t Example -r <number_of_rows>
 #
 ######################
