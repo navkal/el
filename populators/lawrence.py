@@ -225,7 +225,7 @@ if __name__ == '__main__':
     print( '\n=======> Combine GLCAC and weatherization permit data' )
     os.system( 'python lawrence_glcac_with_wx.py -m {0}'.format( args.master_filename ) )
 
-    # Correlate parcels with building permits and GLCAC jobs
+    # Correlate parcels with voting districts, building permits, and GLCAC jobs
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 

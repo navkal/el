@@ -13,6 +13,21 @@ import util
 ACCT = util.ACCOUNT_NUMBER
 
 
+# Merge census voting district fields to parcels dataframe
+def merge_voting_districts( df_parcels ):
+
+    # Read census table
+    df_census = pd.read_sql_table( 'Census_L', engine, index_col=util.ID, parse_dates=True, columns=[ACCT, util.WARD_NUMBER, util.PRECINCT_NUMBER] )
+
+    # Merge voting district fields from census dataframe
+    df_parcels = pd.merge( df_parcels, df_census, on=[ACCT], how='left' )
+
+    # Drop duplicates
+    df_parcels = df_parcels.drop_duplicates( subset=[ACCT] )
+
+    return df_parcels
+
+
 # Merge permit numbers of specified type to parcels dataframe
 def merge_permit_numbers( df_parcels, permit_type ):
 
@@ -88,7 +103,7 @@ def merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name )
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Correlate data in commercial assessment tables' )
+    parser = argparse.ArgumentParser( description='Merge voting and permit information into parcels table' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
@@ -97,6 +112,9 @@ if __name__ == '__main__':
 
     # Retrieve parcels table from database
     df_parcels = pd.read_sql_table( 'Parcels_L', engine, index_col=util.ID, parse_dates=True )
+
+    # Merge voting districts
+    df_parcels = merge_voting_districts( df_parcels )
 
     # Merge permit numbers from specified permit tables
     for s_type in util.BUILDING_PERMIT_TYPES:
