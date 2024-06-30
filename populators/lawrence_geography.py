@@ -8,7 +8,8 @@ pd.set_option( 'display.width', 1000 )
 
 import geopandas as gpd
 
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
+from pyproj import Transformer
 
 import os
 
@@ -16,6 +17,8 @@ import sys
 sys.path.append('../util')
 import util
 
+WARD = util.WARD_NUMBER
+PRECINCT = util.PRECINCT_NUMBER
 
 LAWRENCE_MIN = 250100
 LAWRENCE_MAX = 251899
@@ -37,7 +40,21 @@ GEOMETRY = 'geometry'
 VSID = util.VISION_ID
 ADDRESS = util.ADDRESS
 
-def get_block_group( point ):
+
+def get_block_groups_table():
+
+    # Read raw block groups table from the shapefile
+    df = gpd.read_file( args.block_groups_filename )
+
+    # Extract rows pertaining to Lawrence
+    df[TRACTCE] = df[TRACTCE].astype( int )
+    df = df[ ( df[TRACTCE] >= LAWRENCE_MIN ) & ( df[TRACTCE] <= LAWRENCE_MAX ) ]
+    df[TRACTCE] = ( df[TRACTCE] / 100 ).astype( int )
+
+    return df
+
+
+def map_point_to_block_group( point, df_bg ):
 
     bg = None
 
@@ -54,17 +71,50 @@ def get_block_group( point ):
     return bg
 
 
-def get_block_groups_table():
+def get_wards_table():
 
-    # Read raw block groups table from the shapefile
-    df = gpd.read_file( args.block_groups_filename )
+    # Read raw wards table from the shapefile
+    df = gpd.read_file( args.wards_filename )
 
     # Extract rows pertaining to Lawrence
-    df[TRACTCE] = df[TRACTCE].astype( int )
-    df = df[ ( df[TRACTCE] >= LAWRENCE_MIN ) & ( df[TRACTCE] <= LAWRENCE_MAX ) ]
-    df[TRACTCE] = ( df[TRACTCE] / 100 ).astype( int )
+    df = df[ df['TOWN'] == 'LAWRENCE' ]
 
+    # Transform from projection coordinates to latitude/longitude
+    transformer = Transformer.from_crs( 'epsg:26986', 'epsg:4326', always_xy=True )
+
+    for index, row in df.iterrows():
+
+        # Reorganize current polygon values into list of tuples
+        shape = row[GEOMETRY]
+        xx, yy = shape.exterior.coords.xy
+        ls_x = xx.tolist()
+        ls_y = yy.tolist()
+        ls_xy = [ ( ls_x[i], ls_y[i] ) for i in range( 0, len( ls_x ) ) ]
+
+        # Transform coordinates
+        lat_long = [ transformer.transform( x, y ) for x, y in ls_xy ]
+
+        # Save transformed coordinates in dataframe
+        df.at[index, GEOMETRY] = Polygon( lat_long )
+
+    # Return dataframe
     return df
+
+
+def map_point_to_ward( point, df_wp ):
+
+    wp = None
+
+    for index, row in df_wp.iterrows():
+        if row[GEOMETRY].contains( point ):
+            wp = \
+            {
+                WARD: row['WARD'],
+                PRECINCT: row['PRECINCT']
+            }
+            break
+
+    return wp
 
 
 def get_parcels_table():
@@ -94,11 +144,31 @@ def get_parcels_table():
     df_parcels[LONG] = df_parcels[LONG].astype(float).round( decimals=5 )
     df_parcels[LAT] = df_parcels[LAT].astype(float).round( decimals=5 )
 
-    # Initialize new columns
-    df_parcels[TRACT] = None
-    df_parcels[BLOCK_GROUP] = None
-
     return conn, cur, df_parcels
+
+
+def map_parcels_to_regions( df_parcels, df_geo, df_regions, map_point_to_region, ls_columns ):
+
+    # Initialize new columns
+    for col in ls_columns:
+        df_parcels[col] = None
+
+    n_found = 0
+    n_failed = 0
+
+    # Iterate over parcels that have geolocations
+    for index, row in df_geo.iterrows():
+        region = map_point_to_region( Point( row[LONG], row[LAT] ), df_regions )
+        if region != None:
+            n_found += 1
+            for col in ls_columns:
+                df_parcels.at[index, col] = region[col]
+        else:
+            n_failed += 1
+
+    print( 'Found {} mappings'.format( n_found ) )
+
+    return df_parcels
 
 
 # Main program
@@ -106,38 +176,30 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Map parcel geolocations to US Census block groups' )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
+    parser.add_argument( '-w', dest='wards_filename',  help='Input filename - Name of shapefile containing Lawrence ward geometry', required=True )
     parser.add_argument( '-m', dest='output_filename',  help='Output filename - Name of master database file', required=True )
     args = parser.parse_args()
 
-    df_bg = get_block_groups_table()
+    # Read parcels table
     conn, cur, df_parcels = get_parcels_table()
 
-    n_found = 0
-    n_failed = 0
-
-    # Iterate over parcels that have geolocations
+    # Isolate parcels that have geolocation data
     df_geo = df_parcels.loc[ df_parcels[LAT].notnull() & df_parcels[LONG].notnull() ]
 
+    # Map parcels to census block groups
+    print( '' )
     print( 'Mapping {} geolocations to census block groups'.format( len( df_geo ) ) )
-
-    for index, row in df_geo.iterrows():
-        bg = get_block_group( Point( row[LONG], row[LAT] ) )
-        if bg != None:
-            n_found += 1
-            df_parcels.at[index, GEO_ID] = bg[GEO_ID]
-            df_parcels.at[index, TRACT] = bg[TRACT]
-            df_parcels.at[index, BLOCK_GROUP] = bg[BLOCK_GROUP]
-        else:
-            n_failed += 1
-
-        # print( '(+{},-{}) ({},{},{}): <{}>'.format( n_found, n_failed, df_parcels.loc[index][GEO_ID], df_parcels.loc[index][TRACT], df_parcels.loc[index][BLOCK_GROUP], df_parcels.loc[index][util.NORMALIZED_ADDRESS] ) )
-
-    print( 'Mapped {} geolocations to census block groups'.format( n_found ) )
-
-    # Save parcels table
+    df_parcels = map_parcels_to_regions( df_parcels, df_geo, get_block_groups_table(), map_point_to_block_group, [GEO_ID, TRACT, BLOCK_GROUP] )
     df_parcels[GEO_ID] = df_parcels[GEO_ID].fillna(0).astype('int64')
     df_parcels[TRACT] = df_parcels[TRACT].fillna(0).astype(int)
     df_parcels[BLOCK_GROUP] = df_parcels[BLOCK_GROUP].fillna(0).astype(int)
+
+    # Map parcels to wards
+    print( '' )
+    print( 'Mapping {} geolocations to wards'.format( len( df_geo ) ) )
+    df_parcels = map_parcels_to_regions( df_parcels, df_geo, get_wards_table(), map_point_to_ward, [WARD, PRECINCT] )
+
+    # Save parcels table
     util.create_table( 'Parcels_L', conn, cur, df=df_parcels )
 
     util.report_elapsed_time()

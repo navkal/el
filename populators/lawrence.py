@@ -55,9 +55,9 @@ if __name__ == '__main__':
     print( '\n=======> Parcels input' )
     os.system( 'python db_to_db.py -i ../db/lawrence_parcels.sqlite -f GeoParcels_L -t GeoParcels_L -o {0} -c'.format( args.master_filename ) )
 
-    # Map parcel geolocations to census block groups
+    # Map parcel geolocations to regions inside Lawrence
     print( '\n=======> Parcels table' )
-    os.system( 'python lawrence_block_groups.py -b ../xl/lawrence/census/census_block_group_geometry/tl_2020_25_bg.shp -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_geography.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -w ../xl/lawrence/geography/ward_precinct_geometry/WARDSPRECINCTS2022_POLY.shp -m {0}'.format( args.master_filename ) )
 
     # Summarize parcels data
     print( '\n=======> Parcels summary' )

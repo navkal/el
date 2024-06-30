@@ -2414,7 +2414,7 @@ COLUMN_ORDER = \
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Assessment_L_Residential'] = COLUMN_ORDER['Assessment_L_Commercial']
-COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ CENSUS_GEO_ID, CENSUS_TRACT, CENSUS_BLOCK_GROUP ]
+COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ WARD_NUMBER, PRECINCT_NUMBER, CENSUS_GEO_ID, CENSUS_TRACT, CENSUS_BLOCK_GROUP ]
 COLUMN_ORDER['ElectricMeters_L'] = COLUMN_ORDER['ElectricMeters_A']
 COLUMN_ORDER['RawElectricMeters_L'] = COLUMN_ORDER['RawElectricMeters_A']
 
