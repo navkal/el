@@ -61,7 +61,7 @@ def pad_slashes( s_mblu ):
     return s_mblu
 
 
-def get_parcels_geometry():
+def load_parcels_geometry():
 
     # Read raw wards table from the shapefile
     df = gpd.read_file( '../xl/lawrence/geography/parcel_geometry/M149TaxPar_CY23_FY24.shp' )
@@ -75,19 +75,22 @@ def get_parcels_geometry():
     df[MBLU] = df[MBLU].str.replace( '^0/', '/', regex=True )
     df[MBLU] = pad_slashes( df[MBLU] )
 
-    # Transform from projection coordinates to latitude/longitude
+    # Transform from projection to lat/long coordinates
     transformer = Transformer.from_crs( 'epsg:26986', 'epsg:4326', always_xy=True )
-
-    n_polygons = 0
-    n_multigons = 0
 
     for index, row in df.iterrows():
 
-        # Reorganize current polygon values into list of tuples
+        # Get geometry for current row
         shape = row[GEOMETRY]
 
+        # If we got a MultiPolygon, take the outer envelope, which will be a Polygon
+        if shape.geom_type == 'MultiPolygon':
+            shape = shape.envelope
+
+        # Process Polygon object
         if shape.geom_type == 'Polygon':
-            n_polygons += 1
+
+            # Reorganize current Polygon values into list of tuples
             xx, yy = shape.exterior.coords.xy
             ls_x = xx.tolist()
             ls_y = yy.tolist()
@@ -99,22 +102,16 @@ def get_parcels_geometry():
             # Save transformed coordinates in dataframe
             df.at[index, GEOMETRY] = Polygon( lat_long )
 
-        elif shape.geom_type == 'MultiPolygon':
-            n_multigons += 1
-
         else:
-            print( '!!! Unknown shape.geom_type' )
+            print( '!!! Unknown shape.geom_type: "{}" !!!'.format( shape.geom_type ) )
             exit()
-
-    # print( '' )
-    # print( 'Parcels shapefile contains {} multigons, {} polygons'.format( n_multigons, n_polygons ) )
 
     # Return dataframe
     df = df[ [MBLU, GEOMETRY] ]
     return df
 
 
-def get_block_groups_geometry():
+def load_block_groups_geometry():
 
     # Read raw block groups table from the shapefile
     df = gpd.read_file( args.block_groups_filename )
@@ -144,7 +141,7 @@ def map_location_to_block_group( point, df_bg ):
     return bg
 
 
-def get_precincts_geometry():
+def load_precincts_geometry():
 
     # Read raw wards table from the shapefile
     df = gpd.read_file( args.wards_filename )
@@ -250,7 +247,7 @@ def map_geometries_to_regions( df_parcels, df_precincts, df_block_groups ):
     df_unmapped_parcels = df_parcels[ ( df_parcels[GEO_ID] == 0 ) | df_parcels[WARD].isna() ]
 
     # Get geometries of unmapped parcels
-    df_geometries = get_parcels_geometry()
+    df_geometries = load_parcels_geometry()
     df_unmapped_geometries = df_geometries[ df_geometries[MBLU].isin( df_unmapped_parcels[MBLU] ) ]
 
     print( '' )
@@ -293,8 +290,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Read region geometries
-    df_precincts = get_precincts_geometry()
-    df_block_groups = get_block_groups_geometry()
+    df_precincts = load_precincts_geometry()
+    df_block_groups = load_block_groups_geometry()
 
     # Read parcels table
     conn, cur, df_parcels = get_parcels_table()
