@@ -17,6 +17,8 @@ import sys
 sys.path.append('../util')
 import util
 
+MBLU = util.MBLU
+
 WARD = util.WARD_NUMBER
 PRECINCT = util.PRECINCT_NUMBER
 
@@ -41,7 +43,78 @@ VSID = util.VISION_ID
 ADDRESS = util.ADDRESS
 
 
-def get_block_groups_table():
+
+def pad_slashes( s_mblu ):
+
+    s_mblu = s_mblu.copy()
+
+    s = ~s_mblu.str.contains( '(?:[^/]*/[^/]*){4,}', regex=True )
+
+    while len( s[s] ) > 0:
+        s_mblu.loc[s] = s_mblu.loc[s] + '/'
+        s = ~s_mblu.str.contains( '(?:[^/]*/[^/]*){4,}', regex=True )
+
+    # Clear cells that did not need padding
+    s = s_mblu.str.contains( '////' )
+    s_mblu.loc[s] = ''
+
+    return s_mblu
+
+
+def get_parcels_geometry():
+
+    # Read raw wards table from the shapefile
+    df = gpd.read_file( '../xl/lawrence/geography/parcel_geometry/M149TaxPar_CY23_FY24.shp' )
+
+    # Generate mblu-format column from parcel ID
+    df[MBLU] = df['MAP_PAR_ID']
+    df[MBLU] = df[MBLU].fillna( '' )
+    df[MBLU] = df[MBLU].str.replace( '-', '/' )
+    df[MBLU] = df[MBLU].str.replace( '/0/', '//' )
+    df[MBLU] = df[MBLU].str.replace( '/0$', '/', regex=True )
+    df[MBLU] = df[MBLU].str.replace( '^0/', '/', regex=True )
+    df[MBLU] = pad_slashes( df[MBLU] )
+
+    # Transform from projection coordinates to latitude/longitude
+    transformer = Transformer.from_crs( 'epsg:26986', 'epsg:4326', always_xy=True )
+
+    n_polygons = 0
+    n_multigons = 0
+
+    for index, row in df.iterrows():
+
+        # Reorganize current polygon values into list of tuples
+        shape = row[GEOMETRY]
+
+        if shape.geom_type == 'Polygon':
+            n_polygons += 1
+            xx, yy = shape.exterior.coords.xy
+            ls_x = xx.tolist()
+            ls_y = yy.tolist()
+            ls_xy = [ ( ls_x[i], ls_y[i] ) for i in range( 0, len( ls_x ) ) ]
+
+            # Transform coordinates
+            lat_long = [ transformer.transform( x, y ) for x, y in ls_xy ]
+
+            # Save transformed coordinates in dataframe
+            df.at[index, GEOMETRY] = Polygon( lat_long )
+
+        elif shape.geom_type == 'MultiPolygon':
+            n_multigons += 1
+
+        else:
+            print( '!!! Unknown shape.geom_type' )
+            exit()
+
+    # print( '' )
+    # print( 'Parcels shapefile contains {} multigons, {} polygons'.format( n_multigons, n_polygons ) )
+
+    # Return dataframe
+    df = df[ [MBLU, GEOMETRY] ]
+    return df
+
+
+def get_block_groups_geometry():
 
     # Read raw block groups table from the shapefile
     df = gpd.read_file( args.block_groups_filename )
@@ -54,7 +127,7 @@ def get_block_groups_table():
     return df
 
 
-def map_point_to_block_group( point, df_bg ):
+def map_location_to_block_group( point, df_bg ):
 
     bg = None
 
@@ -71,7 +144,7 @@ def map_point_to_block_group( point, df_bg ):
     return bg
 
 
-def get_wards_table():
+def get_precincts_geometry():
 
     # Read raw wards table from the shapefile
     df = gpd.read_file( args.wards_filename )
@@ -101,7 +174,7 @@ def get_wards_table():
     return df
 
 
-def map_point_to_ward( point, df_wp ):
+def map_location_to_precinct( point, df_wp ):
 
     wp = None
 
@@ -147,7 +220,7 @@ def get_parcels_table():
     return conn, cur, df_parcels
 
 
-def map_parcels_to_regions( df_parcels, df_geo, df_regions, map_point_to_region, ls_columns ):
+def map_locations_to_regions( df_parcels, df_geo, df_regions, map_location_to_region, ls_columns ):
 
     # Initialize new columns
     for col in ls_columns:
@@ -158,7 +231,7 @@ def map_parcels_to_regions( df_parcels, df_geo, df_regions, map_point_to_region,
 
     # Iterate over parcels that have geolocations
     for index, row in df_geo.iterrows():
-        region = map_point_to_region( Point( row[LONG], row[LAT] ), df_regions )
+        region = map_location_to_region( Point( row[LONG], row[LAT] ), df_regions )
         if region != None:
             n_found += 1
             for col in ls_columns:
@@ -171,14 +244,57 @@ def map_parcels_to_regions( df_parcels, df_geo, df_regions, map_point_to_region,
     return df_parcels
 
 
+def map_geometries_to_regions( df_parcels, df_precincts, df_block_groups ):
+
+    # Get unmapped parcels
+    df_unmapped_parcels = df_parcels[ ( df_parcels[GEO_ID] == 0 ) | df_parcels[WARD].isna() ]
+
+    # Get geometries of unmapped parcels
+    df_geometries = get_parcels_geometry()
+    df_unmapped_geometries = df_geometries[ df_geometries[MBLU].isin( df_unmapped_parcels[MBLU] ) ]
+
+    print( '' )
+    print( 'Mapping {} geometries to precincts and census block groups'.format( len( df_unmapped_geometries ) ) )
+
+    n_unmapped_found_in_a_precinct = 0
+    n_unmapped_found_in_a_block_group = 0
+
+    for index, row in df_unmapped_geometries.iterrows():
+
+        region = map_location_to_precinct( row[GEOMETRY], df_precincts )
+        if region != None:
+            n_unmapped_found_in_a_precinct += 1
+            parcels_index = df_parcels[ df_parcels[MBLU] == row[MBLU] ].index[0]
+            df_parcels.at[parcels_index, WARD] = region[WARD]
+            df_parcels.at[parcels_index, PRECINCT] = region[PRECINCT]
+
+        region = map_location_to_block_group( row[GEOMETRY], df_block_groups )
+        if region != None:
+            n_unmapped_found_in_a_block_group += 1
+            parcels_index = df_parcels[ df_parcels[MBLU] == row[MBLU] ].index[0]
+            df_parcels.at[parcels_index, GEO_ID] = region[GEO_ID]
+            df_parcels.at[parcels_index, TRACT] = region[TRACT]
+            df_parcels.at[parcels_index, BLOCK_GROUP] = region[BLOCK_GROUP]
+
+    print( 'Geometries found in a precinct:', n_unmapped_found_in_a_precinct )
+    print( 'Geometries found in a block group:', n_unmapped_found_in_a_block_group )
+
+    return df_parcels
+
+
 # Main program
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Map parcel geolocations to US Census block groups' )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-w', dest='wards_filename',  help='Input filename - Name of shapefile containing Lawrence ward geometry', required=True )
+    parser.add_argument( '-p', dest='parcels_filename',  help='Input filename - Name of shapefile containing Lawrence parcel geometry', required=True )
     parser.add_argument( '-m', dest='output_filename',  help='Output filename - Name of master database file', required=True )
     args = parser.parse_args()
+
+    # Read region geometries
+    df_precincts = get_precincts_geometry()
+    df_block_groups = get_block_groups_geometry()
 
     # Read parcels table
     conn, cur, df_parcels = get_parcels_table()
@@ -186,18 +302,27 @@ if __name__ == '__main__':
     # Isolate parcels that have geolocation data
     df_geo = df_parcels.loc[ df_parcels[LAT].notnull() & df_parcels[LONG].notnull() ]
 
+    # Map parcels to precincts
+    print( '' )
+    print( 'Mapping {} geolocations to precincts'.format( len( df_geo ) ) )
+    df_parcels = map_locations_to_regions( df_parcels, df_geo, df_precincts, map_location_to_precinct, [WARD, PRECINCT] )
+
     # Map parcels to census block groups
     print( '' )
     print( 'Mapping {} geolocations to census block groups'.format( len( df_geo ) ) )
-    df_parcels = map_parcels_to_regions( df_parcels, df_geo, get_block_groups_table(), map_point_to_block_group, [GEO_ID, TRACT, BLOCK_GROUP] )
+    df_parcels = map_locations_to_regions( df_parcels, df_geo, df_block_groups, map_location_to_block_group, [GEO_ID, TRACT, BLOCK_GROUP] )
+
+    # Map unmapped parcels using parcel geometry
+    df_parcels = map_geometries_to_regions( df_parcels, df_precincts, df_block_groups )
+
+    # Fix datatypes
     df_parcels[GEO_ID] = df_parcels[GEO_ID].fillna(0).astype('int64')
     df_parcels[TRACT] = df_parcels[TRACT].fillna(0).astype(int)
     df_parcels[BLOCK_GROUP] = df_parcels[BLOCK_GROUP].fillna(0).astype(int)
 
-    # Map parcels to wards
-    print( '' )
-    print( 'Mapping {} geolocations to wards'.format( len( df_geo ) ) )
-    df_parcels = map_parcels_to_regions( df_parcels, df_geo, get_wards_table(), map_point_to_ward, [WARD, PRECINCT] )
+    # How did we do?
+    df_remaining = df_parcels[ ( df_parcels[GEO_ID] == 0 ) | df_parcels[WARD].isna() ]
+    print( 'Remaining unmapped parcels:', len( df_remaining ) )
 
     # Save parcels table
     util.create_table( 'Parcels_L', conn, cur, df=df_parcels )

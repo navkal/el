@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     # Map parcel geolocations to regions inside Lawrence
     print( '\n=======> Parcels table' )
-    os.system( 'python lawrence_geography.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -w ../xl/lawrence/geography/ward_precinct_geometry/WARDSPRECINCTS2022_POLY.shp -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_geography.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -w ../xl/lawrence/geography/ward_precinct_geometry/WARDSPRECINCTS2022_POLY.shp -p ../xl/lawrence/geography/parcel_geometry/M149TaxPar_CY23_FY24.shp -m {0}'.format( args.master_filename ) )
 
     # Summarize parcels data
     print( '\n=======> Parcels summary' )
