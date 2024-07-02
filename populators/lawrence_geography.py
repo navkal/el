@@ -42,6 +42,9 @@ GEOMETRY = 'geometry'
 VSID = util.VISION_ID
 ADDRESS = util.ADDRESS
 
+# Transform from projection to lat/long coordinates
+TRANSFORMER = Transformer.from_crs( 'epsg:26986', 'epsg:4326', always_xy=True )
+
 
 
 def pad_slashes( s_mblu ):
@@ -61,6 +64,28 @@ def pad_slashes( s_mblu ):
     return s_mblu
 
 
+# Transform polygon from polar to lat/long coordinates
+def transform_polygon( poly ):
+
+    # Reorganize current Polygon values into list of tuples
+    xx, yy = poly.exterior.coords.xy
+    ls_x = xx.tolist()
+    ls_y = yy.tolist()
+    ls_xy = [ ( ls_x[i], ls_y[i] ) for i in range( 0, len( ls_x ) ) ]
+
+    # Transform coordinates
+    ls_lat_long = [ TRANSFORMER.transform( x, y ) for x, y in ls_xy ]
+
+    # Set up return values
+    poly = Polygon( ls_lat_long )
+    centroid = poly.centroid
+    lat = centroid.y
+    long = centroid.x
+
+    return poly, centroid, lat, long
+
+
+# Load parcels geometry dataframe
 def load_parcels_geometry():
 
     # Read raw wards table from the shapefile
@@ -75,9 +100,6 @@ def load_parcels_geometry():
     df[MBLU] = df[MBLU].str.replace( '^0/', '/', regex=True )
     df[MBLU] = pad_slashes( df[MBLU] )
 
-    # Transform from projection to lat/long coordinates
-    transformer = Transformer.from_crs( 'epsg:26986', 'epsg:4326', always_xy=True )
-
     for index, row in df.iterrows():
 
         # Get geometry for current row
@@ -85,29 +107,20 @@ def load_parcels_geometry():
 
         # If we got a MultiPolygon, take the outer envelope, which will be a Polygon
         if shape.geom_type == 'MultiPolygon':
-            shape = shape.envelope
+            poly, centroid, lat, long = transform_polygon( shape.envelope )
+            df.at[index, GEOMETRY] = poly
+            df.at[index, LAT] = lat
+            df.at[index, LONG] = long
 
         # If we got a Polygon object, take its centroid, which will be a Point
         elif shape.geom_type == 'Polygon':
-
-            # Reorganize current Polygon values into list of tuples
-            xx, yy = shape.exterior.coords.xy
-            ls_x = xx.tolist()
-            ls_y = yy.tolist()
-            ls_xy = [ ( ls_x[i], ls_y[i] ) for i in range( 0, len( ls_x ) ) ]
-
-            # Transform coordinates
-            lat_long = [ transformer.transform( x, y ) for x, y in ls_xy ]
-
-            # Save transformed coordinates in dataframe
-            df.at[index, GEOMETRY] = Polygon( lat_long ).centroid
-
-        else:
-            print( '!!! Unknown shape.geom_type: "{}" !!!'.format( shape.geom_type ) )
-            exit()
+            poly, centroid, lat, long = transform_polygon( shape )
+            df.at[index, GEOMETRY] = centroid
+            df.at[index, LAT] = lat
+            df.at[index, LONG] = long
 
     # Return dataframe
-    df = df[ [MBLU, GEOMETRY] ]
+    df = df[ [MBLU, GEOMETRY, LAT, LONG] ]
     return df
 
 
@@ -149,23 +162,13 @@ def load_precincts_geometry():
     # Extract rows pertaining to Lawrence
     df = df[ df['TOWN'] == 'LAWRENCE' ]
 
-    # Transform from projection coordinates to latitude/longitude
-    transformer = Transformer.from_crs( 'epsg:26986', 'epsg:4326', always_xy=True )
-
     for index, row in df.iterrows():
 
-        # Reorganize current polygon values into list of tuples
-        shape = row[GEOMETRY]
-        xx, yy = shape.exterior.coords.xy
-        ls_x = xx.tolist()
-        ls_y = yy.tolist()
-        ls_xy = [ ( ls_x[i], ls_y[i] ) for i in range( 0, len( ls_x ) ) ]
-
-        # Transform coordinates
-        lat_long = [ transformer.transform( x, y ) for x, y in ls_xy ]
+        # Transform to lat/long coordinate system
+        poly, centroid, lat, long = transform_polygon( row[GEOMETRY] )
 
         # Save transformed coordinates in dataframe
-        df.at[index, GEOMETRY] = Polygon( lat_long )
+        df.at[index, GEOMETRY] = poly
 
     # Return dataframe
     return df
@@ -258,24 +261,32 @@ def map_geometries_to_regions( df_parcels, df_precincts, df_block_groups ):
 
     for index, row in df_unmapped_geometries.iterrows():
 
-        region = map_location_to_precinct( row[GEOMETRY], df_precincts )
-        if region != None:
+        precinct = map_location_to_precinct( row[GEOMETRY], df_precincts )
+        if precinct != None:
             n_unmapped_found_in_a_precinct += 1
             parcels_index = df_parcels[ df_parcels[MBLU] == row[MBLU] ].index[0]
-            df_parcels.at[parcels_index, WARD] = region[WARD]
-            df_parcels.at[parcels_index, PRECINCT] = region[PRECINCT]
+            df_parcels.at[parcels_index, WARD] = precinct[WARD]
+            df_parcels.at[parcels_index, PRECINCT] = precinct[PRECINCT]
 
-        region = map_location_to_block_group( row[GEOMETRY], df_block_groups )
-        if region != None:
+        block_group = map_location_to_block_group( row[GEOMETRY], df_block_groups )
+        if block_group != None:
             n_unmapped_found_in_a_block_group += 1
             parcels_index = df_parcels[ df_parcels[MBLU] == row[MBLU] ].index[0]
-            df_parcels.at[parcels_index, GEO_ID] = region[GEO_ID]
-            df_parcels.at[parcels_index, TRACT] = region[TRACT]
-            df_parcels.at[parcels_index, BLOCK_GROUP] = region[BLOCK_GROUP]
+            df_parcels.at[parcels_index, GEO_ID] = block_group[GEO_ID]
+            df_parcels.at[parcels_index, TRACT] = block_group[TRACT]
+            df_parcels.at[parcels_index, BLOCK_GROUP] = block_group[BLOCK_GROUP]
+
+        # If current geometry yielded a new mapping, save lat/long coordinates
+        if ( precinct != None ) or ( block_group != None ):
+            df_parcels.at[parcels_index, LAT] = row[LAT]
+            df_parcels.at[parcels_index, LONG] = row[LONG]
+            df_parcels.at[parcels_index, GEO] = 'Geometry'
 
     print( 'Geometries found in a precinct:', n_unmapped_found_in_a_precinct )
     print( 'Geometries found in a block group:', n_unmapped_found_in_a_block_group )
 
+    df_parcels[LAT] = df_parcels[LAT].astype(float).round( decimals=5 )
+    df_parcels[LONG] = df_parcels[LONG].astype(float).round( decimals=5 )
     return df_parcels
 
 
