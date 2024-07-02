@@ -87,8 +87,8 @@ def load_parcels_geometry():
         if shape.geom_type == 'MultiPolygon':
             shape = shape.envelope
 
-        # Process Polygon object
-        if shape.geom_type == 'Polygon':
+        # If we got a Polygon object, take its centroid, which will be a Point
+        elif shape.geom_type == 'Polygon':
 
             # Reorganize current Polygon values into list of tuples
             xx, yy = shape.exterior.coords.xy
@@ -100,7 +100,7 @@ def load_parcels_geometry():
             lat_long = [ transformer.transform( x, y ) for x, y in ls_xy ]
 
             # Save transformed coordinates in dataframe
-            df.at[index, GEOMETRY] = Polygon( lat_long )
+            df.at[index, GEOMETRY] = Polygon( lat_long ).centroid
 
         else:
             print( '!!! Unknown shape.geom_type: "{}" !!!'.format( shape.geom_type ) )
@@ -194,7 +194,7 @@ def get_parcels_table():
     df_parcels = pd.read_sql_table( 'GeoParcels_L', engine, index_col=util.ID )
 
     # Get geolocation data that has been encoded manually
-    df_manual =  pd.read_excel( '../xl/lawrence/assessment/parcel_geolocation_manual_overrides.xlsx' )
+    df_manual =  pd.read_excel( '../xl/lawrence/geography/parcel_geolocation_manual_overrides.xlsx' )
     df_manual[ZIP] = df_manual[ADDRESS].str.extract( r'(\d{5})$' )
 
     # Incorporate manual geolocations into parcels table
