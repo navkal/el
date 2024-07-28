@@ -229,6 +229,10 @@ if __name__ == '__main__':
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 
+    # Read owner-occupied percentages, hand-edited from EJScreen PDF reports
+    print( '\n=======> EJScreen Owner-Occupied percentage input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/census/ejscreen_owner_occupied.xlsx -k census_geo_id,Percent_Owner_Occupied -t RawOwnerOccupied_L -o {0}'.format( args.master_filename ) )
+
     # Summarize EJScreen data
     print( '\n=======> EJScreen summary' )
     os.system( 'python lawrence_ejscreen_summarize.py -e ../db/lawrence_ejscreen.sqlite -m {0}'.format( args.master_filename ) )
@@ -279,6 +283,7 @@ if __name__ == '__main__':
             'RawCommercial_2',
             'RawDpwVehicles_L',
             'RawGlcacJobs',
+            'RawOwnerOccupied_L',
             'RawResidential_1',
             'RawResidential_2',
             'RawResidential_3',

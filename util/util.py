@@ -237,6 +237,7 @@ PREVIOUS_NAL_DESCRIPTION = 'previous_nal_description'
 GRANTOR = 'grantor'
 PREVIOUS_GRANTOR = 'previous_grantor'
 OWNER_OCCUPIED = 'owner_occupied'
+PCT_OWNER_OCCUPIED = 'pct_owner_occupied'
 ZONING_CODE_1 = 'zoning_code_1'
 TOTAL_ASSESSED_VALUE = 'total_assessed_value'
 ZONE = 'zone'
@@ -1439,6 +1440,11 @@ CONSISTENT_COLUMN_NAMES = \
         'GVWRCategory': GVWR_CATEGORY,
         'Count': COUNT,
         'DailyVMT': DAILY_VMT,
+    },
+    'RawOwnerOccupied_L': \
+    {
+        'census_geo_id': CENSUS_GEO_ID,
+        'Percent_Owner_Occupied': PCT_OWNER_OCCUPIED,
     },
     'RawResidential_1': \
     {

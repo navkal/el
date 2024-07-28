@@ -141,6 +141,10 @@ if __name__ == '__main__':
     # Open master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
+    # Read table of owner-occupied percentages and merge into EJScreen table
+    df_oo = pd.read_sql_table( 'RawOwnerOccupied_L', engine, index_col=util.ID, parse_dates=True )
+    df_ej = pd.merge( df_ej, df_oo, how='left', on=[util.CENSUS_GEO_ID] )
+
     # Read parcels table from database and select residential parcels with known block groups
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.CENSUS_GEO_ID] != 0 )]
@@ -161,6 +165,8 @@ if __name__ == '__main__':
     df_mv = pd.read_sql_table( 'MotorVehicles_L', engine, index_col=util.ID, parse_dates=True )
     df_ej = add_vehicle_counts( df_ej, df_mv )
 
+    # Fix datatypes
+    df_ej[util.PCT_OWNER_OCCUPIED] = df_ej[util.PCT_OWNER_OCCUPIED].fillna( 0 ).astype( int )
 
     # Save summary table to master database
     util.create_table( 'EJScreenSummary_L', conn, cur, df=df_ej )
