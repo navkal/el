@@ -229,7 +229,11 @@ if __name__ == '__main__':
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 
-    # Read owner-occupied percentages, hand-edited from EJScreen PDF reports
+    # Read per-block-group data on energy meter participation in Mass Save
+    print( '\n=======> Mass Save energy meter participation rates input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/census/energy_meter_participation.xlsx -x -t RawEnergyMeterParticipation_L -o {0}'.format( args.master_filename ) )
+
+    # Read per-block-group percentages of owner-occupied properties, hand-edited from EJScreen PDF reports
     print( '\n=======> EJScreen Owner-Occupied percentage input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/census/ejscreen_owner_occupied.xlsx -k census_geo_id,Percent_Owner_Occupied -t RawOwnerOccupied_L -o {0}'.format( args.master_filename ) )
 
@@ -282,6 +286,7 @@ if __name__ == '__main__':
             'RawCommercial_1',
             'RawCommercial_2',
             'RawDpwVehicles_L',
+            'RawEnergyMeterParticipation_L',
             'RawGlcacJobs',
             'RawOwnerOccupied_L',
             'RawResidential_1',
