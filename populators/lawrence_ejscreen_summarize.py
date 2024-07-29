@@ -171,7 +171,7 @@ if __name__ == '__main__':
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.CENSUS_GEO_ID] != 0 )]
 
-    # Add columns counting per-block-group occurrences of specified heating fuel
+    # Add columns counting per-block-group occurrences of specified heating fuels
     HEATING_FUEL_MAP = \
     {
         'Electric': 'heating_fuel_electric',
@@ -179,6 +179,21 @@ if __name__ == '__main__':
         'Oil': 'heating_fuel_oil',
     }
     df_ej = add_value_counts( df_ej, df_parcels, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
+
+    # Add columns counting per-block-group occurrences of specified heating types
+    HEATING_TYPE_MAP = \
+    {
+        'Steam': 'heating_type_steam',
+        'Radiant': 'heating_type_radiant',
+        'None': 'heating_type_none',
+        'Hot Water': 'heating_type_hot_water',
+        'Hot Air-no Duc': 'heating_type_hot_air_no_duc',
+        'Heat Pump': 'heating_type_heat_pump',
+        'Forced Air-Duc': 'heating_type_forced_air_duc',
+        'Floor Furnace': 'heating_type_floor_furnace',
+        'Electr Basebrd': 'heating_type_electr_basebrd',
+    }
+    df_ej = add_value_counts( df_ej, df_parcels, util.HEATING_TYPE_DESC, HEATING_TYPE_MAP )
 
     # Add columns containing per-block-group sums of parcels table columns
     PARCELS_COLUMNS= \
@@ -200,6 +215,8 @@ if __name__ == '__main__':
     df_ej[util.PCT_OWNER_OCCUPIED] = df_ej[util.PCT_OWNER_OCCUPIED].fillna( 0 ).astype( int )
     for s_key in HEATING_FUEL_MAP:
         df_ej[HEATING_FUEL_MAP[s_key]] = df_ej[HEATING_FUEL_MAP[s_key]].fillna( 0 ).astype( int )
+    for s_key in HEATING_TYPE_MAP:
+        df_ej[HEATING_TYPE_MAP[s_key]] = df_ej[HEATING_TYPE_MAP[s_key]].fillna( 0 ).astype( int )
 
     # Save summary table to master database
     util.create_table( 'EJScreenSummary_L', conn, cur, df=df_ej )
