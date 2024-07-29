@@ -11,6 +11,27 @@ sys.path.append('../util')
 import util
 
 
+
+# Add column to count per-block-group occurrences of specified values in a specified column
+def add_value_counts( df_ej, df_parcels, s_parcels_col, map ):
+
+    # Initialize count columns
+    for s_key in map:
+        df_ej[map[s_key]] = 0
+
+    # Iterate over parcels grouped by census block groups
+    for census_geo_id, df_group in df_parcels.groupby( by=[util.CENSUS_GEO_ID] ):
+
+        # Find corresponding summary row
+        ej_row_index = df_ej.loc[df_ej[util.CENSUS_GEO_ID] == census_geo_id].index[0]
+
+        # Save the counts in the summary table
+        for s_key in map:
+            df_ej.at[ej_row_index, map[s_key]] = len( df_group[df_group[s_parcels_col] == s_key] )
+
+    return df_ej
+
+
 # Add column to summary table containing per-block-group sums from specified parcels table column
 def add_parcels_sum_column( df_ej, df_parcels, s_parcels_col ):
 
@@ -70,6 +91,7 @@ MV_COLUMNS= \
     util.EV,
     util.PHEV,
 ]
+
 
 # Add columns to EJScreen summary table counting vehicle types
 def add_vehicle_counts( df_ej, df_mv ):
@@ -149,6 +171,15 @@ if __name__ == '__main__':
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.CENSUS_GEO_ID] != 0 )]
 
+    # Add columns counting per-block-group occurrences of specified heating fuel
+    HEATING_FUEL_MAP = \
+    {
+        'Electric': 'heating_fuel_electric',
+        'Gas': 'heating_fuel_gas',
+        'Oil': 'heating_fuel_oil',
+    }
+    df_ej = add_value_counts( df_ej, df_parcels, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
+
     # Add columns containing per-block-group sums of parcels table columns
     PARCELS_COLUMNS= \
     [
@@ -167,6 +198,8 @@ if __name__ == '__main__':
 
     # Fix datatypes
     df_ej[util.PCT_OWNER_OCCUPIED] = df_ej[util.PCT_OWNER_OCCUPIED].fillna( 0 ).astype( int )
+    for s_key in HEATING_FUEL_MAP:
+        df_ej[HEATING_FUEL_MAP[s_key]] = df_ej[HEATING_FUEL_MAP[s_key]].fillna( 0 ).astype( int )
 
     # Save summary table to master database
     util.create_table( 'EJScreenSummary_L', conn, cur, df=df_ej )
