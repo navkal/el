@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
     # Read table of energy meter participation rates and merge into EJScreen table
     df_mp = pd.read_sql_table( 'RawEnergyMeterParticipation_L', engine, index_col=util.ID, parse_dates=True )
-    df_ej = pd.merge( df_ej, df_mp, how='left', on=[util.CENSUS_GEO_ID] )
+    df_ej = pd.merge( df_ej, df_mp, how='outer', on=[util.CENSUS_GEO_ID] )
 
     # Read table of owner-occupied percentages and merge into EJScreen table
     df_oo = pd.read_sql_table( 'RawOwnerOccupied_L', engine, index_col=util.ID, parse_dates=True )
