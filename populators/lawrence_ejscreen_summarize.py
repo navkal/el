@@ -11,6 +11,17 @@ sys.path.append('../util')
 import util
 
 
+# Calculate number of tenant households per census block group
+def calculate_tenant_households( df_ej ):
+
+    # Determine how many owner households there are in each census block group
+    df_ej[util.OWNER_HOUSEHOLDS] = ( df_ej[util.PCT_OWNER_OCCUPIED] * df_ej[util.PARCEL_COUNT] / 100 ).round( decimals=0 )
+
+    # Subtract owner households from total households to get tenant households
+    df_ej[util.TENANT_HOUSEHOLDS] = df_ej[util.TOTAL_HOUSEHOLDS] - df_ej[util.OWNER_HOUSEHOLDS]
+
+    return df_ej
+
 
 # Add column counting number of parcels per census block group
 def add_parcel_counts( df_ej, df_parcels ):
@@ -185,10 +196,6 @@ if __name__ == '__main__':
     df_mp = pd.read_sql_table( 'RawEnergyMeterParticipation_L', engine, index_col=util.ID, parse_dates=True )
     df_ej = pd.merge( df_ej, df_mp, how='outer', on=[util.CENSUS_GEO_ID] )
 
-    # Read table of owner-occupied percentages and merge into EJScreen table
-    df_oo = pd.read_sql_table( 'RawOwnerOccupied_L', engine, index_col=util.ID, parse_dates=True )
-    df_ej = pd.merge( df_ej, df_oo, how='left', on=[util.CENSUS_GEO_ID] )
-
     # Read parcels table from database and select residential parcels with known block groups
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.CENSUS_GEO_ID] != 0 )]
@@ -228,6 +235,13 @@ if __name__ == '__main__':
     # Add column counting number of parcels per census block group
     df_ej = add_parcel_counts( df_ej, df_parcels )
 
+    # Read table of owner-occupied percentages and merge into EJScreen table
+    df_oo = pd.read_sql_table( 'RawOwnerOccupied_L', engine, index_col=util.ID, parse_dates=True )
+    df_ej = pd.merge( df_ej, df_oo, how='left', on=[util.CENSUS_GEO_ID] )
+
+    # Calculate the number of tenant households per census block group
+    df_ej = calculate_tenant_households( df_ej )
+
     # Add columns containing per-block-group permit counts
     for s_permit_type in util.BUILDING_PERMIT_TYPES:
         df_ej = add_permit_counts( df_ej, df_parcels, s_permit_type )
@@ -238,6 +252,7 @@ if __name__ == '__main__':
 
     # Fix datatypes
     df_ej[util.PCT_OWNER_OCCUPIED] = df_ej[util.PCT_OWNER_OCCUPIED].fillna( 0 ).astype( int )
+    df_ej[util.OWNER_HOUSEHOLDS] = df_ej[util.OWNER_HOUSEHOLDS].fillna( 0 ).astype( int )
     for s_key in HEATING_FUEL_MAP:
         df_ej[HEATING_FUEL_MAP[s_key]] = df_ej[HEATING_FUEL_MAP[s_key]].fillna( 0 ).astype( int )
     for s_key in HEATING_TYPE_MAP:

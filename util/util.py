@@ -573,6 +573,12 @@ BATTERY_AMPS = 'battery_amps'
 BATTERY_VOLTS = 'battery_volts'
 BATTERY_KWH = 'battery_kwh'
 
+
+TOTAL_HOUSEHOLDS = 'ACSTOTHU'
+TENANT_HOUSEHOLDS = 'tenant_households'
+OWNER_HOUSEHOLDS = 'owner_households'
+
+
 CONSISTENT_COLUMN_NAMES = \
 {
     'Assessment': \
