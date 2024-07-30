@@ -12,12 +12,30 @@ import util
 
 
 
+# Add column counting number of parcels per census block group
+def add_parcel_counts( df_ej, df_parcels ):
+
+    # Initialize count column
+    df_ej[util.PARCEL_COUNT] = 0
+
+    # Iterate over parcels grouped by census block groups
+    for census_geo_id, df_group in df_parcels.groupby( by=[util.CENSUS_GEO_ID] ):
+
+        # Find corresponding summary row
+        ej_row_index = df_ej.loc[df_ej[util.CENSUS_GEO_ID] == census_geo_id].index[0]
+
+        # Save the count in the summary table
+        df_ej.at[ej_row_index, util.PARCEL_COUNT] = len( df_group )
+
+    return df_ej
+
+
 # Add column to count per-block-group occurrences of specified values in a specified column
-def add_value_counts( df_ej, df_parcels, s_parcels_col, map ):
+def add_value_counts( df_ej, df_parcels, s_parcels_col, value_map ):
 
     # Initialize count columns
-    for s_key in map:
-        df_ej[map[s_key]] = 0
+    for s_key in value_map:
+        df_ej[value_map[s_key]] = 0
 
     # Iterate over parcels grouped by census block groups
     for census_geo_id, df_group in df_parcels.groupby( by=[util.CENSUS_GEO_ID] ):
@@ -26,8 +44,8 @@ def add_value_counts( df_ej, df_parcels, s_parcels_col, map ):
         ej_row_index = df_ej.loc[df_ej[util.CENSUS_GEO_ID] == census_geo_id].index[0]
 
         # Save the counts in the summary table
-        for s_key in map:
-            df_ej.at[ej_row_index, map[s_key]] = len( df_group[df_group[s_parcels_col] == s_key] )
+        for s_key in value_map:
+            df_ej.at[ej_row_index, value_map[s_key]] = len( df_group[df_group[s_parcels_col] == s_key] )
 
     return df_ej
 
@@ -207,6 +225,9 @@ if __name__ == '__main__':
     for s_parcels_col in PARCELS_COLUMNS:
         df_ej = add_parcels_sum_column( df_ej, df_parcels, s_parcels_col )
 
+    # Add column counting number of parcels per census block group
+    df_ej = add_parcel_counts( df_ej, df_parcels )
+
     # Add columns containing per-block-group permit counts
     for s_permit_type in util.BUILDING_PERMIT_TYPES:
         df_ej = add_permit_counts( df_ej, df_parcels, s_permit_type )
@@ -221,6 +242,9 @@ if __name__ == '__main__':
         df_ej[HEATING_FUEL_MAP[s_key]] = df_ej[HEATING_FUEL_MAP[s_key]].fillna( 0 ).astype( int )
     for s_key in HEATING_TYPE_MAP:
         df_ej[HEATING_TYPE_MAP[s_key]] = df_ej[HEATING_TYPE_MAP[s_key]].fillna( 0 ).astype( int )
+
+    # Sort on census global ID
+    df_ej = df_ej.sort_values( by=[util.CENSUS_GEO_ID] )
 
     # Save summary table to master database
     util.create_table( 'EJScreenSummary_L', conn, cur, df=df_ej )
