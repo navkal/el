@@ -319,6 +319,8 @@ def make_glossary( df_glossary ):
 
         df_glossary = df_glossary[ [GLOSSARY_COL_NAME, GLOSSARY_TEXT] ]
 
+        df_glossary = df_glossary.sort_values( by=[GLOSSARY_COL_NAME], key=lambda col: col.str.lower() )
+
     return df_glossary
 
 
