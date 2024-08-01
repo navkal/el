@@ -7,6 +7,7 @@ pd.options.display.width = 0
 import sqlite3
 import sqlalchemy
 
+import re
 import datetime
 import os
 
@@ -20,7 +21,7 @@ import warnings
 #
 # Sample parameter sequence:
 #
-#   -i input_db.sqlite -o output_workbook.<xlsx|sqlite> [-t tables.xlsx]
+#   -i input_db.sqlite -o output_workbook.<xlsx|sqlite> [-t tables.xlsx] [-g glossary.xlsx]
 #
 # Tables file
 #
@@ -43,6 +44,13 @@ import warnings
 #   - 'old_column_name': Lists columns to include, in the desired order
 #   - 'new_column_name': Lists new name to be used for each column.  During publication, publish_db.py will insert a numeric prefix into each of these names.
 #
+# Glossary file
+#   If a glossary file is provided, publish_db.py generates an additional output tab (or table) containing a column name glossary.
+#   The glossary file consists of one worksheet containing the following columns:
+#
+#   - 'column_name': Lists the master column names to be described in the glossary
+#   - 'description': Lists the descriptions associated with the master column names
+#
 ######################
 
 
@@ -55,6 +63,26 @@ WORKBOOK_STRUCTURE = 'Workbook Structure'
 COPYRIGHT = 'Copyright'
 
 EXCEL_TAB_NAME_MAX_LEN = 31
+
+
+# Glossary definitiions
+MASTERIZE_PATTERN = re.compile( r'^(\d+\-)(.+)$' )
+
+INPUT_COL_NAME = 'input_col_name'
+MASTER_COL_NAME = 'master_col_name'
+DISPLAY_COL_NAME = 'display_col_name'
+GLOSSARY_TEXT = 'description'
+GLOSSARY_COL_NAME = 'column_name'
+
+GLOSSARY_COLUMNS = \
+[
+    INPUT_COL_NAME,
+    MASTER_COL_NAME,
+    DISPLAY_COL_NAME,
+    GLOSSARY_TEXT,
+]
+
+GLOSSARY = 'Glossary'
 
 
 # Read Excel input file that describes operation to be performed
@@ -173,8 +201,53 @@ def read_database():
     return input_db, tab_order, tab_keys
 
 
+# Strip prefix of digits followed by hyphen from column name
+def masterize_column_name( input_col_name ):
+    master_col_name = re.sub( MASTERIZE_PATTERN, r'\2', input_col_name )
+    return master_col_name
+
+
+# Initialize the glossary
+def init_glossary( input_db ):
+
+    # Read the input glossary spreadsheet
+    df_input_glossary = pd.read_excel( args.glossary_filename, dtype=object )
+
+    # Initialize empty glossary dataframe
+    df_glossary = pd.DataFrame( columns=GLOSSARY_COLUMNS )
+
+    # Iterate over tables in the input database
+    for tab_name in input_db:
+
+        # Iterate over columns in current table
+        for input_col_name in input_db[tab_name].columns:
+
+            # Strip of numeric prefix, if any
+            master_col_name = masterize_column_name( input_col_name )
+
+            # Find row in input glossary dataframe
+            input_glossary_row = df_input_glossary[ df_input_glossary[GLOSSARY_COL_NAME] == master_col_name ]
+
+            # Find glossary text for current column name
+            if len( input_glossary_row ):
+                glossary_text = input_glossary_row[GLOSSARY_TEXT].iloc[0]
+            else:
+                glossary_text = ''
+
+            # Initialize glossary row
+            dc_row = { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }
+
+            # Append glossary row to dataframe
+            df_glossary = df_glossary.append( dc_row, ignore_index=True )
+
+    # Drop rows that have no glossary text
+    df_glossary = df_glossary[ df_glossary[GLOSSARY_TEXT] != '' ]
+
+    return df_glossary
+
+
 # Edit columns as specified by tab input file
-def edit_database( input_db, dc_sheets ):
+def edit_database( input_db, dc_sheets, df_glossary ):
 
     for sheet_name in input_db:
 
@@ -186,6 +259,13 @@ def edit_database( input_db, dc_sheets ):
             # Rename columns to be published
             dc_rename = dict( zip( dc_sheets[sheet_name][OLD_COLUMN_NAME], dc_sheets[sheet_name][NEW_COLUMN_NAME] ) )
             input_db[sheet_name] = input_db[sheet_name].rename( columns=dc_rename )
+
+            # Populate glossary dataframe with display names
+            if len( df_glossary ):
+                for s_key in dc_rename:
+                    glossary_row = df_glossary[ ( df_glossary[INPUT_COL_NAME] == s_key ) & ( df_glossary[DISPLAY_COL_NAME] == '' ) ]
+                    if len( glossary_row ):
+                        df_glossary.at[glossary_row.index[0], DISPLAY_COL_NAME] = dc_rename[s_key]
 
             # Number columns to be published
             n_cols = len( input_db[sheet_name].columns )
@@ -202,7 +282,7 @@ def edit_database( input_db, dc_sheets ):
             print( '', 'Publishing as:')
             print( '', list( input_db[sheet_name].columns ) )
 
-    return input_db
+    return input_db, df_glossary
 
 
 # Build dataframe describing workbook structure
@@ -223,6 +303,23 @@ def build_structure():
         df_structure = df_structure.join( df_column, how='outer' )
 
     return df_structure
+
+
+# Finish creating glossary dataframe
+def make_glossary( df_glossary ):
+
+    if len( df_glossary ):
+
+        df_glossary = df_glossary.drop_duplicates( subset=[MASTER_COL_NAME, DISPLAY_COL_NAME] )
+
+        df_glossary[GLOSSARY_COL_NAME] = ''
+
+        for index, row in df_glossary.iterrows():
+            df_glossary.at[index, GLOSSARY_COL_NAME] = row[DISPLAY_COL_NAME] if row[DISPLAY_COL_NAME] != '' else row[MASTER_COL_NAME]
+
+        df_glossary = df_glossary[ [GLOSSARY_COL_NAME, GLOSSARY_TEXT] ]
+
+    return df_glossary
 
 
 # Synthesize copyright worksheet
@@ -252,6 +349,11 @@ def write_workbook():
             print( 'Creating worksheet "{}"'.format( tab_name ) )
             df.to_excel( writer, sheet_name=tab_name, index=False )
 
+        # Write optional glossary table to Excel
+        if len( df_glossary ):
+            print( 'Creating worksheet "{}"'.format( GLOSSARY ) )
+            df_glossary.to_excel( writer, sheet_name=GLOSSARY, index=False )
+
         # Write copyright table to Excel
         print( 'Creating worksheet "{}"'.format( COPYRIGHT ) )
         df_copyright.to_excel( writer, sheet_name=COPYRIGHT, index=False )
@@ -273,8 +375,12 @@ def write_database():
         # Write the table to the database
         write_table( table_name, df, cur, conn )
 
+    # Add optional glossary
+    if len( df_glossary ):
+        write_table( GLOSSARY, df_glossary, cur, conn )
+
     # Add the copyright notice
-    write_table( '_About', make_copyright(), cur, conn )
+    write_table( '_About', df_copyright, cur, conn )
 
 
 # Save a table to the output database
@@ -355,7 +461,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Generate Excel file from SQLite database' )
     parser.add_argument( '-i', dest='input_filename',  help='Input filename - Name of SQLite database file', required=True )
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of Excel workbook or SQLite database', required=True )
-    parser.add_argument( '-t', dest='tabs_filename',  help='Tabs filename - Name of CSV file specifying order and naming tabs in output Excel file' )
+    parser.add_argument( '-t', dest='tabs_filename',  help='Tabs filename - Name of Excel file specifying order and naming of tabs (or tables) and columns in published output' )
+    parser.add_argument( '-g', dest='glossary_filename',  help='Glossary filename - Name of Excel file specifying glossary content to be included in published output' )
     args = parser.parse_args()
 
     output_ext = os.path.splitext( args.output_filename )[1]
@@ -381,15 +488,25 @@ if __name__ == '__main__':
         df_tabs = None
         dc_sheets = {}
 
-
     # Read database file
     input_db, tab_order, tab_keys = read_database()
 
+    # Report and initialize glossary from optional glossary file
+    if args.glossary_filename != None:
+        print( '' )
+        print( 'Glossary filename:', args.glossary_filename )
+        df_glossary = init_glossary( input_db )
+    else:
+        df_glossary = pd.DataFrame()
+
     # Edit tables as specified in Tabs file
-    input_db = edit_database( input_db, dc_sheets )
+    input_db, df_glossary = edit_database( input_db, dc_sheets, df_glossary )
 
     # Build self-describing dataframe
     df_structure = build_structure()
+
+    # Create final glossary dataframe
+    df_glossary = make_glossary( df_glossary )
 
     # Create copyright dataframe
     df_copyright = make_copyright()
