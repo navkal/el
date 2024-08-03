@@ -45,7 +45,8 @@ import warnings
 #   - 'new_column_name': Lists new name to be used for each column.  During publication, publish_db.py will insert a numeric prefix into each of these names.
 #
 # Glossary file
-#   If a glossary file is provided, publish_db.py generates an additional output tab (or table) containing a column name glossary.
+#
+#   If a glossary file is provided, publish_db.py generates an additional output tab (or table) containing a glossary of column names.
 #   The glossary file consists of one worksheet containing the following columns:
 #
 #   - 'column_name': Lists the master column names to be described in the glossary
