@@ -236,7 +236,8 @@ def init_glossary( input_db ):
                 glossary_text = ''
 
             # Initialize glossary row
-            df_row = pd.DataFrame( { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }, index=[0] )
+            dc_row = { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }
+            df_row = pd.DataFrame( dc_row, index=[0] )
 
             # Append glossary row to dataframe
             df_glossary = pd.concat( [df_glossary, df_row], ignore_index=True )
@@ -278,10 +279,12 @@ def edit_database( input_db, dc_sheets, df_glossary ):
 
             print( '' )
             print( 'Editing table "{}"'.format( sheet_name ) )
-            print( '', 'Selecting columns:' )
+            print( '', 'Selecting {} columns:'.format( len( dc_rename.keys() ) ) )
             print( '', list( dc_rename.keys() ) )
-            print( '', 'Publishing as:')
+            print( '', 'Publishing as {} columns:'.format( len( input_db[sheet_name].columns ) ) )
             print( '', list( input_db[sheet_name].columns ) )
+
+    df_glossary = df_glossary[ df_glossary[DISPLAY_COL_NAME] != '']
 
     return input_db, df_glossary
 
@@ -321,6 +324,9 @@ def make_glossary( df_glossary ):
         df_glossary = df_glossary[ [GLOSSARY_COL_NAME, GLOSSARY_TEXT] ]
 
         df_glossary = df_glossary.sort_values( by=[GLOSSARY_COL_NAME], key=lambda col: col.str.lower() )
+
+        print( '' )
+        print( 'Generated {}, containing descriptions of {} column names'.format( GLOSSARY, len( df_glossary ) ) )
 
     return df_glossary
 
