@@ -236,10 +236,10 @@ def init_glossary( input_db ):
                 glossary_text = ''
 
             # Initialize glossary row
-            dc_row = { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }
+            df_row = pd.DataFrame( { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }, index=[0] )
 
             # Append glossary row to dataframe
-            df_glossary = df_glossary.append( dc_row, ignore_index=True )
+            df_glossary = pd.concat( [df_glossary, df_row], ignore_index=True )
 
     # Drop rows that have no glossary text
     df_glossary = df_glossary[ df_glossary[GLOSSARY_TEXT] != '' ]
