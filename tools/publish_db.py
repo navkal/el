@@ -209,7 +209,22 @@ def masterize_column_name( input_col_name ):
 
 
 # Initialize the glossary
-def init_glossary( input_db ):
+def read_glossary_file( input_db ):
+
+    ################
+    #
+    # Initialize the glossary dataframe.
+    #
+    # Each row of the glossary dataframe contains the following fields:
+    #   INPUT_COL_NAME - name found in input database
+    #   MASTER_COL_NAME - master name, without numeric prefix
+    #   DISPLAY_COL_NAME - name to be used in published output
+    #   GLOSSARY_TEXT - column description
+    #
+    # Load INPUT_COL_NAME, MASTER_COL_NAME, and GLOSSARY_TEXT.
+    # Leave DISPLAY_COL_NAME blank for now.
+    #
+    ################
 
     # Read the input glossary spreadsheet
     df_input_glossary = pd.read_excel( args.glossary_filename, dtype=object )
@@ -226,24 +241,21 @@ def init_glossary( input_db ):
             # Strip of numeric prefix, if any
             master_col_name = masterize_column_name( input_col_name )
 
-            # Find row in input glossary dataframe
+            # Search for masterized name in input glossary dataframe
             input_glossary_row = df_input_glossary[ df_input_glossary[GLOSSARY_COL_NAME] == master_col_name ]
 
-            # Find glossary text for current column name
+            # If masterized name is found in the input glossary, load it into the glossary dataframe
             if len( input_glossary_row ):
+
+                # Extract glossary text for current column name
                 glossary_text = input_glossary_row[GLOSSARY_TEXT].iloc[0]
-            else:
-                glossary_text = ''
 
-            # Initialize glossary row
-            dc_row = { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }
-            df_row = pd.DataFrame( dc_row, index=[0] )
+                # Initialize glossary row
+                dc_row = { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }
+                df_row = pd.DataFrame( dc_row, index=[0] )
 
-            # Append glossary row to dataframe
-            df_glossary = pd.concat( [df_glossary, df_row], ignore_index=True )
-
-    # Drop rows that have no glossary text
-    df_glossary = df_glossary[ df_glossary[GLOSSARY_TEXT] != '' ]
+                # Append glossary row to dataframe
+                df_glossary = pd.concat( [df_glossary, df_row], ignore_index=True )
 
     return df_glossary
 
@@ -281,10 +293,8 @@ def edit_database( input_db, dc_sheets, df_glossary ):
             print( 'Editing table "{}"'.format( sheet_name ) )
             print( '', 'Selecting {} columns:'.format( len( dc_rename.keys() ) ) )
             print( '', list( dc_rename.keys() ) )
-            print( '', 'Publishing as {} columns:'.format( len( input_db[sheet_name].columns ) ) )
+            print( '', 'Publishing {} selected columns as:'.format( len( input_db[sheet_name].columns ) ) )
             print( '', list( input_db[sheet_name].columns ) )
-
-    df_glossary = df_glossary[ df_glossary[DISPLAY_COL_NAME] != '']
 
     return input_db, df_glossary
 
@@ -309,20 +319,27 @@ def build_structure():
     return df_structure
 
 
-# Finish creating glossary dataframe
+# Finish building the glossary dataframe
 def make_glossary( df_glossary ):
 
+    # If the glossary is not empty, prepare for publication
     if len( df_glossary ):
 
+        # Drop glossary rows that have no display name
+        df_glossary = df_glossary[df_glossary[DISPLAY_COL_NAME] != '']
+
+        # Drop duplicates
         df_glossary = df_glossary.drop_duplicates( subset=[MASTER_COL_NAME, DISPLAY_COL_NAME] )
 
+        # Select column names to appear in published glossary
         df_glossary[GLOSSARY_COL_NAME] = ''
-
         for index, row in df_glossary.iterrows():
             df_glossary.at[index, GLOSSARY_COL_NAME] = row[DISPLAY_COL_NAME] if row[DISPLAY_COL_NAME] != '' else row[MASTER_COL_NAME]
 
+        # Select glossary columns for publication
         df_glossary = df_glossary[ [GLOSSARY_COL_NAME, GLOSSARY_TEXT] ]
 
+        # Sort glossary dataframe on column name
         df_glossary = df_glossary.sort_values( by=[GLOSSARY_COL_NAME], key=lambda col: col.str.lower() )
 
         print( '' )
@@ -500,21 +517,24 @@ if __name__ == '__main__':
     # Read database file
     input_db, tab_order, tab_keys = read_database()
 
-    # Report and initialize glossary from optional glossary file
+    # Report optional glossary input and initialize glossary dataframe
     if args.glossary_filename != None:
         print( '' )
         print( 'Glossary filename:', args.glossary_filename )
-        df_glossary = init_glossary( input_db )
+        df_glossary = read_glossary_file( input_db )
     else:
         df_glossary = pd.DataFrame()
 
     # Edit tables as specified in Tabs file
-    input_db, df_glossary = edit_database( input_db, dc_sheets, df_glossary )
+    if dc_sheets:
+        input_db, df_glossary = edit_database( input_db, dc_sheets, df_glossary )
+    else:
+        df_glossary[DISPLAY_COL_NAME] = df_glossary[INPUT_COL_NAME]
 
     # Build self-describing dataframe
     df_structure = build_structure()
 
-    # Create final glossary dataframe
+    # Finish building the glossary dataframe
     df_glossary = make_glossary( df_glossary )
 
     # Create copyright dataframe
