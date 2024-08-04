@@ -71,15 +71,14 @@ MASTERIZE_PATTERN = re.compile( r'^(\d+\-)(.+)$' )
 
 INPUT_COL_NAME = 'input_col_name'
 MASTER_COL_NAME = 'master_col_name'
-DISPLAY_COL_NAME = 'display_col_name'
-GLOSSARY_TEXT = 'description'
 GLOSSARY_COL_NAME = 'column_name'
+GLOSSARY_TEXT = 'description'
 
 GLOSSARY_COLUMNS = \
 [
     INPUT_COL_NAME,
     MASTER_COL_NAME,
-    DISPLAY_COL_NAME,
+    GLOSSARY_COL_NAME,
     GLOSSARY_TEXT,
 ]
 
@@ -128,11 +127,19 @@ def read_tabs_file():
                 # Look for table row that references this sheet name as its column map
                 df_sheet_name = df_tabs[ df_tabs[COLUMN_MAP]==sheet_name ]
                 if len( df_sheet_name ):
+
                     # Determine output sheet name - either specified tab name or original table name
                     row = df_sheet_name.iloc[0]
                     output_sheet_name = row[TAB_NAME] if row[TAB_NAME] != '' else row[TABLE_NAME]
                     print( sheet_name, '===>', output_sheet_name )
+
+                    # Retain old column names where new names are not specified
+                    df_no_new_name = df[ df[NEW_COLUMN_NAME] == '' ]
+                    df.loc[df_no_new_name.index, NEW_COLUMN_NAME] = df_no_new_name[OLD_COLUMN_NAME]
+
+                    # Save the mapping
                     dc_sheets[output_sheet_name] = df
+
 
     return df_tabs, dc_sheets
 
@@ -218,11 +225,10 @@ def read_glossary_file( input_db ):
     # Each row of the glossary dataframe contains the following fields:
     #   INPUT_COL_NAME - name found in input database
     #   MASTER_COL_NAME - master name, without numeric prefix
-    #   DISPLAY_COL_NAME - name to be used in published output
+    #   GLOSSARY_COL_NAME - name to be used in published output
     #   GLOSSARY_TEXT - column description
     #
     # Load INPUT_COL_NAME, MASTER_COL_NAME, and GLOSSARY_TEXT.
-    # Leave DISPLAY_COL_NAME blank for now.
     #
     ################
 
@@ -251,7 +257,7 @@ def read_glossary_file( input_db ):
                 glossary_text = input_glossary_row[GLOSSARY_TEXT].iloc[0]
 
                 # Initialize glossary row
-                dc_row = { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, DISPLAY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }
+                dc_row = { INPUT_COL_NAME: input_col_name, MASTER_COL_NAME: master_col_name, GLOSSARY_COL_NAME: '', GLOSSARY_TEXT: glossary_text }
                 df_row = pd.DataFrame( dc_row, index=[0] )
 
                 # Append glossary row to dataframe
@@ -266,6 +272,7 @@ def edit_database( input_db, dc_sheets, df_glossary ):
     for sheet_name in input_db:
 
         if sheet_name in dc_sheets:
+            # This sheet of the input database will have renamed columns
 
             # Select columns to be published
             input_db[sheet_name] = input_db[sheet_name][dc_sheets[sheet_name][OLD_COLUMN_NAME]]
@@ -277,9 +284,9 @@ def edit_database( input_db, dc_sheets, df_glossary ):
             # Populate glossary dataframe with display names
             if len( df_glossary ):
                 for s_key in dc_rename:
-                    glossary_row = df_glossary[ ( df_glossary[INPUT_COL_NAME] == s_key ) & ( df_glossary[DISPLAY_COL_NAME] == '' ) ]
+                    glossary_row = df_glossary[ ( df_glossary[INPUT_COL_NAME] == s_key ) & ( df_glossary[GLOSSARY_COL_NAME] == '' ) ]
                     if len( glossary_row ):
-                        df_glossary.at[glossary_row.index[0], DISPLAY_COL_NAME] = dc_rename[s_key]
+                        df_glossary.at[glossary_row.index[0], GLOSSARY_COL_NAME] = dc_rename[s_key]
 
             # Number columns to be published
             n_cols = len( input_db[sheet_name].columns )
@@ -295,6 +302,16 @@ def edit_database( input_db, dc_sheets, df_glossary ):
             print( '', list( dc_rename.keys() ) )
             print( '', 'Publishing {} selected columns as:'.format( len( input_db[sheet_name].columns ) ) )
             print( '', list( input_db[sheet_name].columns ) )
+
+        else:
+            # This sheet of the input database will not have renamed columns
+
+            # Populate glossary dataframe with display names
+            if len( df_glossary ):
+                for col in input_db[sheet_name].columns:
+                    glossary_row = df_glossary[ ( df_glossary[INPUT_COL_NAME] == col ) & ( df_glossary[GLOSSARY_COL_NAME] == '' ) ]
+                    if len( glossary_row ):
+                        df_glossary.at[glossary_row.index[0], GLOSSARY_COL_NAME] = col
 
     return input_db, df_glossary
 
@@ -326,17 +343,12 @@ def make_glossary( df_glossary ):
     if len( df_glossary ):
 
         # Drop glossary rows that have no display name
-        df_glossary = df_glossary[df_glossary[DISPLAY_COL_NAME] != '']
+        df_glossary = df_glossary[df_glossary[GLOSSARY_COL_NAME] != '']
 
         # Drop duplicates
-        df_glossary = df_glossary.drop_duplicates( subset=[MASTER_COL_NAME, DISPLAY_COL_NAME] )
+        df_glossary = df_glossary.drop_duplicates( subset=[MASTER_COL_NAME, GLOSSARY_COL_NAME] )
 
-        # Select column names to appear in published glossary
-        df_glossary[GLOSSARY_COL_NAME] = ''
-        for index, row in df_glossary.iterrows():
-            df_glossary.at[index, GLOSSARY_COL_NAME] = row[DISPLAY_COL_NAME] if row[DISPLAY_COL_NAME] != '' else row[MASTER_COL_NAME]
-
-        # Select glossary columns for publication
+        # Select columns for publication
         df_glossary = df_glossary[ [GLOSSARY_COL_NAME, GLOSSARY_TEXT] ]
 
         # Sort glossary dataframe on column name
@@ -529,7 +541,8 @@ if __name__ == '__main__':
     if dc_sheets:
         input_db, df_glossary = edit_database( input_db, dc_sheets, df_glossary )
     else:
-        df_glossary[DISPLAY_COL_NAME] = df_glossary[INPUT_COL_NAME]
+        if len( df_glossary ):
+            df_glossary[GLOSSARY_COL_NAME] = df_glossary[INPUT_COL_NAME]
 
     # Build self-describing dataframe
     df_structure = build_structure()
