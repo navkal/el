@@ -112,7 +112,7 @@ if __name__ == '__main__':
     df_facility = pd.read_sql_table( args.facility_table, engine, index_col=util.ID )
 
     # Prepare facility table for merge
-    df_facility = df_facility[ df_facility[util.PROVIDER] == 'National Grid' ]
+    df_facility = df_facility[ df_facility[util.PROVIDER] == util.NATIONAL_GRID ]
     df_facility = df_facility.drop_duplicates( subset=[util.ACCOUNT_NUMBER] )
     df_facility = df_facility[FACILITY_COLUMNS]
     df_facility = util.fix_numeric_columns( df_facility )

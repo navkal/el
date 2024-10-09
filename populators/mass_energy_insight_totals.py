@@ -29,9 +29,6 @@ if __name__ == '__main__':
     # Create copy of dataframe
     df = df_raw.copy()
 
-    # Drop unwanted columns
-    df = df.drop( columns=[util.ONE, util.USAGE_END_NULL] )
-
     # Build dictionary of years covered by table data
     years = {}
     for col_name in df.columns:

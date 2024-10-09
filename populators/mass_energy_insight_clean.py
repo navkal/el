@@ -200,16 +200,6 @@ if __name__ == '__main__':
         df.insert( df.columns.get_loc( util.ACCOUNT_NUMBER ) + 1, util.EXTERNAL_SUPPLIER, df.pop( util.EXTERNAL_SUPPLIER ) )
         df.insert( df.columns.get_loc( util.EXTERNAL_SUPPLIER ) + 1, util.LOCATION_ADDRESS, df.pop( util.LOCATION_ADDRESS ) )
 
-    # Convert tallies from text to numeric.
-    for col_name in df.columns:
-        if is_tally_column( col_name ) and ( df[col_name].dtype == object ):
-
-            # Clean up text
-            df[col_name] = df[col_name].replace( ',', '', regex=True )
-
-            # Convert to numeric datatype
-            df[col_name] = df[col_name].fillna( 0 ).astype( int )
-
     # Handle conflicts between rows representing same account
     df, df_history = clean_conflicts( df )
 

@@ -244,8 +244,18 @@ ZONE = 'zone'
 
 DEPARTMENT = 'department'
 FACILITY = 'facility'
+COMPLEX = 'complex'
+FUEL = 'fuel'
+USAGE_END = 'usage_end'
+FUEL_UNITS = 'fuel_units'
 PROVIDER = 'provider'
+MEI_COST = 'cost'
+MEI_USE = 'use'
+USE = 'Use'
 POSITION = 'position'
+
+NATIONAL_GRID = 'National Grid'
+ELECTRIC = 'Electric'
 
 GENDER = 'gender'
 
@@ -483,9 +493,6 @@ ENTIRE_ROOF = 'entire_roof'
 STRIPPING = 'stripping'
 ROOF_LAYERS = 'roof_layers'
 SUBMITTAL_DOCUMENTS = 'submittal_documents'
-
-USAGE_END_NULL = 'usage_end_null'
-ONE = 'one'
 
 CUSTOMER_NAME = 'customer_name'
 UTILITY_ACCOUNT = 'utility_account'
@@ -1449,13 +1456,22 @@ CONSISTENT_COLUMN_NAMES = \
     },
     'RawMassEnergyInsight_A': \
     {
+        'department': DEPARTMENT,
+        'complex': COMPLEX,
+        'facility': FACILITY,
+        'account_num': ACCOUNT_NUMBER,
+        'account_fuel': FUEL,
+        'usage_end': USAGE_END,
+        'use': MEI_USE,
+        'cost': MEI_COST,
+    },
+    'RawMassEnergyInsight_A_OldFormat': \
+    {
         'Department': DEPARTMENT,
-        'Complex': 'complex',
+        'Complex': COMPLEX,
         'Facility': FACILITY,
-        'Fuel (units)': 'fuel_units',
+        'Fuel (units)': FUEL_UNITS,
         'Account #': ACCOUNT_NUMBER,
-        'Usage End Date Null': USAGE_END_NULL,
-        'One': ONE,
         'Provider': PROVIDER,
         'Unnamed: 8': COST_OR_USE,
     },
@@ -1743,6 +1759,7 @@ CONSISTENT_COLUMN_NAMES = \
 }
 CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Gas'] = CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Plumbing']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
+CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L_OldFormat'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A_OldFormat']
 CONSISTENT_COLUMN_NAMES['RawElectricMeters_L'] = CONSISTENT_COLUMN_NAMES['RawElectricMeters_A']
 
 

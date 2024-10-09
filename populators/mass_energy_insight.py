@@ -45,23 +45,25 @@ if __name__ == '__main__':
 
     # Read Mass Energy Insight data - Andover
     print( '\n=======> Mass Energy Insight input - Andover' )
-    # Generate code to initialize column name mappings
     csv_filename = '../xl/mass_energy_insight/mass_energy_insight_a.csv'
     table_name = 'RawMassEnergyInsight_A'
-    start_year = find_start_year( csv_filename )
-    b = "util.populate_mei_column_names(util.CONSISTENT_COLUMN_NAMES['{}'],{},2030)".format( table_name, start_year )
-    # Pass initialization code to xl-to-db script
-    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -m -b {} -o {} -c'.format( csv_filename, table_name, b, args.master_filename ) )
+    drop_columns = 'unit,mmbtu'
+    os.system( 'python xl_to_db.py -i {} -t {} -v -p {} -o {} -c'.format( csv_filename, table_name, drop_columns, args.master_filename ) )
 
     # Read Mass Energy Insight data - Lawrence
     print( '\n=======> Mass Energy Insight input - Lawrence' )
-    # Generate code to initialize column name mappings
     csv_filename = '../xl/mass_energy_insight/mass_energy_insight_l.csv'
     table_name = 'RawMassEnergyInsight_L'
-    start_year = find_start_year( csv_filename )
-    b = "util.populate_mei_column_names(util.CONSISTENT_COLUMN_NAMES['{}'],{},2030)".format( table_name, start_year )
-    # Pass initialization code to xl-to-db script
-    os.system( 'python xl_to_db.py -i {} -t {} -v -f "\t" -r 1 -e -m -b {} -o {}'.format( csv_filename, table_name, b, args.master_filename ) )
+    drop_columns = 'unit,mmbtu'
+    os.system( 'python xl_to_db.py -i {} -t {} -v -p {} -o {}'.format( csv_filename, table_name, drop_columns, args.master_filename ) )
+
+    # Preprocess Mass Energy Insight data - Andover
+    print( '\n=======> Mass Energy Insight preprocess - Andover' )
+    os.system( 'python mass_energy_insight_preprocess.py -i RawMassEnergyInsight_A -o RawMassEnergyInsight_A_OldFormat -d {0}'.format( args.master_filename ) )
+
+    # Preprocess Mass Energy Insight data - Lawrence
+    print( '\n=======> Mass Energy Insight preprocess - Lawrence' )
+    os.system( 'python mass_energy_insight_preprocess.py -i RawMassEnergyInsight_L -o RawMassEnergyInsight_L_OldFormat -d {0}'.format( args.master_filename ) )
 
 
     # Read external suppliers data
@@ -73,11 +75,11 @@ if __name__ == '__main__':
     print( '\n=======> ISO zones input' )
     os.system( 'python xl_to_db.py -i ../xl/mass_energy_insight/iso_zones_l.xlsx -s account_number -t RawIsoZones_L -o {0}'.format( args.master_filename ) )
 
-
     # Generate clean Mass Energy Insight tables with optional addition of external suppliers data
     print( '\n=======> Mass Energy Insight tables' )
-    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_A -o Mei_A -d {0}'.format( args.master_filename ) )
-    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_L -z RawIsoZones_L -e RawExternalSuppliersElectric_L -g RawExternalSuppliersGas_L -o Mei_L -p ExternalSuppliersElectric_L -q ExternalSuppliersGas_L -d {0}'.format( args.master_filename ) )
+    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_A_OldFormat -o Mei_A -d {0}'.format( args.master_filename ) )
+    os.system( 'python mass_energy_insight_clean.py -i RawMassEnergyInsight_L_OldFormat -z RawIsoZones_L -e RawExternalSuppliersElectric_L -g RawExternalSuppliersGas_L -o Mei_L -p ExternalSuppliersElectric_L -q ExternalSuppliersGas_L -d {0}'.format( args.master_filename ) )
+
 
     # Generate Mass Energy Insight month tables
     print( '\n=======> Mass Energy Insight months' )
@@ -133,6 +135,8 @@ if __name__ == '__main__':
             'RawIsoZones_L',
             'RawMassEnergyInsight_A',
             'RawMassEnergyInsight_L',
+            'RawMassEnergyInsight_A_OldFormat',
+            'RawMassEnergyInsight_L_OldFormat',
          ],
         'encipher_column_names':
         [

@@ -26,8 +26,8 @@ if __name__ == '__main__':
     # Read table from database
     df_org = pd.read_sql_table( args.input_table, engine, index_col=util.ID )
 
-    # Initialize base dataframe, omitting unwanted columns
-    df_base = df_org.drop( columns=[util.ONE, util.USAGE_END_NULL] )
+    # Initialize base dataframe
+    df_base = df_org
 
     # Build dictionary of months covered by table data and drop all month columns from base dataframe
     months = {}
