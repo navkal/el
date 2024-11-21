@@ -58,12 +58,38 @@ HEATING_TYPE_MAP = util.HEATING_TYPE_MAP
 
 ZIP_CODE_MAP = \
 {
-    '01840': 'zip_code_01840',
-    '01841': 'zip_code_01841',
-    '01842': 'zip_code_01842',
-    '01843': 'zip_code_01843',
+    '01840': util.ZIP + '_01840',
+    '01841': util.ZIP + '_01841',
+    '01842': util.ZIP + '_01842',
+    '01843': util.ZIP + '_01843',
 }
 
+RENTAL_MAP_2_4 = \
+{
+    2: util.TOTAL_OCCUPANCY + '_2',
+    3: util.TOTAL_OCCUPANCY + '_3',
+    4: util.TOTAL_OCCUPANCY + '_4',
+}
+
+RENTAL_MAP_5_7 = \
+{
+    5: util.TOTAL_OCCUPANCY + '_5',
+    6: util.TOTAL_OCCUPANCY + '_6',
+    7: util.TOTAL_OCCUPANCY + '_7',
+}
+
+
+def build_summary_table( df_summary, df_details ):
+    # Add columns counting per-ward occurrences of specified heating fuels
+    df_summary = util.add_value_counts( df_summary, df_details, util.WARD_NUMBER, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
+
+    # Add columns counting per-ward occurrences of specified heating types
+    df_summary = util.add_value_counts( df_summary, df_details, util.WARD_NUMBER, util.HEATING_TYPE_DESC, HEATING_TYPE_MAP )
+
+    # Add columns counting per-ward occurrences of specified zip codes
+    df_summary = util.add_value_counts( df_summary, df_details, util.WARD_NUMBER, util.ZIP, ZIP_CODE_MAP )
+
+    return df_summary
 
 ##################################
 
@@ -85,24 +111,30 @@ if __name__ == '__main__':
     # Group parcels by wards
     for ward, df_group in df_parcels.groupby( by=[util.WARD_NUMBER] ):
 
-        # Create and save current ward parcels table
+        # Create and save parcels table for current ward
         df_ward_parcels = df_group[WARD_PARCELS_COLUMNS]
         util.create_table( 'Ward_{}_ResidentialParcels'.format( ward ), conn, cur, df=df_ward_parcels )
 
+    # Load councilors dataframe
+    df_councilors = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
 
-    # Initialize wards summary table from Councilors spreadsheet
-    df_summary = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
-
-    # Add columns counting per-ward occurrences of specified heating fuels
-    df_summary = util.add_value_counts( df_summary, df_parcels, util.WARD_NUMBER, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
-
-    # Add columns counting per-ward occurrences of specified heating types
-    df_summary = util.add_value_counts( df_summary, df_parcels, util.WARD_NUMBER, util.HEATING_TYPE_DESC, HEATING_TYPE_MAP )
-
-    # Add columns counting per-ward occurrences of specified zip codes
-    df_summary = util.add_value_counts( df_summary, df_parcels, util.WARD_NUMBER, util.ZIP, ZIP_CODE_MAP )
-
-    # Save wards summary table in database
+    # Build and save wards summary table
+    df_summary = df_councilors.copy()
+    df_summary = build_summary_table( df_summary, df_parcels )
     util.create_table( 'WardSummary', conn, cur, df=df_summary )
+
+    # Build and save wards summary table of small rentals
+    df_rentals_small = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] >= 2 ) & ( df_parcels[util.TOTAL_OCCUPANCY] <= 4 )]
+    df_summary = df_councilors.copy()
+    df_summary = util.add_value_counts( df_summary, df_rentals_small, util.WARD_NUMBER, util.TOTAL_OCCUPANCY, RENTAL_MAP_2_4 )
+    df_summary[util.TOTAL_OCCUPANCY + '_2_4'] = df_summary[util.TOTAL_OCCUPANCY + '_2'] + df_summary[util.TOTAL_OCCUPANCY + '_3'] + df_summary[util.TOTAL_OCCUPANCY + '_4']
+    df_summary = build_summary_table( df_summary, df_rentals_small )
+    util.create_table( 'WardSummary_Rentals_2_4', conn, cur, df=df_summary )
+
+    # Build and save wards summary table of large rentals
+    df_rentals_large = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] > 4 ) ]
+    df_summary = df_councilors.copy()
+    df_summary = util.add_value_counts( df_summary, df_rentals_large, util.WARD_NUMBER, util.TOTAL_OCCUPANCY, RENTAL_MAP_5_7 )
+    util.create_table( 'WardSummary_Rentals_Gt4', conn, cur, df=df_summary )
 
     util.report_elapsed_time()

@@ -2645,14 +2645,14 @@ PUBLISH_INFO = \
 
 
 # Add columns to a summary dataframe, counting per-group occurrences in a detailed dataframe, of specified values in a specified column
-def add_value_counts( df_summary, df_detail, s_groupby_col, s_parcels_col, value_map ):
+def add_value_counts( df_summary, df_details, s_groupby_col, s_parcels_col, value_map ):
 
     # Initialize count columns
     for s_key in value_map:
         df_summary[value_map[s_key]] = 0
 
     # Iterate over rows of detailed dataframe, grouped by specified column
-    for census_geo_id, df_group in df_detail.groupby( by=[s_groupby_col] ):
+    for census_geo_id, df_group in df_details.groupby( by=[s_groupby_col] ):
 
         # Find corresponding summary row
         ej_row_index = df_summary.loc[df_summary[s_groupby_col] == census_geo_id].index[0]
