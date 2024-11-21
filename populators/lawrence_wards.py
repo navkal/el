@@ -53,6 +53,18 @@ WARD_SUMMARY_COLUMNS = \
     util.WARD_NUMBER,
 ]
 
+HEATING_FUEL_MAP = util.HEATING_FUEL_MAP
+HEATING_TYPE_MAP = util.HEATING_TYPE_MAP
+
+ZIP_CODE_MAP = \
+{
+    '01840': 'zip_code_01840',
+    '01841': 'zip_code_01841',
+    '01842': 'zip_code_01842',
+    '01843': 'zip_code_01843',
+}
+
+
 ##################################
 
 # Main program
@@ -66,54 +78,31 @@ if __name__ == '__main__':
     # Open master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
-    # Read Councilors table
-    df_councilors = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
-
-    # Read Parcels table
+    # Initialize table of residential parcels with known wards
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
-
-    # Isolate residential properties with known wards
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.WARD_NUMBER].notnull() )]
 
-    # Initialize empty dictionary of ward parcels tables
-    dc_ward_parcels_dfs = {}
-
-    # Initialize empty wards summary table
-    df_summary = pd.DataFrame( columns=WARD_SUMMARY_COLUMNS )
-
     # Group parcels by wards
-    for idx, df_group in df_parcels.groupby( by=[util.WARD_NUMBER] ):
+    for ward, df_group in df_parcels.groupby( by=[util.WARD_NUMBER] ):
 
-        #
-        # Ward parcels table
-        #
-
-        # Create parcels table for current ward
+        # Create and save current ward parcels table
         df_ward_parcels = df_group[WARD_PARCELS_COLUMNS]
+        util.create_table( 'Ward_{}_ResidentialParcels'.format( ward ), conn, cur, df=df_ward_parcels )
 
-        # Save parcels table for this ward in dictionary
-        dc_ward_parcels_dfs[idx] = df_ward_parcels
 
-        #
-        # Ward summary table
-        #
+    # Initialize wards summary table from Councilors spreadsheet
+    df_summary = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
 
-        # Initialize ward row from councilors table
-        summary_row = df_councilors[ df_councilors[util.WARD_NUMBER] == df_group.iloc[0][util.WARD_NUMBER] ].copy()
+    # Add columns counting per-ward occurrences of specified heating fuels
+    df_summary = util.add_value_counts( df_summary, df_parcels, util.WARD_NUMBER, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
 
-        # Add other fields to the row
-        summary_row['electric'] = len( df_group[ df_group[util.HEATING_FUEL_DESC] == 'Electric' ] )
-        summary_row['oil'] = len( df_group[ df_group[util.HEATING_FUEL_DESC] == 'Oil' ] )
-        summary_row['gas'] = len( df_group[ df_group[util.HEATING_FUEL_DESC] == 'Gas' ] )
+    # Add columns counting per-ward occurrences of specified heating types
+    df_summary = util.add_value_counts( df_summary, df_parcels, util.WARD_NUMBER, util.HEATING_TYPE_DESC, HEATING_TYPE_MAP )
 
-        # Append new ward row to wards summary table
-        df_summary = pd.concat( [df_summary, summary_row] )
+    # Add columns counting per-ward occurrences of specified zip codes
+    df_summary = util.add_value_counts( df_summary, df_parcels, util.WARD_NUMBER, util.ZIP, ZIP_CODE_MAP )
 
-    # Save ward tables in database
-    for ward in dc_ward_parcels_dfs:
-        util.create_table( 'Ward_{}_ResidentialParcels'.format( ward ), conn, cur, df=dc_ward_parcels_dfs[ward] )
-
-    # Save summary table in database
+    # Save wards summary table in database
     util.create_table( 'WardSummary', conn, cur, df=df_summary )
 
     util.report_elapsed_time()

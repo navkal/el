@@ -430,6 +430,27 @@ HEATING_FUEL_DESC = HEATING_FUEL + _DESC
 HEATING_TYPE_DESC = HEATING_TYPE + _DESC
 AC_TYPE_DESC = AC_TYPE + _DESC
 
+HEATING_FUEL_MAP = \
+{
+    'Electric': 'heating_fuel_electric',
+    'Gas': 'heating_fuel_gas',
+    'Oil': 'heating_fuel_oil',
+}
+
+HEATING_TYPE_MAP = \
+{
+    'Steam': 'heating_type_steam',
+    'Radiant': 'heating_type_radiant',
+    'None': 'heating_type_none',
+    'Hot Water': 'heating_type_hot_water',
+    'Hot Air-no Duc': 'heating_type_hot_air_no_duc',
+    'Heat Pump': 'heating_type_heat_pump',
+    'Forced Air-Duc': 'heating_type_forced_air_duc',
+    'Floor Furnace': 'heating_type_floor_furnace',
+    'Electr Basebrd': 'heating_type_electr_basebrd',
+}
+
+
 EMPLOYEES = 'number_of_employees'
 APPLICANT = 'applicant'
 EMAIL = 'email'
@@ -2620,6 +2641,27 @@ PUBLISH_INFO = \
         ]
     },
 }
+
+
+
+# Add columns to a summary dataframe, counting per-group occurrences in a detailed dataframe, of specified values in a specified column
+def add_value_counts( df_summary, df_detail, s_groupby_col, s_parcels_col, value_map ):
+
+    # Initialize count columns
+    for s_key in value_map:
+        df_summary[value_map[s_key]] = 0
+
+    # Iterate over rows of detailed dataframe, grouped by specified column
+    for census_geo_id, df_group in df_detail.groupby( by=[s_groupby_col] ):
+
+        # Find corresponding summary row
+        ej_row_index = df_summary.loc[df_summary[s_groupby_col] == census_geo_id].index[0]
+
+        # Save the counts in the summary table
+        for s_key in value_map:
+            df_summary.at[ej_row_index, value_map[s_key]] = len( df_group[df_group[s_parcels_col] == s_key] )
+
+    return df_summary
 
 
 # Combine two dataframes by concatenating common columns and merging unique columns
