@@ -191,6 +191,7 @@ TOWN_NAME = 'town_name'
 TOWN_INDICATOR = 'town_indicator'
 
 WARD_NUMBER = 'ward_number'
+COUNCILOR_NAME = 'councilor_name'
 
 ELECTION_DATE = 'election_date'
 PARTY_VOTED = 'party_voted'
@@ -392,6 +393,7 @@ ROOF_COVER = 'roof_cover'
 ROOF_STRUCTURE = 'roof_structure'
 HEATING_FUEL = 'heating_fuel'
 LAND_USE_CODE = 'primary_land_use_code'
+LAND_USE_CODE_DESC = LAND_USE_CODE + _DESC
 SALE_PRICE = 'sale_price'
 STORY_HEIGHT = 'story_height'
 AC_TYPE = 'ac_type'
@@ -727,6 +729,11 @@ CONSISTENT_COLUMN_NAMES = \
         'Ward #': WARD_NUMBER,
         'Precinct #': PRECINCT_NUMBER,
         'Voter Status': VOTER_STATUS,
+    },
+    'Councilors_L': \
+    {
+        'ward': WARD_NUMBER,
+        'councilor': COUNCILOR_NAME,
     },
     'EjCommunities': \
     {
@@ -1255,7 +1262,7 @@ CONSISTENT_COLUMN_NAMES = \
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
         'REM_USE_CODE': LAND_USE_CODE,
         'CNS_OCC': LAND_USE_CODE + '_1',
-        'CNS_OCC_DESC': LAND_USE_CODE + _DESC,
+        'CNS_OCC_DESC': LAND_USE_CODE_DESC,
     },
     'RawContracts': \
     {
@@ -2113,7 +2120,7 @@ COLUMN_ORDER = \
         # TOTAL_ASSESSED_VALUE,
         # LAND_USE_CODE,
         # LAND_USE_CODE + '_1',
-        # LAND_USE_CODE + _DESC,
+        # LAND_USE_CODE_DESC,
         # STORY_HEIGHT,
         # ROOF_STRUCTURE,
         # ROOF_STRUCTURE + _DESC,
@@ -2287,7 +2294,7 @@ COLUMN_ORDER = \
         HEAT_AC,
         FIRST_FLOOR_USE,
         LAND_USE_CODE,
-        LAND_USE_CODE + _DESC,
+        LAND_USE_CODE_DESC,
         RESIDENTIAL_UNITS,
         KITCHENS,
         BATHS,
@@ -2432,7 +2439,7 @@ COLUMN_ORDER = \
         HEAT_AC,
         FIRST_FLOOR_USE,
         LAND_USE_CODE,
-        LAND_USE_CODE + _DESC,
+        LAND_USE_CODE_DESC,
         RESIDENTIAL_UNITS,
         KITCHENS,
         BATHS,

@@ -229,6 +229,14 @@ if __name__ == '__main__':
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 
+    # Read table of City Councilors
+    print( '\n=======> Councilors input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/councilors.xlsx -t Councilors_L -o {0}'.format( args.master_filename ) )
+
+    # Generate ward tables
+    print( '\n=======> Ward tables' )
+    os.system( 'python lawrence_wards.py -m {0}'.format( args.master_filename ) )
+
     # Read per-block-group data on energy meter participation in Mass Save
     print( '\n=======> Mass Save energy meter participation rates input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/census/energy_meter_participation.xlsx -x -t RawEnergyMeterParticipation_L -o {0}'.format( args.master_filename ) )
