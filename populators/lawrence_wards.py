@@ -118,12 +118,19 @@ if __name__ == '__main__':
     # Load councilors dataframe
     df_councilors = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
 
+    #
+    # General wards summary
+    #
+
     # Build and save wards summary table
     df_summary = df_councilors.copy()
     df_summary = build_summary_table( df_summary, df_parcels )
     util.create_table( 'WardSummary', conn, cur, df=df_summary )
 
-    # Build and save wards summary table of small rentals
+    #
+    # Small rental summary
+    #
+
     df_rentals_small = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] >= 2 ) & ( df_parcels[util.TOTAL_OCCUPANCY] <= 4 )]
     df_summary = df_councilors.copy()
     df_summary = util.add_value_counts( df_summary, df_rentals_small, util.WARD_NUMBER, util.TOTAL_OCCUPANCY, RENTAL_MAP_2_4 )
@@ -131,10 +138,28 @@ if __name__ == '__main__':
     df_summary = build_summary_table( df_summary, df_rentals_small )
     util.create_table( 'WardSummary_Rentals_2_4', conn, cur, df=df_summary )
 
-    # Build and save wards summary table of large rentals
+    #
+    # Large rental summary
+    #
+
     df_rentals_large = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] > 4 ) ]
     df_summary = df_councilors.copy()
+
+    # Count total large-rental parcels
+    for ward, df_group in df_rentals_large.groupby( by=[util.WARD_NUMBER] ):
+        summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
+        df_summary.at[summary_row_index, util.TOTAL_OCCUPANCY + '_gt_4'] = len( df_group )
+    df_summary[util.TOTAL_OCCUPANCY + '_gt_4'] = df_summary[util.TOTAL_OCCUPANCY + '_gt_4'].astype(int)
+
+    # Count parcels with specific total occupancies
     df_summary = util.add_value_counts( df_summary, df_rentals_large, util.WARD_NUMBER, util.TOTAL_OCCUPANCY, RENTAL_MAP_5_7 )
+    df_summary[util.TOTAL_OCCUPANCY + '_8_or_more'] = df_summary[util.TOTAL_OCCUPANCY + '_gt_4'] - ( df_summary[util.TOTAL_OCCUPANCY + '_5'] + df_summary[util.TOTAL_OCCUPANCY + '_6'] + df_summary[util.TOTAL_OCCUPANCY + '_7'] )
+
+    # Build the rest of the large-rental summary
+    df_summary = build_summary_table( df_summary, df_rentals_large )
+
+    # Save large rental summary
     util.create_table( 'WardSummary_Rentals_Gt4', conn, cur, df=df_summary )
+
 
     util.report_elapsed_time()
