@@ -78,6 +78,8 @@ RENTAL_MAP_5_7 = \
     7: util.TOTAL_OCCUPANCY + '_7',
 }
 
+TOTAL_UNITS = 'total_' + util.RESIDENTIAL_UNITS
+
 
 def build_summary_table( df_summary, df_details ):
     # Add columns counting per-ward occurrences of specified heating fuels
@@ -131,19 +133,42 @@ if __name__ == '__main__':
     # Small rental summary
     #
 
+    # Isolate small rental properties
     df_rentals_small = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] >= 2 ) & ( df_parcels[util.TOTAL_OCCUPANCY] <= 4 )]
+
+    # Initialize small rental summary
     df_summary = df_councilors.copy()
+
+    # Count parcels with specific total occupancies
     df_summary = util.add_value_counts( df_summary, df_rentals_small, util.WARD_NUMBER, util.TOTAL_OCCUPANCY, RENTAL_MAP_2_4 )
+
+    # Count total small-rental parcels
     df_summary[util.TOTAL_OCCUPANCY + '_2_4'] = df_summary[util.TOTAL_OCCUPANCY + '_2'] + df_summary[util.TOTAL_OCCUPANCY + '_3'] + df_summary[util.TOTAL_OCCUPANCY + '_4']
+
+    # Count total small-rental residential units
+    for ward, df_group in df_rentals_small.groupby( by=[util.WARD_NUMBER] ):
+        summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
+        df_summary.at[summary_row_index, TOTAL_UNITS] = df_group[util.TOTAL_OCCUPANCY].sum()
+    df_summary[TOTAL_UNITS] = df_summary[TOTAL_UNITS].astype(int)
+
+    # Build the rest of the small rental summary
     df_summary = build_summary_table( df_summary, df_rentals_small )
+
+    # Save small rental summary
     util.create_table( 'WardSummary_Rentals_2_4', conn, cur, df=df_summary )
 
     #
     # Large rental summary
     #
 
+    # Isolate large rental properties
     df_rentals_large = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] > 4 ) ]
+
+    # Initialize large rental summary
     df_summary = df_councilors.copy()
+
+    # Count parcels with specific total occupancies
+    df_summary = util.add_value_counts( df_summary, df_rentals_large, util.WARD_NUMBER, util.TOTAL_OCCUPANCY, RENTAL_MAP_5_7 )
 
     # Count total large-rental parcels
     for ward, df_group in df_rentals_large.groupby( by=[util.WARD_NUMBER] ):
@@ -151,11 +176,21 @@ if __name__ == '__main__':
         df_summary.at[summary_row_index, util.TOTAL_OCCUPANCY + '_gt_4'] = len( df_group )
     df_summary[util.TOTAL_OCCUPANCY + '_gt_4'] = df_summary[util.TOTAL_OCCUPANCY + '_gt_4'].astype(int)
 
-    # Count parcels with specific total occupancies
-    df_summary = util.add_value_counts( df_summary, df_rentals_large, util.WARD_NUMBER, util.TOTAL_OCCUPANCY, RENTAL_MAP_5_7 )
+    # Count parcels with greatest total occupancies
     df_summary[util.TOTAL_OCCUPANCY + '_8_or_more'] = df_summary[util.TOTAL_OCCUPANCY + '_gt_4'] - ( df_summary[util.TOTAL_OCCUPANCY + '_5'] + df_summary[util.TOTAL_OCCUPANCY + '_6'] + df_summary[util.TOTAL_OCCUPANCY + '_7'] )
 
-    # Build the rest of the large-rental summary
+    # Swap positions of last two columns
+    cols = df_summary.columns.tolist()
+    cols[-1], cols[-2] = cols[-2], cols[-1]
+    df_summary = df_summary[cols]
+
+    # Count total large-rental parcels and residential units
+    for ward, df_group in df_rentals_large.groupby( by=[util.WARD_NUMBER] ):
+        summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
+        df_summary.at[summary_row_index, TOTAL_UNITS] = df_group[util.TOTAL_OCCUPANCY].sum()
+    df_summary[TOTAL_UNITS] = df_summary[TOTAL_UNITS].astype(int)
+
+    # Build the rest of the large rental summary
     df_summary = build_summary_table( df_summary, df_rentals_large )
 
     # Save large rental summary
