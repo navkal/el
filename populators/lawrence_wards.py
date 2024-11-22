@@ -184,7 +184,7 @@ if __name__ == '__main__':
     cols[-1], cols[-2] = cols[-2], cols[-1]
     df_summary = df_summary[cols]
 
-    # Count total large-rental parcels and residential units
+    # Count total large-rental residential units
     for ward, df_group in df_rentals_large.groupby( by=[util.WARD_NUMBER] ):
         summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
         df_summary.at[summary_row_index, TOTAL_UNITS] = df_group[util.TOTAL_OCCUPANCY].sum()
