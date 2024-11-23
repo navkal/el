@@ -421,6 +421,7 @@ BUILDING_GRADE = 'building_grade'
 GRADE = 'grade'
 FIRST_FLOOR_USE = 'first_floor_use'
 RESIDENTIAL_UNITS = 'residential_units'
+TOTAL_RESIDENTIAL_UNITS = 'total_' + RESIDENTIAL_UNITS
 TOTAL_OCCUPANCY = 'total_occupancy'
 TOTAL_BATHS = 'total_baths'
 TOTAL_KITCHENS = 'total_kitchens'
@@ -498,6 +499,8 @@ DATE_DUE_FOR_INSPECTION = 'date_due_for_inspection'
 INSPECTION_STATUS = 'inspection_status'
 PROPERTY_MANAGER = 'property_manager'
 
+SOLAR = 'solar'
+WX = 'wx'
 BUILDING_PERMIT_TYPES = \
 [
     'cga',
@@ -506,9 +509,14 @@ BUILDING_PERMIT_TYPES = \
     'plumbing',
     'roof',
     'siding',
-    'solar',
-    'wx',
+    SOLAR,
+    WX,
 ]
+
+_PERMIT = '_permit'
+SOLAR_PERMIT = SOLAR + _PERMIT
+WX_PERMIT = WX + _PERMIT
+_COUNT = '_count'
 
 APPLIANCE = 'appliance'
 

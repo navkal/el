@@ -63,8 +63,8 @@ def add_parcels_sum_column( df_ej, df_parcels, s_parcels_col ):
 def add_permit_counts( df_ej, df_parcels, s_permit_type ):
 
     # Initialize column names for current permit type
-    permit_col_name = s_permit_type + '_permit'
-    count_col_name = permit_col_name + '_count'
+    permit_col_name = s_permit_type + util._PERMIT
+    count_col_name = permit_col_name + util._COUNT
 
     # Initialize count column
     df_ej[count_col_name] = 0

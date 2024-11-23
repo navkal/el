@@ -13,6 +13,8 @@ import util
 
 WARD_PARCELS_COLUMNS = \
 [
+    util.PRECINCT_NUMBER,
+    util.TOTAL_OCCUPANCY,
     util.VISION_ID,
     util.ACCOUNT_NUMBER,
     util.MBLU,
@@ -29,7 +31,8 @@ WARD_PARCELS_COLUMNS = \
     util.HEAT_AC,
     util.LAND_USE_CODE,
     util.LAND_USE_CODE_DESC,
-    util.TOTAL_OCCUPANCY,
+    util.SOLAR_PERMIT,
+    util.WX_PERMIT,
     util.TOTAL_ACRES,
     util.SALE_PRICE,
     util.SALE_DATE,
@@ -39,8 +42,6 @@ WARD_PARCELS_COLUMNS = \
     util.OWNER_ADDRESS,
     util.OWNER_ZIP,
     util.ZIP,
-    util.WARD_NUMBER,
-    util.PRECINCT_NUMBER,
     util.CENSUS_GEO_ID,
     util.CENSUS_TRACT,
     util.CENSUS_BLOCK_GROUP,
@@ -78,8 +79,6 @@ RENTAL_MAP_5_7 = \
     7: util.TOTAL_OCCUPANCY + '_7',
 }
 
-TOTAL_UNITS = 'total_' + util.RESIDENTIAL_UNITS
-
 
 def build_summary_table( df_summary, df_details ):
     # Add columns counting per-ward occurrences of specified heating fuels
@@ -113,8 +112,9 @@ if __name__ == '__main__':
     # Group parcels by wards
     for ward, df_group in df_parcels.groupby( by=[util.WARD_NUMBER] ):
 
-        # Create and save parcels table for current ward
+        # Create, sort, and save parcels table for current ward
         df_ward_parcels = df_group[WARD_PARCELS_COLUMNS]
+        df_ward_parcels = df_ward_parcels.sort_values( by=[util.PRECINCT_NUMBER, util.TOTAL_OCCUPANCY, util.VISION_ID] )
         util.create_table( 'Ward_{}_ResidentialParcels'.format( ward ), conn, cur, df=df_ward_parcels )
 
     # Load councilors dataframe
@@ -148,8 +148,8 @@ if __name__ == '__main__':
     # Count total small-rental residential units
     for ward, df_group in df_rentals_small.groupby( by=[util.WARD_NUMBER] ):
         summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
-        df_summary.at[summary_row_index, TOTAL_UNITS] = df_group[util.TOTAL_OCCUPANCY].sum()
-    df_summary[TOTAL_UNITS] = df_summary[TOTAL_UNITS].astype(int)
+        df_summary.at[summary_row_index, util.TOTAL_RESIDENTIAL_UNITS] = df_group[util.TOTAL_OCCUPANCY].sum()
+    df_summary[util.TOTAL_RESIDENTIAL_UNITS] = df_summary[util.TOTAL_RESIDENTIAL_UNITS].astype(int)
 
     # Build the rest of the small rental summary
     df_summary = build_summary_table( df_summary, df_rentals_small )
@@ -187,8 +187,8 @@ if __name__ == '__main__':
     # Count total large-rental residential units
     for ward, df_group in df_rentals_large.groupby( by=[util.WARD_NUMBER] ):
         summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
-        df_summary.at[summary_row_index, TOTAL_UNITS] = df_group[util.TOTAL_OCCUPANCY].sum()
-    df_summary[TOTAL_UNITS] = df_summary[TOTAL_UNITS].astype(int)
+        df_summary.at[summary_row_index, util.TOTAL_RESIDENTIAL_UNITS] = df_group[util.TOTAL_OCCUPANCY].sum()
+    df_summary[util.TOTAL_RESIDENTIAL_UNITS] = df_summary[util.TOTAL_RESIDENTIAL_UNITS].astype(int)
 
     # Build the rest of the large rental summary
     df_summary = build_summary_table( df_summary, df_rentals_large )

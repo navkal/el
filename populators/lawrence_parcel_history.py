@@ -21,7 +21,7 @@ def merge_permit_numbers( df_parcels, permit_type ):
 
     # Determine names of old, source column and new, output column
     old_col_name = util.PERMIT_NUMBER
-    new_col_name = permit_type + '_permit'
+    new_col_name = permit_type + util._PERMIT
 
     # Do the merge
     df_parcels = merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name )

@@ -80,8 +80,8 @@ if __name__ == '__main__':
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Plumbing', [util.APPLICANT], 'plumbing' )
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Roof', [util.BUSINESS_NAME, util.APPLICANT], 'roof' )
     df = analyze_contractor_activity( df, 'BuildingPermits_L_Siding', [util.BUSINESS_NAME, util.APPLICANT], 'siding' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', [util.APPLICANT], 'solar' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', [util.BUSINESS_NAME], 'wx' )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', [util.APPLICANT], util.SOLAR )
+    df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', [util.BUSINESS_NAME], util.WX )
     df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
     df[util.PROJECT_COUNT] = df[util.PROJECT_COUNT].astype(int)
 
