@@ -92,22 +92,9 @@ def build_summary_table( df_summary, df_details ):
 
     return df_summary
 
-##################################
 
-# Main program
-if __name__ == '__main__':
-
-    # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Generate ward tables' )
-    parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
-    args = parser.parse_args()
-
-    # Open master database
-    conn, cur, engine = util.open_database( args.master_filename, False )
-
-    # Initialize table of residential parcels with known wards
-    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
-    df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.WARD_NUMBER].notnull() )]
+# Create one parcels table for each ward
+def create_wards_parcels_tables( df_parcels ):
 
     # Group parcels by wards
     for ward, df_group in df_parcels.groupby( by=[util.WARD_NUMBER] ):
@@ -117,21 +104,22 @@ if __name__ == '__main__':
         df_ward_parcels = df_ward_parcels.sort_values( by=[util.PRECINCT_NUMBER, util.TOTAL_OCCUPANCY, util.VISION_ID] )
         util.create_table( 'Ward_{}_ResidentialParcels'.format( ward ), conn, cur, df=df_ward_parcels )
 
-    # Load councilors dataframe
-    df_councilors = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
+    return
 
-    #
-    # General wards summary
-    #
+
+# Create wards summary table
+def create_wards_summary_table( df_councilors, df_parcels ):
 
     # Build and save wards summary table
     df_summary = df_councilors.copy()
     df_summary = build_summary_table( df_summary, df_parcels )
     util.create_table( 'WardSummary', conn, cur, df=df_summary )
 
-    #
-    # Small rental summary
-    #
+    return
+
+
+# Create wards summary of small rentals
+def create_wards_summary_table_small( df_councilors, df_parcels ):
 
     # Isolate small rental properties
     df_rentals_small = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] >= 2 ) & ( df_parcels[util.TOTAL_OCCUPANCY] <= 4 )]
@@ -157,9 +145,11 @@ if __name__ == '__main__':
     # Save small rental summary
     util.create_table( 'WardSummary_Rentals_2_4', conn, cur, df=df_summary )
 
-    #
-    # Large rental summary
-    #
+    return
+
+
+# Create wards summary of large rentals
+def create_wards_summary_table_large( df_councilors, df_parcels ):
 
     # Isolate large rental properties
     df_rentals_large = df_parcels[( df_parcels[util.TOTAL_OCCUPANCY] > 4 ) ]
@@ -195,6 +185,40 @@ if __name__ == '__main__':
 
     # Save large rental summary
     util.create_table( 'WardSummary_Rentals_Gt4', conn, cur, df=df_summary )
+    
+    return
 
+
+##################################
+
+# Main program
+if __name__ == '__main__':
+
+    # Retrieve and validate arguments
+    parser = argparse.ArgumentParser( description='Generate ward tables' )
+    parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
+    args = parser.parse_args()
+
+    # Open master database
+    conn, cur, engine = util.open_database( args.master_filename, False )
+
+    # Initialize table of residential parcels with known wards
+    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
+    df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.WARD_NUMBER].notnull() )]
+
+    # Create collections of parcels tables, one for each ward
+    create_wards_parcels_tables( df_parcels )
+
+    # Load councilors dataframe
+    df_councilors = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
+
+    # Create wards summary table
+    create_wards_summary_table( df_councilors, df_parcels )
+
+    # Create wards summary of small rentals
+    create_wards_summary_table_small( df_councilors, df_parcels )
+
+    # Create wards summary of large rentals
+    create_wards_summary_table_large( df_councilors, df_parcels )
 
     util.report_elapsed_time()
