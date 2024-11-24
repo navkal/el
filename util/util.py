@@ -2672,6 +2672,34 @@ def add_value_counts( df_summary, df_details, s_groupby_col, s_parcels_col, valu
     return df_summary
 
 
+# Add column to summary table counting permits of specified type
+def add_permit_counts( df_summary, df_details, s_groupby_col, s_permit_type, s_col_name_suffix='' ):
+
+    # Initialize column names for current permit type
+    permit_col_name = s_permit_type + _PERMIT
+    count_col_name = permit_col_name + _COUNT + s_col_name_suffix
+
+    # Initialize count column
+    df_summary[count_col_name] = 0
+
+    # Iterate over detail rows grouped by specified column
+    for idx, df_group in df_details.groupby( by=[s_groupby_col] ):
+
+        # Isolate rows in current group that have at least one permit of specified permit type
+        df_rows_with_permits = df_group[ df_group[permit_col_name].notna() ]
+
+        # Count the permits in current group
+        n_permits = 0
+        for i_row, row in df_rows_with_permits.iterrows():
+            n_permits += ( row[permit_col_name].count(',') + 1 )
+
+        # Save the permit count in the corresponding row of the summary table
+        summary_row_index = df_summary.loc[df_summary[s_groupby_col] == idx].index[0]
+        df_summary.at[summary_row_index, count_col_name] = n_permits
+
+    return df_summary
+
+
 # Combine two dataframes by concatenating common columns and merging unique columns
 def combine_dataframes( df_1, df_2, subset, keep, on ):
 

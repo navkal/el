@@ -79,8 +79,14 @@ RENTAL_MAP_5_7 = \
     7: util.TOTAL_OCCUPANCY + '_7',
 }
 
+BUILDING_PERMIT_TYPES = \
+[
+    util.SOLAR,
+    util.WX,
+]
 
-def build_summary_table( df_summary, df_details ):
+
+def add_value_count_columns( df_summary, df_details ):
     # Add columns counting per-ward occurrences of specified heating fuels
     df_summary = util.add_value_counts( df_summary, df_details, util.WARD_NUMBER, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
 
@@ -94,7 +100,7 @@ def build_summary_table( df_summary, df_details ):
 
 
 # Create one parcels table for each ward
-def create_wards_parcels_tables( df_parcels ):
+def create_ward_parcels_tables( df_parcels ):
 
     # Group parcels by wards
     for ward, df_group in df_parcels.groupby( by=[util.WARD_NUMBER] ):
@@ -110,9 +116,16 @@ def create_wards_parcels_tables( df_parcels ):
 # Create wards summary table
 def create_wards_summary_table( df_councilors, df_parcels ):
 
-    # Build and save wards summary table
+    # Initialize wards summary table
     df_summary = df_councilors.copy()
-    df_summary = build_summary_table( df_summary, df_parcels )
+
+    # Add columns containing per-ward solar and wx permit counts
+    for s_permit_type in BUILDING_PERMIT_TYPES:
+        df_summary = util.add_permit_counts( df_summary, df_parcels, util.WARD_NUMBER, s_permit_type )
+
+    # Build common fields
+    df_summary = add_value_count_columns( df_summary, df_parcels )
+
     util.create_table( 'WardSummary', conn, cur, df=df_summary )
 
     return
@@ -133,6 +146,17 @@ def create_wards_summary_table_small( df_councilors, df_parcels ):
     # Count total small-rental parcels
     df_summary[util.TOTAL_OCCUPANCY + '_2_4'] = df_summary[util.TOTAL_OCCUPANCY + '_2'] + df_summary[util.TOTAL_OCCUPANCY + '_3'] + df_summary[util.TOTAL_OCCUPANCY + '_4']
 
+    # Get counts of listed permit types
+    for s_permit_type in BUILDING_PERMIT_TYPES:
+
+        # Count permits for small rentals with specific occupancy
+        for n_occupancy in RENTAL_MAP_2_4:
+            df_occupancy = df_parcels[df_parcels[util.TOTAL_OCCUPANCY] == n_occupancy ].copy()
+            df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_' + str( n_occupancy ) )
+
+        # Count permits for all small rentals
+        df_summary = util.add_permit_counts( df_summary, df_rentals_small, util.WARD_NUMBER, s_permit_type, '_2_4' )
+
     # Count total small-rental residential units
     for ward, df_group in df_rentals_small.groupby( by=[util.WARD_NUMBER] ):
         summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
@@ -140,7 +164,7 @@ def create_wards_summary_table_small( df_councilors, df_parcels ):
     df_summary[util.TOTAL_RESIDENTIAL_UNITS] = df_summary[util.TOTAL_RESIDENTIAL_UNITS].astype(int)
 
     # Build the rest of the small rental summary
-    df_summary = build_summary_table( df_summary, df_rentals_small )
+    df_summary = add_value_count_columns( df_summary, df_rentals_small )
 
     # Save small rental summary
     util.create_table( 'WardSummary_Rentals_2_4', conn, cur, df=df_summary )
@@ -174,6 +198,21 @@ def create_wards_summary_table_large( df_councilors, df_parcels ):
     cols[-1], cols[-2] = cols[-2], cols[-1]
     df_summary = df_summary[cols]
 
+    # Get counts of listed permit types
+    for s_permit_type in BUILDING_PERMIT_TYPES:
+
+        # Count permits for large rentals with specific occupancy
+        for n_occupancy in RENTAL_MAP_5_7:
+            df_occupancy = df_parcels[df_parcels[util.TOTAL_OCCUPANCY] == n_occupancy ].copy()
+            df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_' + str( n_occupancy ) )
+
+        # Count permits for largest rentals
+        df_occupancy = df_parcels[df_parcels[util.TOTAL_OCCUPANCY] >= 8].copy()
+        df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_8_or_more' )
+
+        # Count permits for all large rentals
+        df_summary = util.add_permit_counts( df_summary, df_rentals_large, util.WARD_NUMBER, s_permit_type, '_gt_4' )
+
     # Count total large-rental residential units
     for ward, df_group in df_rentals_large.groupby( by=[util.WARD_NUMBER] ):
         summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
@@ -181,11 +220,11 @@ def create_wards_summary_table_large( df_councilors, df_parcels ):
     df_summary[util.TOTAL_RESIDENTIAL_UNITS] = df_summary[util.TOTAL_RESIDENTIAL_UNITS].astype(int)
 
     # Build the rest of the large rental summary
-    df_summary = build_summary_table( df_summary, df_rentals_large )
+    df_summary = add_value_count_columns( df_summary, df_rentals_large )
 
     # Save large rental summary
     util.create_table( 'WardSummary_Rentals_Gt4', conn, cur, df=df_summary )
-    
+
     return
 
 
@@ -206,8 +245,8 @@ if __name__ == '__main__':
     df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.WARD_NUMBER].notnull() )]
 
-    # Create collections of parcels tables, one for each ward
-    create_wards_parcels_tables( df_parcels )
+    # Create one parcels table for each ward
+    create_ward_parcels_tables( df_parcels )
 
     # Load councilors dataframe
     df_councilors = pd.read_sql_table( 'Councilors_L', engine, index_col=util.ID, parse_dates=True )
