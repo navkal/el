@@ -421,7 +421,6 @@ BUILDING_GRADE = 'building_grade'
 GRADE = 'grade'
 FIRST_FLOOR_USE = 'first_floor_use'
 RESIDENTIAL_UNITS = 'residential_units'
-TOTAL_RESIDENTIAL_UNITS = 'total_' + RESIDENTIAL_UNITS
 TOTAL_OCCUPANCY = 'total_occupancy'
 TOTAL_BATHS = 'total_baths'
 TOTAL_KITCHENS = 'total_kitchens'
@@ -758,11 +757,6 @@ CONSISTENT_COLUMN_NAMES = \
         'Ward #': WARD_NUMBER,
         'Precinct #': PRECINCT_NUMBER,
         'Voter Status': VOTER_STATUS,
-    },
-    'Councilors_L': \
-    {
-        'ward': WARD_NUMBER,
-        'councilor': COUNCILOR_NAME,
     },
     'EjCommunities': \
     {
@@ -1751,6 +1745,12 @@ CONSISTENT_COLUMN_NAMES = \
         'CONTACT1 NAME': CONTACT_NAME,
         'CONTACT1 EMAIL': CONTACT_EMAIL,
         'CONTACT1 PHONE': PHONE,
+    },
+    'RawWards_L': \
+    {
+        'ward': WARD_NUMBER,
+        'councilor': COUNCILOR_NAME,
+        'population': POPULATION,
     },
     'Solar': \
     {

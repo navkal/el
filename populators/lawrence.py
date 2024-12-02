@@ -229,9 +229,9 @@ if __name__ == '__main__':
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 
-    # Read table of City Councilors
-    print( '\n=======> Councilors input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/councilors.xlsx -t Councilors_L -o {0}'.format( args.master_filename ) )
+    # Read table of city wards
+    print( '\n=======> Wards input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/wards.xlsx -t RawWards_L -o {0}'.format( args.master_filename ) )
 
     # Generate ward tables
     print( '\n=======> Ward tables' )
@@ -276,7 +276,6 @@ if __name__ == '__main__':
             'Assessment_L_Commercial_Merged',
             'Assessment_L_Residential_Merged',
             'GeoParcels_L',
-            'Councilors_L',
             'RawBuildingPermits',
             'RawBuildingPermits_Cga',
             'RawBuildingPermits_Electrical',
@@ -305,6 +304,7 @@ if __name__ == '__main__':
             'RawResidential_5',
             'RawVehicleAttributes_L',
             'RawVehicleExciseTax_L',
+            'RawWards_L',
             'VinDictionary_L',
          ],
         'encipher_column_names':
