@@ -61,16 +61,16 @@ ZIP_CODE_MAP = \
 
 RENTAL_MAP_2_4 = \
 {
-    2: util.PARCEL_COUNT + '_2u',
-    3: util.PARCEL_COUNT + '_3u',
-    4: util.PARCEL_COUNT + '_4u',
+    2: util.PARCEL_COUNT + '_w2u',
+    3: util.PARCEL_COUNT + '_w3u',
+    4: util.PARCEL_COUNT + '_w4u',
 }
 
 RENTAL_MAP_5_7 = \
 {
-    5: util.PARCEL_COUNT + '_5u',
-    6: util.PARCEL_COUNT + '_6u',
-    7: util.PARCEL_COUNT + '_7u',
+    5: util.PARCEL_COUNT + '_w5u',
+    6: util.PARCEL_COUNT + '_w6u',
+    7: util.PARCEL_COUNT + '_w7u',
 }
 
 BUILDING_PERMIT_TYPES = \
@@ -152,10 +152,10 @@ def create_wards_summary_table_small( df_wards, df_parcels ):
         # Count permits for small rentals with specific occupancy
         for n_occupancy in RENTAL_MAP_2_4:
             df_occupancy = df_parcels[df_parcels[util.TOTAL_OCCUPANCY] == n_occupancy ].copy()
-            df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_' + str( n_occupancy ) )
+            df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_w' + str( n_occupancy ) + 'u' )
 
         # Count permits for all small rentals
-        df_summary = util.add_permit_counts( df_summary, df_rentals_small, util.WARD_NUMBER, s_permit_type, '_2_4' )
+        df_summary = util.add_permit_counts( df_summary, df_rentals_small, util.WARD_NUMBER, s_permit_type, '_w2_4u' )
 
     # Build the rest of the small rental summary
     df_summary = add_common_summary_columns( df_summary, df_rentals_small )
@@ -189,20 +189,20 @@ def create_wards_summary_table_large( df_wards, df_parcels ):
         # Count permits for large rentals with specific occupancy
         for n_occupancy in RENTAL_MAP_5_7:
             df_occupancy = df_parcels[df_parcels[util.TOTAL_OCCUPANCY] == n_occupancy ].copy()
-            df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_' + str( n_occupancy ) )
+            df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_w' + str( n_occupancy ) + 'u' )
 
         # Count permits for largest rentals
         df_occupancy = df_parcels[df_parcels[util.TOTAL_OCCUPANCY] >= 8].copy()
-        df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_8_or_more' )
+        df_summary = util.add_permit_counts( df_summary, df_occupancy, util.WARD_NUMBER, s_permit_type, '_w8u_plus' )
 
         # Count permits for all large rentals
-        df_summary = util.add_permit_counts( df_summary, df_rentals_large, util.WARD_NUMBER, s_permit_type, '_gt_4' )
+        df_summary = util.add_permit_counts( df_summary, df_rentals_large, util.WARD_NUMBER, s_permit_type, '_gt_4u' )
 
     # Build the rest of the large rental summary
     df_summary = add_common_summary_columns( df_summary, df_rentals_large )
 
     # Count parcels with greatest total occupancies
-    df_summary[util.PARCEL_COUNT + '_8u_or_more'] = df_summary[util.PARCEL_COUNT] - ( df_summary[util.PARCEL_COUNT + '_5u'] + df_summary[util.PARCEL_COUNT + '_6u'] + df_summary[util.PARCEL_COUNT + '_7u'] )
+    df_summary[util.PARCEL_COUNT + '_w8u_plus'] = df_summary[util.PARCEL_COUNT] - ( df_summary[util.PARCEL_COUNT + '_w5u'] + df_summary[util.PARCEL_COUNT + '_w6u'] + df_summary[util.PARCEL_COUNT + '_w7u'] )
 
     # Save large rental summary
     util.create_table( 'WardSummary_Rentals_Gt4', conn, cur, df=df_summary )
