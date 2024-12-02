@@ -51,13 +51,11 @@ USER_AGENT = 'City of Lawrence, MA - Office of Energy, Environment, and Sustaina
 GEO_SERVICE_AZURE = AzureMaps( load_azure_key(), user_agent=USER_AGENT )
 GEO_SERVICE_NOMINATIM = Nominatim( user_agent=USER_AGENT )
 
-LAWRENCE_ZIPS = ['01840','01841','01842','01843']
-
 
 # Validate geolocation based on returned zip code
 def validate_geo( d_addr, street_name ):
     zip = d_addr['postalCode'] if 'postalCode' in d_addr else d_addr['postcode']
-    valid_zip = zip if zip in LAWRENCE_ZIPS else None
+    valid_zip = zip if zip in util.LAWRENCE_ZIPS else None
     return valid_zip
 
 

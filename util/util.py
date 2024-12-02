@@ -1798,6 +1798,16 @@ CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['Raw
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L_OldFormat'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A_OldFormat']
 CONSISTENT_COLUMN_NAMES['RawElectricMeters_L'] = CONSISTENT_COLUMN_NAMES['RawElectricMeters_A']
 
+LAWRENCE_ZIPS = ['01840','01841','01842','01843']
+
+
+
+# Format with-units suffix for Lawrence ward data
+def with_units( n_occupancy, gt=False, plus=False ):
+    prefix = '_gt_' if gt else '_w'
+    suffix = '_plus' if plus else ''
+    return prefix + str( n_occupancy ) + 'u' + suffix
+
 
 # Calculate age of a person
 def calculate_age( date_of_birth ):
@@ -1938,6 +1948,38 @@ COLUMN_GROUP = \
         NORMALIZED_STREET_NAME,
         NORMALIZED_OCCUPANCY,
         NORMALIZED_ADDITIONAL_INFO,
+    ],
+    'WARD_SUMMARY_HEAD':
+    [
+        WARD_NUMBER,
+        COUNCILOR_NAME,
+        POPULATION,
+        TOTAL_OCCUPANCY,
+    ],
+    'WARD_SUMMARY_HEATING_FUEL':
+    [
+        HEATING_FUEL_MAP['Electric'],
+        HEATING_FUEL_MAP['Oil'],
+        HEATING_FUEL_MAP['Gas'],
+    ],
+    'WARD_SUMMARY_HEATING_TYPE':
+    [
+        HEATING_TYPE_MAP['Electr Basebrd'],
+        HEATING_TYPE_MAP['Hot Water'],
+        HEATING_TYPE_MAP['Steam'],
+        HEATING_TYPE_MAP['Forced Air-Duc'],
+        HEATING_TYPE_MAP['Radiant'],
+        HEATING_TYPE_MAP['Hot Air-no Duc'],
+        HEATING_TYPE_MAP['Heat Pump'],
+        HEATING_TYPE_MAP['Floor Furnace'],
+        HEATING_TYPE_MAP['None'],
+    ],
+    'WARD_SUMMARY_ZIP':
+    [
+        ZIP + '_' + LAWRENCE_ZIPS[0],
+        ZIP + '_' + LAWRENCE_ZIPS[1],
+        ZIP + '_' + LAWRENCE_ZIPS[2],
+        ZIP + '_' + LAWRENCE_ZIPS[3],
     ],
 }
 
@@ -2486,6 +2528,57 @@ COLUMN_ORDER = \
         OWNER_2_NAME,
         OWNER_ADDRESS,
         OWNER_ZIP,
+    ],
+    'WardSummary':
+    [
+        * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
+        PARCEL_COUNT,
+        WX_PERMIT + _COUNT,
+        SOLAR_PERMIT + _COUNT,
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
+        * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
+    ],
+    'WardSummary_Rentals_2_4':
+    [
+        * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
+        PARCEL_COUNT + with_units( '2_4' ),
+        PARCEL_COUNT + with_units( 2 ),
+        PARCEL_COUNT + with_units( 3 ),
+        PARCEL_COUNT + with_units( 4 ),
+        WX_PERMIT + _COUNT + with_units( '2_4' ),
+        WX_PERMIT + _COUNT + with_units( 2 ),
+        WX_PERMIT + _COUNT + with_units( 3 ),
+        WX_PERMIT + _COUNT + with_units( 4 ),
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
+        * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
+        SOLAR_PERMIT + _COUNT + with_units( '2_4' ),
+        SOLAR_PERMIT + _COUNT + with_units( 2 ),
+        SOLAR_PERMIT + _COUNT + with_units( 3 ),
+        SOLAR_PERMIT + _COUNT + with_units( 4 ),
+    ],
+    'WardSummary_Rentals_Gt4':
+    [
+        * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
+        PARCEL_COUNT + with_units( 4, gt=True ),
+        PARCEL_COUNT + with_units( 5 ),
+        PARCEL_COUNT + with_units( 6 ),
+        PARCEL_COUNT + with_units( 7 ),
+        PARCEL_COUNT + with_units( 8, plus=True ),
+        WX_PERMIT + _COUNT + with_units( 4, gt=True ),
+        WX_PERMIT + _COUNT + with_units( 5 ),
+        WX_PERMIT + _COUNT + with_units( 6 ),
+        WX_PERMIT + _COUNT + with_units( 7 ),
+        WX_PERMIT + _COUNT + with_units( 8, plus=True ),
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
+        * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
+        SOLAR_PERMIT + _COUNT + with_units( 4, gt=True ),
+        SOLAR_PERMIT + _COUNT + with_units( 5 ),
+        SOLAR_PERMIT + _COUNT + with_units( 6 ),
+        SOLAR_PERMIT + _COUNT + with_units( 7 ),
+        SOLAR_PERMIT + _COUNT + with_units( 8, plus=True ),
     ],
     'Water':
     [
