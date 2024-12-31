@@ -233,6 +233,10 @@ if __name__ == '__main__':
     print( '\n=======> Wards input' )
     os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/wards.xlsx -t RawWards_L -o {0}'.format( args.master_filename ) )
 
+    # Read table of National Grid accounts
+    print( '\n=======> National Grid accounts input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/national_grid_accounts.xlsx -a "TblF1" -r 1 -t RawNationalGridAccounts_L -o {0}'.format( args.master_filename ) )
+
     # Generate ward tables
     print( '\n=======> Ward tables' )
     os.system( 'python lawrence_wards.py -m {0}'.format( args.master_filename ) )

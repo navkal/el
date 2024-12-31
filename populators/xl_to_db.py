@@ -23,6 +23,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Generate database table from Excel spreadsheet' )
     parser.add_argument( '-b', dest='do_this_before_starting',  help='Initialization code to execute before doing anything else' )
     parser.add_argument( '-i', dest='input_filename',  help='Input filename - Name of MS Excel file' )
+    parser.add_argument( '-a', dest='sheet_name',  help='Name of sheet (tab) in input file' )
     parser.add_argument( '-d', dest='input_directory',  help='Input directory - Location of MS Excel file(s)' )
     parser.add_argument( '-v', dest='csv', action='store_true',  help='Read input as CSV' )
     parser.add_argument( '-f', dest='field_separator', help='Field separator in CSV input file' )
@@ -77,8 +78,9 @@ if __name__ == '__main__':
             df_xl = util.read_excel_with_hyperlinks( args.input_filename, skiprows )
         else:
             # Get dataframe without hyperlinks
+            sheet_name = args.sheet_name if ( args.sheet_name != None ) else 0
             warnings.filterwarnings( 'ignore', category=UserWarning, module='openpyxl' )
-            df_xl = pd.read_excel( args.input_filename, dtype=object, skiprows=skiprows )
+            df_xl = pd.read_excel( args.input_filename, dtype=object, sheet_name=sheet_name, skiprows=skiprows )
 
     else:
         # Error: No input specified
