@@ -161,18 +161,47 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     address = re.sub( r'^197-999 BRUCE ST$', '197-199 BRUCE ST', address )
     address = re.sub( r'^100 WATER ST\)$', '100 WATER ST', address )
     address = re.sub( r'^1 COMMONWEALTH DR/ 135 MARSTON$', '1 COMMONWEALTH DR', address )
+    address = re.sub( r' ST STR$', ' ST', address ).strip()
 
     # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )
 
-    # Move nonconforming informational text to trailing, parenthesized string
+    # Move nonconforming informational text to trailing, parenthesized strings
+    parens = []
+
     if ' AKA ' in address:
         address_parts = address.split( ' AKA ', 1 )
         address = address_parts[0].strip()
-        address = address + ' (AKA ' + address_parts[1].strip() + ')'
+        parens.append( 'AKA ' + address_parts[1].strip() )
+
     if address.startswith( 'REAR ' ):
-        address = re.sub( r'^REAR ', '', address )
-        address = address.strip() + ' (REAR)'
+        address = re.sub( r'^REAR ', '', address ).strip()
+        parens.append( 'REAR' )
+
+    if address.endswith( ' SOLAR' ):
+        address = re.sub( r' SOLAR$', '', address ).strip()
+        parens.append( 'SOLAR' )
+
+    re_pole = r' POLE \d+$'
+    if re.search( re_pole, address ):
+        stripped = ' '.join( address.rsplit( ' ', 2)[-2:] )
+        address = re.sub( re_pole, '', address ).strip()
+        parens.append( stripped )
+
+    re_front_or_rear = r' (\d+)?(FRO?N?T|REAR)$'
+    if re.search( re_front_or_rear, address ):
+        address = re.sub( r' (APT|FL) (\d+)(FRO?N?T|REAR)$', r' \1 \2 \3', address )
+        stripped = address.rsplit( ' ', 1 )[-1]
+        address = re.sub( re_front_or_rear, '', address ).strip()
+        parens.append( stripped )
+
+    if address.endswith( ' APT' ):
+        address = re.sub( r' APT$', '', address ).strip()
+        parens.append( 'APT' )
+
+    for paren in parens:
+        address += ' (' + paren + ')'
+
 
     # Optionally extract and remove parenthesized text
     if return_parts:
