@@ -509,6 +509,9 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
             if verbose:
                 print( 'Exception: usaddress.RepeatedLabelError' )
 
+    # Strip leading zero, if any
+    address = address.lstrip( '0' ).strip()
+
     if verbose:
         if address != original:
             print( 'Address mapped from "{0}" to "{1}"'.format( original, address ) )
@@ -529,6 +532,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
             parts['StreetName'] = ' '.join( street_split[1:] )
 
         number = parts['AddressNumber'] if 'AddressNumber' in parts else ''
+        number = number.lstrip( '0' ).strip()
 
         street_parts = []
         if 'StreetNamePreDirectional' in parts:

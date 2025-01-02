@@ -230,6 +230,7 @@ if __name__ == '__main__':
     os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/national_grid_accounts.xlsx -a "TblF1" -r 1 -t RawNationalGridAccounts_L -o {0}'.format( args.master_filename ) )
 
     # Generate National Grid account tables
+    print( '\n=======> National Grid accounts tables' )
     os.system( 'python lawrence_national_grid_accounts.py -m {0}'.format( args.master_filename ) )
 
     # Correlate parcels with voting districts, building permits, GLCAC jobs, and National Grid accounts
