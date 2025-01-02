@@ -615,6 +615,7 @@ TOTAL_HOUSEHOLDS = 'ACSTOTHU'
 TENANT_HOUSEHOLDS = 'tenant_households'
 OWNER_HOUSEHOLDS = 'owner_households'
 
+ACCOUNT = 'account'
 ACCOUNT_TYPE = 'account_type'
 BASIC_OR_TPS = 'basic_or_tps'
 SERV_ADDR_ = 'serv_addr_'
@@ -1534,7 +1535,7 @@ CONSISTENT_COLUMN_NAMES = \
         'DS/CS': BASIC_OR_TPS,
         'NAME': 'name',
         'ACCT_CODE': 'acct_code',
-        'LDC_ACCT_NO': ACCOUNT_NUMBER,
+        'LDC_ACCT_NO': ACCOUNT,
         'CYC/3ERT': 'cyc_3ert',
         'SERV_ADDR1': SERV_ADDR_1,
         'SERV_ADDR2': SERV_ADDR_2,
@@ -2434,7 +2435,7 @@ COLUMN_ORDER = \
     ],
     'NationalGridMeters_L':
     [
-        ACCOUNT_NUMBER,
+        ACCOUNT,
         NORMALIZED_ADDRESS,
         THIRD_PARTY_SUPPLY,
     ],

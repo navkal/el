@@ -23,7 +23,7 @@ ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Generate table of National Grid accounts' )
+    parser = argparse.ArgumentParser( description='Generate tablea of National Grid accounts and meters' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename' )
     args = parser.parse_args()
 
@@ -51,12 +51,12 @@ if __name__ == '__main__':
 
     # Save full residential account data for reference
     df_accounts = df_residential.copy()
-    df_accounts[util.ACCOUNT_NUMBER] = df_accounts[util.ACCOUNT_NUMBER].fillna(0).astype( 'int64' )
+    df_accounts[util.ACCOUNT] = df_accounts[util.ACCOUNT].fillna(0).astype( 'int64' )
     util.create_table( 'NationalGridAccounts_L', conn, cur, df=df_accounts )
 
     # Partition residential accounts as representing basic service or third-party supply
-    df_basic_service = df_residential[ pd.notnull( df_residential[util.ACCOUNT_NUMBER] ) ]
-    df_third_party = df_residential[ pd.isnull( df_residential[util.ACCOUNT_NUMBER] ) ]
+    df_basic_service = df_residential[ pd.notnull( df_residential[util.ACCOUNT] ) ]
+    df_third_party = df_residential[ pd.isnull( df_residential[util.ACCOUNT] ) ]
 
     # Prepare to third-party records for correlation with basic service records by address
     df_third_party = df_third_party[[ADDR]]
@@ -68,13 +68,15 @@ if __name__ == '__main__':
     # Fill empty cells in third-party supply column
     df[util.THIRD_PARTY_SUPPLY] = df[util.THIRD_PARTY_SUPPLY].fillna( util.NO )
 
-    # Prepare dataframe
+    # Merge meters dataframe with assessment data
+    table_name = 'NationalGridMeters_L'
+    df = util.merge_with_assessment_data( table_name, df, engine=engine, sort_by=util.COLUMN_ORDER[table_name], drop_subset=util.COLUMN_ORDER[table_name] )
+
+    # Housekeeping
     df = df.drop( columns=[util.BASIC_OR_TPS] )
-    df = df.drop_duplicates()
-    df = df.sort_values( util.COLUMN_ORDER['NationalGridMeters_L'] )
-    df[util.ACCOUNT_NUMBER] = df[util.ACCOUNT_NUMBER].astype( 'int64' )
+    df[util.ACCOUNT] = df[util.ACCOUNT].astype( 'int64' )
 
     # Write to the database
-    util.create_table( 'NationalGridMeters_L', conn, cur, df=df )
+    util.create_table( table_name, conn, cur, df=df )
 
     util.report_elapsed_time()
