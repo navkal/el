@@ -615,6 +615,14 @@ TOTAL_HOUSEHOLDS = 'ACSTOTHU'
 TENANT_HOUSEHOLDS = 'tenant_households'
 OWNER_HOUSEHOLDS = 'owner_households'
 
+ACCOUNT_TYPE = 'account_type'
+BASIC_OR_TPS = 'basic_or_tps'
+SERV_ADDR_ = 'serv_addr_'
+SERV_ADDR_1 = SERV_ADDR_ + '1'
+SERV_ADDR_2 = SERV_ADDR_ + '2'
+SERV_ADDR_3 = SERV_ADDR_ + '3'
+SERV_ADDR_4 = SERV_ADDR_ + '4'
+THIRD_PARTY_SUPPLY = 'third_party_supply'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1523,15 +1531,15 @@ CONSISTENT_COLUMN_NAMES = \
     },
     'RawNationalGridAccounts_L': \
     {
-        'DS/CS': 'ds_cs',
+        'DS/CS': BASIC_OR_TPS,
         'NAME': 'name',
         'ACCT_CODE': 'acct_code',
-        'LDC_ACCT_NO': 'ldc_acct_no',
+        'LDC_ACCT_NO': ACCOUNT_NUMBER,
         'CYC/3ERT': 'cyc_3ert',
-        'SERV_ADDR1': 'serv_addr1',
-        'SERV_ADDR2': 'serv_addr2',
-        'SERV_ADDR3': 'serv_addr3',
-        'SERV_ADDR4': 'serv_addr4',
+        'SERV_ADDR1': SERV_ADDR_1,
+        'SERV_ADDR2': SERV_ADDR_2,
+        'SERV_ADDR3': SERV_ADDR_3,
+        'SERV_ADDR4': SERV_ADDR_4,
         'SERV_CITY': 'serv_city',
         'SERV_STATE': 'serv_state',
         'SERV_ZIP': 'serv_zip',
@@ -1543,7 +1551,7 @@ CONSISTENT_COLUMN_NAMES = \
         'MAIL_ZIP': 'mail_zip',
         'ICAP': 'icap',
         'Sort Order': 'sort_order',
-        'Account Type': 'account_type',
+        'Account Type': ACCOUNT_TYPE,
         'TX_TAR_SVC_DESC': 'tx_tar_svc_desc',
         'CD_CITY_CNTY': 'cd_city_cnty',
     },
@@ -2423,6 +2431,12 @@ COLUMN_ORDER = \
         ELECTION_DATE,
         OFFICE,
         CANDIDATE,
+    ],
+    'NationalGridMeters_L':
+    [
+        ACCOUNT_NUMBER,
+        NORMALIZED_ADDRESS,
+        THIRD_PARTY_SUPPLY,
     ],
     'Partisans':
     [
