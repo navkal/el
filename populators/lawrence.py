@@ -225,7 +225,14 @@ if __name__ == '__main__':
     print( '\n=======> Combine GLCAC and weatherization permit data' )
     os.system( 'python lawrence_glcac_with_wx.py -m {0}'.format( args.master_filename ) )
 
-    # Correlate parcels with voting districts, building permits, and GLCAC jobs
+    # Read National Grid account data
+    print( '\n=======> National Grid accounts input' )
+    os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/national_grid_accounts.xlsx -a "TblF1" -r 1 -t RawNationalGridAccounts_L -o {0}'.format( args.master_filename ) )
+
+    # Generate National Grid account tables
+    os.system( 'python lawrence_national_grid_accounts.py -m {0}'.format( args.master_filename ) )
+
+    # Correlate parcels with voting districts, building permits, GLCAC jobs, and National Grid accounts
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
 
@@ -236,13 +243,6 @@ if __name__ == '__main__':
     # Generate ward tables
     print( '\n=======> Ward tables' )
     os.system( 'python lawrence_wards.py -m {0}'.format( args.master_filename ) )
-
-    # Read National Grid account data
-    print( '\n=======> National Grid accounts input' )
-    os.system( 'python xl_to_db.py -i ../xl/lawrence/community_first_partnership/national_grid_accounts.xlsx -a "TblF1" -r 1 -t RawNationalGridAccounts_L -o {0}'.format( args.master_filename ) )
-
-    # Generate National Grid account tables
-    os.system( 'python lawrence_national_grid_accounts.py -m {0}'.format( args.master_filename ) )
 
     # Read per-block-group data on energy meter participation in Mass Save
     print( '\n=======> Mass Save energy meter participation rates input' )

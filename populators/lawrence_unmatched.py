@@ -35,6 +35,7 @@ TABLE_NAMES = \
     'Businesses_L',
     'Census_L',
     'GlcacJobs_L',
+    'NationalGridMeters_L',
 ]
 
 TOTAL_COUNT = 'total_count'

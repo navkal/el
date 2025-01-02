@@ -47,6 +47,26 @@ def merge_glcac_job_numbers( df_parcels ):
     return df_parcels
 
 
+# Merge National Grid accounts to parcels dataframe
+def merge_national_grid_accounts( df_parcels ):
+
+    # Read specified table of National Grid accounts
+    df_accounts = pd.read_sql_table( 'NationalGridMeters_L', engine, index_col=util.ID, parse_dates=True )
+
+    # Determine names of old, source column and new, output column
+    old_col_name = util.ACCOUNT
+    new_col_name = 'ng_account'
+
+    # Convert to string
+    df_accounts[old_col_name] = df_accounts[old_col_name].astype( str )
+
+    # Do the merge
+    df_parcels = merge_to_parcels_table( df_parcels, df_accounts, old_col_name, new_col_name )
+
+    # Return result
+    return df_parcels
+
+
 # Perform specified merge to parcels table
 def merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name ):
 
@@ -104,6 +124,9 @@ if __name__ == '__main__':
 
     # Merge GLCAC job numbers
     df_parcels = merge_glcac_job_numbers( df_parcels )
+
+    # Merge National Grid accounts
+    df_parcels = merge_national_grid_accounts( df_parcels )
 
     # Sort on account number
     df_parcels = df_parcels.sort_values( by=[ACCT] )
