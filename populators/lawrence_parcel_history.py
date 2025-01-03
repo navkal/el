@@ -53,15 +53,16 @@ def merge_national_grid_accounts( df_parcels ):
     # Read specified table of National Grid accounts
     df_accounts = pd.read_sql_table( 'NationalGridMeters_L', engine, index_col=util.ID, parse_dates=True )
 
-    # Determine names of old, source column and new, output column
+    # Determine name of source column and set the datatype
     old_col_name = util.ACCOUNT
-    new_col_name = 'ng_account'
-
-    # Convert to string
     df_accounts[old_col_name] = df_accounts[old_col_name].astype( str )
 
-    # Do the merge
-    df_parcels = merge_to_parcels_table( df_parcels, df_accounts, old_col_name, new_col_name )
+    # Merge all accounts
+    df_parcels = merge_to_parcels_table( df_parcels, df_accounts, old_col_name, 'ng_account' )
+
+    # Merge R-2 (residential assistance) accounts
+    df_r2_accounts = df_accounts[ df_accounts[util.ACCOUNT_TYPE] == 'Residential Assistance' ]
+    df_parcels = merge_to_parcels_table( df_parcels, df_r2_accounts, old_col_name, 'ng_r2_account' )
 
     # Return result
     return df_parcels
