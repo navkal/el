@@ -6,6 +6,8 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import math
+
 import sys
 sys.path.append( '../util' )
 import util
@@ -35,15 +37,36 @@ LAND_USE_CODE_3 = \
 
 LAND_USE_CODE_4 = \
 [
-    '960R',
-    '111M',
-    '1110',
-    '109M',
-    '1090',
-    '013M',
-    '013C',
     '0130',
+    '013C',
+    '013M',
+    '1090',
+    '109M',
+    '1110',
+    '111M',
+    '960R',
 ]
+
+LAND_USE_CODE_5_PLUS = \
+[
+    '0130',
+    '013C',
+    '109M',
+    '1110',
+    '111C',
+    '111E',
+    '111M',
+    '1120',
+    '112A',
+    '112C',
+    '112M',
+    '1210',
+    '125C',
+    '960R',
+]
+
+
+
 
 
 # Merge permit numbers of specified type to parcels dataframe
@@ -136,18 +159,41 @@ def merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name )
     return df_parcels
 
 
-# Flag properties that are eligible for LEAN program
+# Find LEAN-eligible parcels
 def flag_lean_eligibility( df_parcels ):
 
-    # Find LEAN-eligible properties for 1, 2, 3, and 4 families
+    # Find LEAN-eligible parcels for 1, 2, 3, and 4 families
     df_lean_1 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_1 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 1 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].notnull() ]
     df_lean_2 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_2 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 2 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].notnull() ]
     df_lean_3 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_3 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 3 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].str.count( ',' ) >= 1 ]
     df_lean_4 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_4 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 4 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].str.count( ',' ) >= 1 ]
-
-    # Build index of all LEAN-eligible properties
     df_lean_index = df_lean_1.index.union( df_lean_2.index ).union( df_lean_3.index ).union( df_lean_4.index )
+
+    # Set LEAN eligibility
     df_parcels.at[ df_lean_index, util.LEAN_ELIGIBILITY ] = util.LEAN
+
+    # Find LMF-eligible parcels for 5+ families
+    df_lean_5_plus = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_5_PLUS ) & ( df_parcels[util.TOTAL_OCCUPANCY] >= 5 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].notnull() ]
+
+    # Group by total occupancy
+    for n_occ, df_group in df_lean_5_plus.groupby( by=[util.TOTAL_OCCUPANCY] ):
+
+        # Determine, for this group's total occupancy, the minimum number of commas to test for in list of R2 accounts
+        n_min_commas = math.ceil( n_occ/2 )
+
+        # For each parcel in current group...
+        for index, row in df_group.iterrows():
+
+            # Get the list of R2 accounts and count the commas
+            r2_accounts = row[util.NATIONAL_GRID_R2_ACCOUNT]
+            n_commas = r2_accounts.count( ',' )
+
+            # If count of commas satisfies minimum, set LMF eligibility
+            if n_commas >= n_min_commas:
+                df_parcels.at[ index, util.LEAN_ELIGIBILITY ] = util.LEAN_MULTI_FAMILY
+
+    # Set all remaining parcels as not eligible
+    df_parcels[util.LEAN_ELIGIBILITY] = df_parcels[util.LEAN_ELIGIBILITY].fillna( util.LEAN_NONE )
 
     return df_parcels
 
