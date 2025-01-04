@@ -629,7 +629,8 @@ NATIONAL_GRID_R2_ACCOUNT = 'ng_r2_account'
 LEAN_ELIGIBILITY = 'lean_eligibility'
 LEAN = 'LEAN'
 LEAN_MULTI_FAMILY = 'LMF'
-LEAN_NONE = 'n/a'
+LEAN_UNKNOWN = '?'
+LEAN_NA = 'n/a'
 
 CONSISTENT_COLUMN_NAMES = \
 {

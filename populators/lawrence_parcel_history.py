@@ -167,10 +167,10 @@ def flag_lean_eligibility( df_parcels ):
     df_lean_2 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_2 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 2 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].notnull() ]
     df_lean_3 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_3 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 3 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].str.count( ',' ) >= 1 ]
     df_lean_4 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_4 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 4 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].str.count( ',' ) >= 1 ]
-    df_lean_index = df_lean_1.index.union( df_lean_2.index ).union( df_lean_3.index ).union( df_lean_4.index )
+    lean_index = df_lean_1.index.union( df_lean_2.index ).union( df_lean_3.index ).union( df_lean_4.index )
 
     # Set LEAN eligibility
-    df_parcels.at[ df_lean_index, util.LEAN_ELIGIBILITY ] = util.LEAN
+    df_parcels.at[ lean_index, util.LEAN_ELIGIBILITY ] = util.LEAN
 
     # Find LMF-eligible parcels for 5+ families
     df_lean_5_plus = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_5_PLUS ) & ( df_parcels[util.TOTAL_OCCUPANCY] >= 5 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].notnull() ]
@@ -192,8 +192,12 @@ def flag_lean_eligibility( df_parcels ):
             if n_commas >= n_min_commas:
                 df_parcels.at[ index, util.LEAN_ELIGIBILITY ] = util.LEAN_MULTI_FAMILY
 
-    # Set all remaining parcels as not eligible
-    df_parcels[util.LEAN_ELIGIBILITY] = df_parcels[util.LEAN_ELIGIBILITY].fillna( util.LEAN_NONE )
+    # Set remaining residential parcels as unknown
+    df_lean_unknown = df_parcels[ ( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & df_parcels[util.LEAN_ELIGIBILITY].isnull() ]
+    df_parcels.at[ df_lean_unknown.index, util.LEAN_ELIGIBILITY ] = util.LEAN_UNKNOWN
+
+    # Fill the rest as not applicable
+    df_parcels[util.LEAN_ELIGIBILITY] = df_parcels[util.LEAN_ELIGIBILITY].fillna( util.LEAN_NA )
 
     return df_parcels
 
