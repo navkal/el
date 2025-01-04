@@ -13,6 +13,39 @@ import util
 ACCT = util.ACCOUNT_NUMBER
 
 
+# Land use codes for 1-, 2-, 3-, and 4-family parcels
+LAND_USE_CODE_1 = \
+[
+    '1010',
+    '1021',
+]
+
+LAND_USE_CODE_2 = \
+[
+    '1040',
+    '1041',
+    '104M',
+]
+
+LAND_USE_CODE_3 = \
+[
+    '1050',
+    '105M',
+]
+
+LAND_USE_CODE_4 = \
+[
+    '960R',
+    '111M',
+    '1110',
+    '109M',
+    '1090',
+    '013M',
+    '013C',
+    '0130',
+]
+
+
 # Merge permit numbers of specified type to parcels dataframe
 def merge_permit_numbers( df_parcels, permit_type ):
 
@@ -58,11 +91,11 @@ def merge_national_grid_accounts( df_parcels ):
     df_accounts[old_col_name] = df_accounts[old_col_name].astype( str )
 
     # Merge all accounts
-    df_parcels = merge_to_parcels_table( df_parcels, df_accounts, old_col_name, 'ng_account' )
+    df_parcels = merge_to_parcels_table( df_parcels, df_accounts, old_col_name, util.NATIONAL_GRID_ACCOUNT )
 
     # Merge R-2 (residential assistance) accounts
     df_r2_accounts = df_accounts[ df_accounts[util.ACCOUNT_TYPE] == 'Residential Assistance' ]
-    df_parcels = merge_to_parcels_table( df_parcels, df_r2_accounts, old_col_name, 'ng_r2_account' )
+    df_parcels = merge_to_parcels_table( df_parcels, df_r2_accounts, old_col_name, util.NATIONAL_GRID_R2_ACCOUNT )
 
     # Return result
     return df_parcels
@@ -103,6 +136,23 @@ def merge_to_parcels_table( df_parcels, df_permits, old_col_name, new_col_name )
     return df_parcels
 
 
+# Flag properties that are eligible for LEAN program
+def flag_lean_eligibility( df_parcels ):
+
+    # Find LEAN-eligible properties for 1, 2, 3, and 4 families
+    df_lean_1 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_1 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 1 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].notnull() ]
+    df_lean_2 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_2 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 2 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].notnull() ]
+    df_lean_3 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_3 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 3 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].str.count( ',' ) >= 1 ]
+    df_lean_4 = df_parcels[ df_parcels[util.LAND_USE_CODE].isin( LAND_USE_CODE_4 ) & ( df_parcels[util.TOTAL_OCCUPANCY] == 4 ) & df_parcels[util.NATIONAL_GRID_R2_ACCOUNT].str.count( ',' ) >= 1 ]
+
+    # Build index of all LEAN-eligible properties
+    df_lean_index = df_lean_1.index.union( df_lean_2.index ).union( df_lean_3.index ).union( df_lean_4.index )
+    df_parcels.at[ df_lean_index, util.LEAN_ELIGIBILITY ] = util.LEAN
+
+    return df_parcels
+
+
+
 ##################################
 
 # Main program
@@ -128,6 +178,9 @@ if __name__ == '__main__':
 
     # Merge National Grid accounts
     df_parcels = merge_national_grid_accounts( df_parcels )
+
+    # Determine eligibility for Mass Save programs
+    df_parcels = flag_lean_eligibility( df_parcels )
 
     # Sort on account number
     df_parcels = df_parcels.sort_values( by=[ACCT] )

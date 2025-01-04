@@ -143,7 +143,6 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     address = re.sub( r' UNION$', ' UNION ST', address )
     address = re.sub( r' ST ST ', ' ST ', address )
     address = re.sub( r' T$', ' ST', address )
-    address = re.sub( r' APT FRT ', ' ', address )
     address = re.sub( r' BROADWAY ST[A-Z]*$', ' BROADWAY ', address )
     address = re.sub( r' AB FARNHAM ', ' A-B FARNHAM ', address )
     address = re.sub( r'18 FRANKLIN-45 BROADWAY', '18 FRANKLIN ST (45 BROADWAY)', address )
@@ -170,10 +169,12 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     # Move nonconforming informational text to trailing, parenthesized strings
     parens = []
 
-    if ' AKA ' in address:
-        address_parts = address.split( ' AKA ', 1 )
-        address = address_parts[0].strip()
-        parens.append( 'AKA ' + address_parts[1].strip() )
+    start_paren = [' AKA ', ' APT FRT ']
+    for s in start_paren:
+        if s in address:
+            address_parts = address.split( s, 1 )
+            address = address_parts[0].strip()
+            parens.append( s.strip() + ' ' + address_parts[1].strip() )
 
     if address.startswith( 'REAR ' ):
         address = re.sub( r'^REAR ', '', address ).strip()
