@@ -7,10 +7,10 @@
 # -f <filer>
 #
 # Optional parameters:
-# -t <target directory> (defaults to script working directory)
+# -t <target directory> (defaults to working directory)
 #
 # Sample parameter sequence:
-# -d 01/06/2025 -f "DOER" -t ./out
+# -d 10/31/2024 -f "Eversource Energy" -t ./out
 #
 ######################
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Download filings from MA DPU docket 24-141' )
     parser.add_argument( '-d', dest='date',  help='Date of filing', required=True )
     parser.add_argument( '-f', dest='filer',  help='Filer', required=True )
-    parser.add_argument( '-t', dest='target_directory',  help='Download target directory' )
+    parser.add_argument( '-t', dest='target_directory',  help='Target directory where downloads will be saved' )
     args = parser.parse_args()
 
     # Report start time
