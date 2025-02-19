@@ -28,6 +28,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
+# --> Time reporting -->
+import time
+START_TIME = time.time()
+
+def report_elapsed_time( prefix='\n', start_time=START_TIME ):
+    elapsed_time = round( ( time.time() - start_time ) * 1000 ) / 1000
+    minutes, seconds = divmod( elapsed_time, 60 )
+    ms = round( ( elapsed_time - int( elapsed_time ) ) * 1000 )
+    print( prefix + 'Elapsed time: {:02d}:{:02d}.{:d}'.format( int( minutes ), int( seconds ), ms ) )
+# <-- Time reporting <--
+
+
 # Get ID of row with specified date and filer
 def get_row_id( driver, s_date, s_filer ):
 
@@ -46,7 +58,9 @@ def get_row_id( driver, s_date, s_filer ):
     xpath = ''.join( wait_parts )
 
     print( '' )
-    print( 'Waiting for filings dated {} from {}...'.format( s_date, s_filer ) )
+    print( 'Waiting for requested filings...' )
+    print( '  Date: {}'.format( s_date ) )
+    print( '  Filer: {}'.format( s_filer ) )
 
     element = WebDriverWait( driver, 120 ).until( EC.presence_of_element_located( ( By.XPATH, xpath ) ) )
     row_id = element.get_attribute( 'id' )
@@ -111,11 +125,15 @@ def download_files( driver, row_id, target_dir ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Load Excel sheet into SQLite database' )
+    parser = argparse.ArgumentParser( description='Download filings from MA DPU docket 24-141' )
     parser.add_argument( '-d', dest='date',  help='Date of filing', required=True )
     parser.add_argument( '-f', dest='filer',  help='Filer', required=True )
-    parser.add_argument( '-t', dest='target_directory',  help='Target directory for downloads (optional)' )
+    parser.add_argument( '-t', dest='target_directory',  help='Download target directory' )
     args = parser.parse_args()
+
+    # Report start time
+    print( '' )
+    print( 'Starting at', time.strftime( '%H:%M:%S', time.localtime( START_TIME ) ) )
 
     # Set target directory
     target_dir = os.getcwd() if ( args.target_directory == None ) else args.target_directory
@@ -148,3 +166,5 @@ if __name__ == '__main__':
     # Close the browser
     driver.quit()
 
+    # Report elapsed time
+    report_elapsed_time()
