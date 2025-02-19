@@ -1,15 +1,15 @@
 # Copyright 2025 Energize Andover.  All rights reserved.
 
+import argparse
+
 import os
+import requests
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-
-import argparse
-
 
 
 # Get ID of row with specified date and filer
@@ -29,9 +29,8 @@ def get_row_id( driver, s_date, s_filer ):
 
     xpath = ''.join( wait_parts )
 
-    print( '----------' )
-    print( 'Waiting to load: {}'.format( xpath ) )
-    print( '----------' )
+    print( '' )
+    print( 'Loading page...' )
 
     element = WebDriverWait( driver, 120 ).until( EC.presence_of_element_located( ( By.XPATH, xpath ) ) )
     row_id = element.get_attribute( 'id' )
@@ -42,6 +41,7 @@ def get_row_id( driver, s_date, s_filer ):
 # Download files to specified target directory
 def download_files( driver, row_id, target_dir ):
 
+    # Get list of download links
     download_parts = \
     [
         '//div[@id="files_' + row_id + '"]',
@@ -49,20 +49,62 @@ def download_files( driver, row_id, target_dir ):
     ]
 
     xpath = ''.join( download_parts )
-    print( xpath )
 
     links = driver.find_elements( By.XPATH, xpath )
+
+    # Report download operation
     print( '' )
     print( 'Downloading {} files to {}:'.format( len( links ), target_dir ) )
 
+    # Iterate over list of links
     count = 0
     for link in links:
+
+        count += 1
+        filename = link.text
+
         try:
-            count += 1
-            print( '{: >3d}:  {}'.format( count, link.text ) )
-            link.click()
-        except Exception as e:
-            print( '  Download failed: {}'.format( e ) )
+            # Get the download
+            response = requests.get( link.get_attribute( 'href' ), stream=True )
+
+            # Raise HTTPError for bad response (4xx or 5xx)
+            response.raise_for_status()
+
+            # Try to fix filename if file extension is missing
+            filename = fix_pdf_filename( response, filename )
+
+            # Save the download
+            with open( os.path.join( target_dir, filename ), 'wb' ) as file:
+                for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
+                    file.write( chunk )
+
+            # Report success
+            print( '{: >3d}: {}'.format( count, filename ) )
+
+        except requests.exceptions.RequestException as e:
+            # Report error
+            print( '{: >3d}: {}'.format( count, filename ) )
+            print( '  Error: {}'.format( e ) )
+
+
+# Fix filename if it is a PDF missing the proper extension
+def fix_pdf_filename( response, filename ):
+
+    # Find out what kind of file we have
+    content_type = response.headers.get( 'content-type' )
+
+    # If it's a PDF...
+    if content_type == 'application/pdf':
+
+        # Get file extension from filename
+        file_ext = filename.split( '.' )[-1]
+
+        # Optionally fix filename
+        file_type = 'pdf'
+        if file_ext != file_type:
+            filename = filename + '.' + file_type
+
+    return filename
 
 
 ######################
@@ -101,8 +143,6 @@ if __name__ == '__main__':
 
     # Get ID of row specified by date and filer
     row_id = get_row_id( driver, args.date, args.filer )
-
-    print( '--> GOT row_id', row_id )
 
     # Download files listed in identified row
     download_files( driver, row_id, target_dir )
