@@ -19,7 +19,6 @@ import argparse
 
 import os
 import requests
-import re
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -68,6 +67,29 @@ def get_row_id( driver, s_date, s_filer ):
     return row_id
 
 
+# Extract filename from content disposition header
+def get_filename( content_disposition ):
+
+    filename = None
+
+    filename_label = 'filename='
+
+    if content_disposition:
+
+        # Split disposition into parts
+        parts = content_disposition.split(";")
+
+        # File filename part
+        for part in parts:
+
+            part = part.strip()
+            if part.startswith( filename_label ):
+                filename = part[len( filename_label ):].strip( '"' )
+                break
+
+    return filename
+
+
 # Download files to specified target directory
 def download_files( driver, row_id, target_dir ):
 
@@ -99,23 +121,27 @@ def download_files( driver, row_id, target_dir ):
             # Raise HTTPError for bad response (4xx or 5xx)
             response.raise_for_status()
 
-            # Determine the filename
-            disp = response.headers['content-disposition']
-            filename = re.findall( 'filename=(.+)', disp )[0]
-            filename = filename.strip( '"' )
+            # Extract filename from content disposition header
+            filename = get_filename( response.headers['content-disposition'] )
 
-            # Save the download
-            with open( os.path.join( target_dir, filename ), 'wb' ) as file:
-                for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
-                    file.write( chunk )
+            if filename:
+                # Save the download
+                with open( os.path.join( target_dir, filename ), 'wb' ) as file:
+                    for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
+                        file.write( chunk )
 
-            # Report success
-            print( '{: >3d}: {}'.format( count, filename ) )
+                # Report success
+                print( '{: >3d}: {}'.format( count, filename ) )
+
+            else:
+                # Report error
+                print( '  Error: {}'.format( 'Filename not found in content disposition header' ) )
 
         except requests.exceptions.RequestException as e:
             # Report error
             print( '{: >3d}: {}'.format( count, filename ) )
             print( '  Error: {}'.format( e ) )
+            exit()
 
 
 
