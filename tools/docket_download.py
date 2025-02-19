@@ -1,5 +1,20 @@
 # Copyright 2025 Energize Andover.  All rights reserved.
 
+######################
+#
+# Required parameters:
+# -d <date>
+# -f <filer>
+#
+# Optional parameters:
+# -t <target directory> (defaults to script working directory)
+#
+# Sample parameter sequence:
+# -d 01/06/2025 -f "DOER" -t ./out
+#
+######################
+
+
 import argparse
 
 import os
