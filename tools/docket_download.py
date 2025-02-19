@@ -4,6 +4,7 @@ import argparse
 
 import os
 import requests
+import re
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -30,7 +31,7 @@ def get_row_id( driver, s_date, s_filer ):
     xpath = ''.join( wait_parts )
 
     print( '' )
-    print( 'Loading page...' )
+    print( 'Waiting for filings dated {} from {}...'.format( s_date, s_filer ) )
 
     element = WebDriverWait( driver, 120 ).until( EC.presence_of_element_located( ( By.XPATH, xpath ) ) )
     row_id = element.get_attribute( 'id' )
@@ -61,7 +62,6 @@ def download_files( driver, row_id, target_dir ):
     for link in links:
 
         count += 1
-        filename = link.text
 
         try:
             # Get the download
@@ -70,8 +70,10 @@ def download_files( driver, row_id, target_dir ):
             # Raise HTTPError for bad response (4xx or 5xx)
             response.raise_for_status()
 
-            # Try to fix filename if file extension is missing
-            filename = fix_pdf_filename( response, filename )
+            # Determine the filename
+            disp = response.headers['content-disposition']
+            filename = re.findall( 'filename=(.+)', disp )[0]
+            filename = filename.strip( '"' )
 
             # Save the download
             with open( os.path.join( target_dir, filename ), 'wb' ) as file:
@@ -86,25 +88,6 @@ def download_files( driver, row_id, target_dir ):
             print( '{: >3d}: {}'.format( count, filename ) )
             print( '  Error: {}'.format( e ) )
 
-
-# Fix filename if it is a PDF missing the proper extension
-def fix_pdf_filename( response, filename ):
-
-    # Find out what kind of file we have
-    content_type = response.headers.get( 'content-type' )
-
-    # If it's a PDF...
-    if content_type == 'application/pdf':
-
-        # Get file extension from filename
-        file_ext = filename.split( '.' )[-1]
-
-        # Optionally fix filename
-        file_type = 'pdf'
-        if file_ext != file_type:
-            filename = filename + '.' + file_type
-
-    return filename
 
 
 ######################
