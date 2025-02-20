@@ -3,6 +3,7 @@
 ######################
 #
 # Required parameters:
+# -n <docket_number>
 # -d <date>
 # -f <filer>
 #
@@ -10,7 +11,7 @@
 # -t <target directory> (defaults to working directory)
 #
 # Sample parameter sequence:
-# -d 10/31/2024 -f "Eversource Energy" -t ./out
+# -n 24-141 -d 10/31/2024 -f "Eversource Energy" -t ./out
 #
 ######################
 
@@ -151,7 +152,8 @@ def download_files( driver, row_id, target_dir ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Download filings from MA DPU docket 24-141' )
+    parser = argparse.ArgumentParser( description='Download MA docket filings' )
+    parser.add_argument( '-n', dest='docket_number',  help='Docket number', required=True )
     parser.add_argument( '-d', dest='date',  help='Date of filing', required=True )
     parser.add_argument( '-f', dest='filer',  help='Filer', required=True )
     parser.add_argument( '-t', dest='target_directory',  help='Target directory where downloads will be saved' )
@@ -181,7 +183,8 @@ if __name__ == '__main__':
     driver = webdriver.Chrome( ChromeDriverManager().install(), options=options )
 
     # Open the web page
-    driver.get( 'https://eeaonline.eea.state.ma.us/DPU/Fileroom/dockets/bynumber/24-141' )
+    docket_url = 'https://eeaonline.eea.state.ma.us/DPU/Fileroom/dockets/bynumber/' + args.docket_number
+    driver.get( docket_url )
 
     # Get ID of row specified by date and filer
     row_id = get_row_id( driver, args.date, args.filer )
