@@ -81,7 +81,7 @@ def get_web_page( driver, s_docket_number ):
     xpath = ''.join( wait_parts )
 
     print( '' )
-    print( 'Waiting for web page...' )
+    print( 'Waiting for web page' )
     print( '  Docket Number: {}'.format( s_docket_number ) )
 
     try:
@@ -93,6 +93,7 @@ def get_web_page( driver, s_docket_number ):
 
         print( '' )
         print( 'Error loading web page' )
+        print( '  URL: {}'.format( docket_url ) )
         print( '  Reason: {}'.format( s_message ) )
 
         exit()
@@ -122,7 +123,7 @@ def get_row_id( driver, s_date, s_filer ):
     xpath = ''.join( wait_parts )
 
     print( '' )
-    print( 'Waiting for filings...' )
+    print( 'Waiting for filings' )
     print( '  Date: {}'.format( s_date ) )
     print( '  Filer: {}'.format( s_filer ) )
 
