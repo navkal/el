@@ -29,7 +29,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-# --> Time reporting -->
+# --> Reporting of elapsed time -->
 import time
 START_TIME = time.time()
 
@@ -38,7 +38,7 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
     minutes, seconds = divmod( elapsed_time, 60 )
     ms = round( ( elapsed_time - int( elapsed_time ) ) * 1000 )
     print( prefix + 'Elapsed time: {:02d}:{:02d}.{:d}'.format( int( minutes ), int( seconds ), ms ) )
-# <-- Time reporting <--
+# <-- Reporting of elapsed time <--
 
 
 
@@ -65,126 +65,151 @@ def get_driver( target_dir ):
 
 
 # Get the web page for the specified docket
-def get_web_page( driver, s_docket_number ):
+def get_docket( driver, s_docket_number ):
 
     # Open the web page
     docket_url = 'https://eeaonline.eea.state.ma.us/DPU/Fileroom/dockets/bynumber/' + s_docket_number
     driver.get( docket_url )
 
-    # Wait briefly for error to occur
-    wait_parts = \
+    # Initialize xpath that would navigate to an error message, should one appear
+    xpath_parts = \
     [
+        # Select the div in which all results are displayed
         '//div[@class="resultsList"]',
+        # Select the div containing a centered message that reports errors
         '/div[@class="resultsCenter"]',
     ]
-
-    xpath = ''.join( wait_parts )
+    xpath = ''.join( xpath_parts )
 
     print( '' )
-    print( 'Waiting for web page' )
+    print( 'Waiting for docket' )
     print( '  Docket Number: {}'.format( s_docket_number ) )
 
     try:
         # Wait briefly for error message to load
         element = WebDriverWait( driver, 10 ).until( EC.presence_of_element_located( ( By.XPATH, xpath ) ) )
 
-        # If error message loaded, report and exit
-        s_message = element.get_attribute( 'innerHTML' )
+        # Extract error message
+        s_error = element.get_attribute( 'innerHTML' )
 
+        # Report error message
         print( '' )
-        print( 'Error loading web page' )
+        print( 'Error loading docket' )
         print( '  URL: {}'.format( docket_url ) )
-        print( '  Reason: {}'.format( s_message ) )
+        print( '  Reason: {}'.format( s_error ) )
+        print( '' )
+        print( '--> Please check requested docket number' )
 
         exit()
 
     except TimeoutException:
-        # Wait for error message timed out; good!
+        # No error message; do nothing
         pass
 
     return
 
 
-# Get ID of row with specified date and filer
-def get_row_id( driver, s_date, s_filer ):
+# Get IDs of rows with specified date and filer
+def get_row_ids( driver, s_date, s_filer ):
 
-    # Wait for the page to fully load JavaScript-rendered content
-    wait_parts = \
+    # Initialize xpath to navigate to the docket row representing the requested date and filer
+    xpath_parts = \
     [
+        # Select all the docket rows
         '//div[@class="divGridRow"]',
+        # Select the left column of each row
         '/div[@class="left"]',
+        # Select the left-column cells that have a matching date
         '[.//text()[contains(., "' + s_date + '" )]]',
+        # Navigate back to the parent rows, now filtered by date
         '/parent::div',
+        # Select the right column of those rows
         '/div[@class="right"]',
+        # Select the right-column cells that have a matching filer
         '[.//text()[contains(., "' + s_filer + '" )]]',
+        # Navigate back to the parent row, now filtered by date and filer
         '/parent::div',
     ]
-
-    xpath = ''.join( wait_parts )
+    xpath = ''.join( xpath_parts )
 
     print( '' )
     print( 'Waiting for filings' )
     print( '  Date: {}'.format( s_date ) )
     print( '  Filer: {}'.format( s_filer ) )
 
-    element = WebDriverWait( driver, 90 ).until( EC.presence_of_element_located( ( By.XPATH, xpath ) ) )
-    row_id = element.get_attribute( 'id' )
+    # Wait for the row with requested date and filer to load
+    try:
+        ls_elements = WebDriverWait( driver, 90 ).until( EC.presence_of_all_elements_located( ( By.XPATH, xpath ) ) )
+        ls_row_ids = []
+        for element in ls_elements:
+            ls_row_ids.append( element.get_attribute( 'id' ) )
 
-    return row_id
+    except TimeoutException:
+        print( '' )
+        print( 'Error loading requested filings' )
+        print( '' )
+        print( '--> Please check requested date and filer' )
+        exit()
+
+    return ls_row_ids
 
 
 # Download files to specified target directory
-def download_files( driver, row_id, target_dir ):
+def download_files( driver, ls_row_ids, target_dir ):
 
-    # Get list of download links
-    download_parts = \
-    [
-        '//div[@id="files_' + row_id + '"]',
-        '/a',
-    ]
-
-    xpath = ''.join( download_parts )
-
-    links = driver.find_elements( By.XPATH, xpath )
-
-    # Report download operation
     print( '' )
-    print( 'Downloading {} files to {}:'.format( len( links ), target_dir ) )
-
-    # Iterate over list of links
+    print( 'Downloading files to {}:'.format( target_dir ) )
     count = 0
-    for link in links:
 
-        count += 1
+    for row_id in ls_row_ids:
 
-        try:
-            # Get the download
-            response = requests.get( link.get_attribute( 'href' ), stream=True )
+        # Initialize xpath that would navigate to list of download links
+        xpath_parts = \
+        [
+            '//div[@id="files_' + row_id + '"]',
+            '/a',
+        ]
+        xpath = ''.join( xpath_parts )
 
-            # Raise HTTPError for bad response (4xx or 5xx)
-            response.raise_for_status()
+        # Extract the links
+        ls_links = driver.find_elements( By.XPATH, xpath )
 
-            # Extract filename from content disposition header
-            filename = get_filename( response.headers['content-disposition'] )
+        # Iterate over list of links
+        for link in ls_links:
 
-            if filename:
-                # Save the download
-                with open( os.path.join( target_dir, filename ), 'wb' ) as file:
-                    for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
-                        file.write( chunk )
+            count += 1
 
-                # Report success
-                print( '{: >3d}: {}'.format( count, filename ) )
+            try:
+                # Get the download
+                response = requests.get( link.get_attribute( 'href' ), stream=True )
 
-            else:
+                # Raise HTTPError for bad response (4xx or 5xx)
+                response.raise_for_status()
+
+                # Extract filename from content disposition header
+                filename = get_filename( response.headers['content-disposition'] )
+
+                if filename:
+                    # Save the download
+                    with open( os.path.join( target_dir, filename ), 'wb' ) as file:
+                        for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
+                            file.write( chunk )
+
+                    # Report success
+                    print( '{: >3d}: {}'.format( count, filename ) )
+
+                else:
+                    # Report error
+                    print( '  Error: {}'.format( 'Filename not found in content disposition header' ) )
+
+            except requests.exceptions.RequestException as e:
                 # Report error
-                print( '  Error: {}'.format( 'Filename not found in content disposition header' ) )
+                print( '{: >3d}: {}'.format( count, filename ) )
+                print( '  Error: {}'.format( e ) )
+                exit()
 
-        except requests.exceptions.RequestException as e:
-            # Report error
-            print( '{: >3d}: {}'.format( count, filename ) )
-            print( '  Error: {}'.format( e ) )
-            exit()
+    if count == 0:
+        print( '  No files found' )
 
 
 # Extract filename from content disposition header
@@ -231,13 +256,13 @@ if __name__ == '__main__':
     driver = get_driver( args.target_directory )
 
     # Get the web page for the specified docket
-    get_web_page( driver, args.docket_number )
+    get_docket( driver, args.docket_number )
 
-    # Get ID of row specified by date and filer
-    row_id = get_row_id( driver, args.date, args.filer )
+    # Get IDs of rows specified by date and filer
+    ls_row_ids = get_row_ids( driver, args.date, args.filer )
 
-    # Download files listed in identified row
-    download_files( driver, row_id, args.target_directory )
+    # Download files listed in identified rows
+    download_files( driver, ls_row_ids, args.target_directory )
 
     # Close the browser
     driver.quit()
