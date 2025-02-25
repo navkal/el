@@ -271,7 +271,7 @@ if __name__ == '__main__':
 
     # Report argument list
     print( '' )
-    print( 'Arguments to', __file__ )
+    print( __file__, 'running with the following arguments',  )
     print( '  Docket Number: {}'.format( args.docket_number ) )
     print( '  Date: {}'.format( args.date ) )
     print( '  Filer: {}'.format( args.filer ) )
