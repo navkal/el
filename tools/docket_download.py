@@ -17,6 +17,7 @@
 
 
 import argparse
+from datetime import datetime
 
 import os
 import requests
@@ -40,6 +41,26 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
     print( prefix + 'Elapsed time: {:02d}:{:02d}.{:d}'.format( int( minutes ), int( seconds ), ms ) )
 # <-- Reporting of elapsed time <--
 
+
+# Ensure date format mm/dd/yyyy
+def format_date( s_date ):
+
+    s_format = '%m/%d/%Y'
+
+    try:
+        # Parse the date
+        d = datetime.strptime( s_date, s_format )
+
+        # Reformat the date as mm/dd/yyyy
+        s_date = d.strftime( s_format )
+
+    except ValueError:
+        # Could not parse date
+        print( '' )
+        print( 'Error in date format: {}'.format( s_date ) )
+        exit()
+
+    return s_date
 
 
 # Get the Chrome driver
@@ -248,9 +269,20 @@ if __name__ == '__main__':
     parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory where downloads will be saved' )
     args = parser.parse_args()
 
+    # Report argument list
+    print( '' )
+    print( 'Arguments to', __file__ )
+    print( '  Docket Number: {}'.format( args.docket_number ) )
+    print( '  Date: {}'.format( args.date ) )
+    print( '  Filer: {}'.format( args.filer ) )
+    print( '  Target Directory: {}'.format( args.target_directory ) )
+
     # Report start time
     print( '' )
     print( 'Starting at', time.strftime( '%H:%M:%S', time.localtime( START_TIME ) ) )
+
+    # Ensure that date is in format used by docket website
+    s_date = format_date( args.date )
 
     # Get the Chrome driver
     driver = get_driver( args.target_directory )
@@ -259,7 +291,7 @@ if __name__ == '__main__':
     get_docket( driver, args.docket_number )
 
     # Get IDs of rows specified by date and filer
-    ls_row_ids = get_row_ids( driver, args.date, args.filer )
+    ls_row_ids = get_row_ids( driver, s_date, args.filer )
 
     # Download files listed in identified rows
     download_files( driver, ls_row_ids, args.target_directory )
