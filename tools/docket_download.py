@@ -4,10 +4,10 @@
 #
 # Required parameters:
 # -n <docket_number>
-# -d <date>
-# -f <filer>
 #
 # Optional parameters:
+# -d <date>
+# -f <filer>
 # -t <target directory> (defaults to working directory)
 #
 # Sample parameter sequence:
@@ -21,6 +21,7 @@ from datetime import datetime
 
 import os
 import requests
+from pathvalidate import sanitize_filename
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -28,6 +29,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+
+
+# Date formats used on web page and output directory
+DATE_FORMAT_WEB = '%m/%d/%Y'
+DATE_FORMAT_DIR = '%Y-%m-%d'
 
 
 # --> Reporting of elapsed time -->
@@ -45,14 +51,12 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
 # Ensure date format mm/dd/yyyy
 def format_date( s_date ):
 
-    s_format = '%m/%d/%Y'
-
     try:
         # Parse the date
-        d = datetime.strptime( s_date, s_format )
+        d = datetime.strptime( s_date, DATE_FORMAT_WEB )
 
         # Reformat the date as mm/dd/yyyy
-        s_date = d.strftime( s_format )
+        s_date = d.strftime( DATE_FORMAT_WEB )
 
     except ValueError:
         # Could not parse date
@@ -141,14 +145,17 @@ def get_row_ids( driver, s_date, s_filer ):
         # Select the left column of each row
         '/div[@class="left"]',
         # Select the left-column cells that have a matching date
-        '[.//text()[contains(., "' + s_date + '" )]]',
+        '[.//text()[contains( ., "' + s_date + '" )]]',
         # Navigate back to the parent rows, now filtered by date
         '/parent::div',
         # Select the right column of those rows
         '/div[@class="right"]',
+        # Select the element containing the filer
+        '/span[@class="filer"]',
         # Select the right-column cells that have a matching filer
-        '[.//text()[contains(., "' + s_filer + '" )]]',
+        '[.//text()[contains( ., "' + s_filer + '" )]]',
         # Navigate back to the parent row, now filtered by date and filer
+        '/parent::div',
         '/parent::div',
     ]
     xpath = ''.join( xpath_parts )
@@ -178,16 +185,32 @@ def get_row_ids( driver, s_date, s_filer ):
 # Download files to specified target directory
 def download_files( driver, ls_row_ids, target_dir ):
 
-    print( '' )
-    print( 'Downloading files to {}:'.format( target_dir ) )
     count = 0
 
+    prev_download_dir = ''
+
     for row_id in ls_row_ids:
+
+        # Generate a directory name based on this row's date and filer and append to target directory
+        dir_name = make_dir_name( row_id )
+        download_dir = os.path.join( target_dir, dir_name )
+
+        # Create the directory if it does not already exist
+        if not os.path.exists( download_dir ):
+            os.makedirs( download_dir )
+
+        # Report next download directory
+        if download_dir != prev_download_dir:
+            print( '' )
+            print( 'Downloading files to "{}":'.format( download_dir ) )
+            prev_download_dir = download_dir
 
         # Initialize xpath that would navigate to list of download links
         xpath_parts = \
         [
+            # Select the row
             '//div[@id="files_' + row_id + '"]',
+            # Select the links in the row
             '/a',
         ]
         xpath = ''.join( xpath_parts )
@@ -202,17 +225,21 @@ def download_files( driver, ls_row_ids, target_dir ):
 
             try:
                 # Get the download
-                response = requests.get( link.get_attribute( 'href' ), stream=True )
-
-                # Raise HTTPError for bad response (4xx or 5xx)
-                response.raise_for_status()
+                try:
+                    response = requests.get( link.get_attribute( 'href' ), stream=True )
+                    response.raise_for_status()
+                except:
+                    # Wait and retry
+                    time.sleep( 5 )
+                    response = requests.get( link.get_attribute( 'href' ), stream=True )
+                    response.raise_for_status()
 
                 # Extract filename from content disposition header
                 filename = get_filename( response.headers['content-disposition'] )
 
                 if filename:
                     # Save the download
-                    with open( os.path.join( target_dir, filename ), 'wb' ) as file:
+                    with open( os.path.join( download_dir, filename ), 'wb' ) as file:
                         for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
                             file.write( chunk )
 
@@ -223,14 +250,55 @@ def download_files( driver, ls_row_ids, target_dir ):
                     # Report error
                     print( '  Error: {}'.format( 'Filename not found in content disposition header' ) )
 
-            except requests.exceptions.RequestException as e:
+            except Exception as e:
                 # Report error
                 print( '{: >3d}: {}'.format( count, filename ) )
-                print( '  Error: {}'.format( e ) )
-                exit()
+                print( '  Download failed: {}'.format( e ) )
 
     if count == 0:
         print( '  No files found' )
+
+
+# Generate a directory name from date and filer of identified row
+def make_dir_name( row_id ):
+
+    # Find the date of the current row
+    xpath_parts = \
+    [
+        # Select the row
+        '//div[@id="' + row_id + '"]',
+        # Select the left column of the row
+        '/div[@class="left"]',
+        # Select the element containing the date
+        '/span[@class="created"]',
+        # Select the element containing the date text
+        '/strong',
+    ]
+    xpath = ''.join( xpath_parts )
+    el = driver.find_element( By.XPATH, xpath )
+    s_date = el.get_attribute( 'innerHTML' )
+
+    # Find the filer of the current row
+    xpath_parts = \
+    [
+        # Select the row
+        '//div[@id="' + row_id + '"]',
+        # Select the right column of the row
+        '/div[@class="right"]',
+        # Select the element containing the filer
+        '/span[@class="filer"]',
+    ]
+    xpath = ''.join( xpath_parts )
+    el = driver.find_element( By.XPATH, xpath )
+    s_filer = el.get_attribute( 'innerHTML' )
+
+    # Reformat date for directory name
+    d = datetime.strptime( s_date, DATE_FORMAT_WEB )
+    s_date = d.strftime( DATE_FORMAT_DIR )
+
+    # Format valid directory name from combined date and filer
+    dir_name = sanitize_filename( s_date + ' ' + s_filer )
+    return dir_name
 
 
 # Extract filename from content disposition header
@@ -253,6 +321,8 @@ def get_filename( content_disposition ):
                 filename = part[len( filename_label ):].strip( '"' )
                 break
 
+    filename = sanitize_filename( filename )
+
     return filename
 
 
@@ -264,8 +334,8 @@ if __name__ == '__main__':
     # Read arguments
     parser = argparse.ArgumentParser( description='Download MA docket filings' )
     parser.add_argument( '-n', dest='docket_number',  help='Docket number', required=True )
-    parser.add_argument( '-d', dest='date',  help='Date of filing', required=True )
-    parser.add_argument( '-f', dest='filer',  help='Filer', required=True )
+    parser.add_argument( '-d', dest='date',  help='Date of filing', default='' )
+    parser.add_argument( '-f', dest='filer',  help='Filer', default='' )
     parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory where downloads will be saved' )
     args = parser.parse_args()
 
@@ -282,7 +352,7 @@ if __name__ == '__main__':
     print( 'Starting at', time.strftime( '%H:%M:%S', time.localtime( START_TIME ) ) )
 
     # Ensure that date is in format used by docket website
-    s_date = format_date( args.date )
+    s_date = format_date( args.date ) if args.date else ''
 
     # Get the Chrome driver
     driver = get_driver( args.target_directory )
