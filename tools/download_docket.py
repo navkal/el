@@ -202,7 +202,8 @@ def get_row_ids( driver, s_date, s_filer ):
             print_optional_argument( 'Filer', s_filer )
         exit()
 
-    return ls_row_ids
+    # Reverse the order, so in case of duplication, newer files overwrite older files
+    return reversed( ls_row_ids )
 
 
 # Download files to specified target directory
