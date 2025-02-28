@@ -49,7 +49,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 DATE_FORMAT_WEB = '%m/%d/%Y'
 DATE_FORMAT_DIR = '%Y-%m-%d'
 
-MAX_RETRY_SECONDS = 5
+MAX_RETRY_SECONDS = 10
 
 # --> Reporting of elapsed time -->
 import time
@@ -61,6 +61,11 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
     ms = round( ( elapsed_time - int( elapsed_time ) ) * 1000 )
     print( prefix + 'Elapsed time: {:02d}:{:02d}.{:d}'.format( int( minutes ), int( seconds ), ms ) )
 # <-- Reporting of elapsed time <--
+
+
+# Report value of optional argument
+def print_optional_argument( s_label, s_value ):
+    print( '  {}: {}'.format( s_label, s_value if s_value else '<any>' ) )
 
 
 # Ensure date format mm/dd/yyyy
@@ -177,8 +182,8 @@ def get_row_ids( driver, s_date, s_filer ):
 
     print( '' )
     print( 'Waiting for filings' )
-    print( '  Date: {}'.format( s_date ) )
-    print( '  Filer: {}'.format( s_filer ) )
+    print_optional_argument( 'Date', s_date )
+    print_optional_argument( 'Filer', s_filer )
 
     # Wait for the row with requested date and filer to load
     try:
@@ -189,9 +194,12 @@ def get_row_ids( driver, s_date, s_filer ):
 
     except TimeoutException:
         print( '' )
-        print( 'Error loading requested filings' )
+        print( 'Request timed out.' )
         print( '' )
-        print( '--> Please check requested date and filer' )
+        if s_date or s_filer:
+            print( '--> Please check argument values' )
+            print_optional_argument( 'Date', s_date )
+            print_optional_argument( 'Filer', s_filer )
         exit()
 
     return ls_row_ids
@@ -372,8 +380,8 @@ if __name__ == '__main__':
     print( '' )
     print( __file__, 'running with the following arguments',  )
     print( '  Docket Number: {}'.format( args.docket_number ) )
-    print( '  Date: {}'.format( args.date ) )
-    print( '  Filer: {}'.format( args.filer ) )
+    print_optional_argument( 'Date', args.date )
+    print_optional_argument( 'Filer', args.filer )
     print( '  Target Directory: {}'.format( args.target_directory ) )
 
     # Report start time
