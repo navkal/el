@@ -2,6 +2,9 @@
 
 ######################
 #
+# Download files from a specified docket into a collection
+# of subdirectories, organized by date and filer
+#
 # Required parameters:
 # -n <docket_number>
 #
@@ -10,8 +13,19 @@
 # -f <filer>
 # -t <target directory> (defaults to working directory)
 #
-# Sample parameter sequence:
-# -n 24-141 -d 10/31/2024 -f "Eversource Energy" -t ./out
+# Sample parameter sequences:
+#
+#  Download files posted on specified date by specified filer
+#   -n 24-141 -d 10/31/2024 -f "Eversource Energy" -t ./out
+#
+#  Download all files posted on specified date
+#   -n 24-141 -d 01/06/2025 -t ./out
+#
+#  Download all files posted by specified filer
+#   -n 24-141 -f "DOER" -t ./out
+#
+#  Download an entire docket
+#   -n 24-141 -t ./out
 #
 ######################
 
@@ -35,6 +49,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 DATE_FORMAT_WEB = '%m/%d/%Y'
 DATE_FORMAT_DIR = '%Y-%m-%d'
 
+MAX_RETRY_SECONDS = 5
 
 # --> Reporting of elapsed time -->
 import time
@@ -224,11 +239,24 @@ def download_files( driver, ls_row_ids, target_dir ):
             count += 1
 
             try:
-                # Get the download
-                try:
-                    response = requests.get( link.get_attribute( 'href' ), stream=True )
-                    response.raise_for_status()
-                except:
+                # Request the download in a retry loop
+                for sec in range( 1, MAX_RETRY_SECONDS + 1 ):
+                    try:
+                        # Issue the request
+                        response = requests.get( link.get_attribute( 'href' ), stream=True )
+                        response.raise_for_status()
+                    except:
+                        # Request failed
+                        if sec < MAX_RETRY_SECONDS:
+                            # Sleep and try again
+                            time.sleep( sec )
+                        else:
+                            # We're out of luck
+                            response.raise_for_status()
+                    else:
+                        # Request succeeded; exit loop
+                        break
+
                     # Wait and retry
                     time.sleep( 5 )
                     response = requests.get( link.get_attribute( 'href' ), stream=True )
@@ -251,9 +279,10 @@ def download_files( driver, ls_row_ids, target_dir ):
                     print( '  Error: {}'.format( 'Filename not found in content disposition header' ) )
 
             except Exception as e:
-                # Report error
+                # Report error and abort
                 print( '{: >3d}: {}'.format( count, filename ) )
                 print( '  Download failed: {}'.format( e ) )
+                exit()
 
     if count == 0:
         print( '  No files found' )
@@ -332,11 +361,11 @@ def get_filename( content_disposition ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Download MA docket filings' )
+    parser = argparse.ArgumentParser( description='Download files from a specified docket into a collection of subdirectories, organized by date and filer' )
     parser.add_argument( '-n', dest='docket_number',  help='Docket number', required=True )
     parser.add_argument( '-d', dest='date',  help='Date of filing', default='' )
     parser.add_argument( '-f', dest='filer',  help='Filer', default='' )
-    parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory where downloads will be saved' )
+    parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory where downloads will be organized into subdirectories' )
     args = parser.parse_args()
 
     # Report argument list
