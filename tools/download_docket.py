@@ -44,23 +44,22 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-
-# Date formats used on web page and output directory
-DATE_FORMAT_WEB = '%m/%d/%Y'
-DATE_FORMAT_DIR = '%Y-%m-%d'
-
-MAX_RETRY_SECONDS = 10
-
 # --> Reporting of elapsed time -->
 import time
 START_TIME = time.time()
-
 def report_elapsed_time( prefix='\n', start_time=START_TIME ):
     elapsed_time = round( ( time.time() - start_time ) * 1000 ) / 1000
     minutes, seconds = divmod( elapsed_time, 60 )
     ms = round( ( elapsed_time - int( elapsed_time ) ) * 1000 )
     print( prefix + 'Elapsed time: {:02d}:{:02d}.{:d}'.format( int( minutes ), int( seconds ), ms ) )
 # <-- Reporting of elapsed time <--
+
+
+# Date formats used on web page and output directory
+DATE_FORMAT_WEB = '%m/%d/%Y'
+DATE_FORMAT_DIR = '%Y-%m-%d'
+
+MAX_RETRY_SECONDS = 10
 
 
 # Report value of optional argument
