@@ -103,7 +103,11 @@ def get_driver( target_dir ):
     options.add_argument( '--headless' )
 
     # Initialize the driver
-    driver = webdriver.Chrome( ChromeDriverManager().install(), options=options )
+    try:
+        driver = webdriver.Chrome( service=webdriver.ChromeService( ChromeDriverManager().install() ), options=options )
+    except:
+        # Retry using syntax from a different Selenium version
+        driver = webdriver.Chrome( ChromeDriverManager().install(), options=options )
 
     return driver
 
