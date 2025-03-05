@@ -35,6 +35,7 @@ from datetime import datetime
 
 import os
 import requests
+import base64
 from pathvalidate import sanitize_filename
 
 from selenium import webdriver
@@ -60,6 +61,11 @@ DATE_FORMAT_WEB = '%m/%d/%Y'
 DATE_FORMAT_DIR = '%Y-%m-%d'
 
 MAX_RETRY_SECONDS = 10
+
+
+FILENAME_LABEL = 'filename='
+UTF_LABEL = '=?utf-8?B?'
+MAX_PATH_LEN = 220
 
 
 # Report value of optional argument
@@ -212,6 +218,8 @@ def get_row_ids( driver, s_date, s_filer ):
 # Download files to specified target directory
 def download_files( driver, ls_row_ids, target_dir ):
 
+    filename = None
+
     count = 0
 
     prev_download_dir = ''
@@ -275,7 +283,7 @@ def download_files( driver, ls_row_ids, target_dir ):
                     response.raise_for_status()
 
                 # Extract filename from content disposition header
-                filename = get_filename( response.headers['content-disposition'] )
+                filename = get_filename( response.headers['content-disposition'], download_dir )
 
                 if filename:
                     # Save the download
@@ -343,11 +351,9 @@ def make_dir_name( row_id ):
 
 
 # Extract filename from content disposition header
-def get_filename( content_disposition ):
+def get_filename( content_disposition, download_dir ):
 
     filename = None
-
-    filename_label = 'filename='
 
     if content_disposition:
 
@@ -358,11 +364,33 @@ def get_filename( content_disposition ):
         for part in parts:
 
             part = part.strip()
-            if part.startswith( filename_label ):
-                filename = part[len( filename_label ):].strip( '"' )
+            if part.startswith( FILENAME_LABEL ):
+
+                # Extract the filename
+                filename = part[len( FILENAME_LABEL ):].strip( '"' )
+
+                # Optionally decode the filename
+                if filename.startswith( UTF_LABEL ):
+                    filename = filename.split( '?' )[3]
+                    filename = base64.b64decode( filename )
+                    filename = filename.decode( 'utf-8' )
+
                 break
 
+    # Sanitize
     filename = sanitize_filename( filename )
+
+    # Remove unwelcome characters
+    filename = ''.join( filename.split( ',' ) )
+    filename = ''.join( filename.split( '�' ) )
+
+    # Truncate
+    split_on_dot = filename.split( '.' )
+    name_part = '.'.join( split_on_dot[:-1] )
+    ext_part = split_on_dot[-1]
+    len_available = MAX_PATH_LEN - len( download_dir )
+    name_part = name_part[:len_available]
+    filename = '.'.join( [ name_part, ext_part ] )
 
     return filename
 
