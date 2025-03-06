@@ -66,6 +66,7 @@ MAX_RETRY_SECONDS = 10
 FILENAME_LABEL = 'filename='
 UTF_LABEL = '=?utf-8?B?'
 MAX_PATH_LEN = 220
+REPLACEMENT_CHAR = '\uFFFD'     # Occurs in utf-8 encoded filenames
 
 
 # Report value of optional argument
@@ -382,7 +383,7 @@ def get_filename( content_disposition, download_dir ):
 
     # Remove unwelcome characters
     filename = ''.join( filename.split( ',' ) )
-    filename = ''.join( filename.split( '�' ) )
+    filename = ''.join( filename.split( REPLACEMENT_CHAR ) )
 
     # Truncate
     split_on_dot = filename.split( '.' )
