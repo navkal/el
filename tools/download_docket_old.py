@@ -56,23 +56,12 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
 # <-- Reporting of elapsed time <--
 
 
-DASHBOARD_URL = 'https://eeaonline.eea.state.ma.us/dpu/fileroom/#/dashboard'
-
-XPATH_DASHBOARD = '//input[@id="mat-input-1"]'
-XPATH_FILER = '//input[contains(@class, "mat-input-element") and (@type="text") and (@aria-label="Filer")]'
-XPATH_COMMON_ANCESTER = '../../../../../../..'
-XPATH_ANCHOR = './/a'
-
-DATE = 'date'
-FILER = 'filer'
-LINKS = 'links'
-
-# Date formats used in input, on web page, and in output directory name
-DATE_FORMAT_PARSE = '%m/%d/%Y'
-DATE_FORMAT_WEB = '%#m/%#d/%Y'
+# Date formats used on web page and output directory
+DATE_FORMAT_WEB = '%m/%d/%Y'
 DATE_FORMAT_DIR = '%Y-%m-%d'
 
 MAX_RETRY_SECONDS = 10
+
 
 FILENAME_LABEL = 'filename='
 UTF_LABEL = '=?utf-8?B?'
@@ -85,12 +74,12 @@ def print_optional_argument( s_label, s_value ):
     print( '  {}: {}'.format( s_label, s_value if s_value else '<any>' ) )
 
 
-# Ensure date format [m]m/[d]d/yyyy
+# Ensure date format mm/dd/yyyy
 def format_date( s_date ):
 
     try:
         # Parse the date
-        d = datetime.strptime( s_date, DATE_FORMAT_PARSE )
+        d = datetime.strptime( s_date, DATE_FORMAT_WEB )
 
         # Reformat the date as mm/dd/yyyy
         s_date = d.strftime( DATE_FORMAT_WEB )
@@ -131,130 +120,104 @@ def get_driver( target_dir ):
 
 
 # Get the web page for the specified docket
-def get_docket( s_docket_number ):
+def get_docket( driver, s_docket_number ):
 
-    # Open the dashboard
-    driver.get( DASHBOARD_URL )
+    # Open the web page
+    docket_url = 'https://eeaonline.eea.state.ma.us/DPU/Fileroom/dockets/bynumber/' + s_docket_number
+    driver.get( docket_url )
+
+    # Initialize xpath that would navigate to an error message, should one appear
+    xpath_parts = \
+    [
+        # Select the div in which all results are displayed
+        '//div[@class="resultsList"]',
+        # Select the div containing a centered message that reports errors
+        '/div[@class="resultsCenter"]',
+    ]
+    xpath = ''.join( xpath_parts )
 
     print( '' )
-    print( 'Waiting for dashboard' )
+    print( 'Waiting for docket' )
+    print( '  Docket Number: {}'.format( s_docket_number ) )
 
     try:
-        # Wait for dashboard to load
-        WebDriverWait( driver, 5 ).until( EC.presence_of_element_located( ( By.XPATH, XPATH_DASHBOARD ) ) )
-    except:
-        # Report error and abort
+        # Wait briefly for error message to load
+        element = WebDriverWait( driver, 10 ).until( EC.presence_of_element_located( ( By.XPATH, xpath ) ) )
+
+        # Extract error message
+        s_error = element.get_attribute( 'innerHTML' )
+
+        # Report error message
         print( '' )
-        print( 'Error loading dashboard' )
-        print( '  URL: {}'.format( DASHBOARD_URL ) )
+        print( 'Error loading docket' )
+        print( '  URL: {}'.format( docket_url ) )
+        print( '  Reason: {}'.format( s_error ) )
         print( '' )
-        driver.quit()
+        print( '--> Please check requested docket number' )
+
         exit()
 
-    # Set docket number.  This triggers the website to load the docket.
-    input_element = driver.find_element_by_id( 'mat-input-1' )
-    input_element.send_keys( s_docket_number )
+    except TimeoutException:
+        # No error message; do nothing
+        pass
 
     return
 
 
-# Get docket filings
-def get_filings( s_date, s_filer, ls_filings, page_number=1 ):
+# Get IDs of rows with specified date and filer
+def get_row_ids( driver, s_date, s_filer ):
 
-    print( f'Waiting for filings, page {page_number}' )
+    # Initialize xpath to navigate to the docket row representing the requested date and filer
+    xpath_parts = \
+    [
+        # Select all the docket rows
+        '//div[@class="divGridRow"]',
+        # Select the left column of each row
+        '/div[@class="left"]',
+        # Select the left-column cells that have a matching date
+        '[.//text()[contains( ., "' + s_date + '" )]]',
+        # Navigate back to the parent rows, now filtered by date
+        '/parent::div',
+        # Select the right column of those rows
+        '/div[@class="right"]',
+        # Select the element containing the filer
+        '/span[@class="filer"]',
+        # Select the right-column cells that have a matching filer
+        '[.//text()[contains( ., "' + s_filer + '" )]]',
+        # Navigate back to the parent row, now filtered by date and filer
+        '/parent::div',
+        '/parent::div',
+    ]
+    xpath = ''.join( xpath_parts )
 
-    # Wait for filer elements to load
+    print( '' )
+    print( 'Waiting for filings' )
+    print_optional_argument( 'Date', s_date )
+    print_optional_argument( 'Filer', s_filer )
+
+    # Wait for the row with requested date and filer to load
     try:
-        ls_filers = WebDriverWait( driver, 10 ).until( EC.presence_of_all_elements_located( ( By.XPATH, XPATH_FILER ) ) )
-    except:
-        # Report error and abort
+        ls_elements = WebDriverWait( driver, 90 ).until( EC.presence_of_all_elements_located( ( By.XPATH, xpath ) ) )
+        ls_row_ids = []
+        for element in ls_elements:
+            ls_row_ids.append( element.get_attribute( 'id' ) )
+
+    except TimeoutException:
         print( '' )
-        print( 'Error loading filings' )
-        print( '-- Check your arguments --' )
-        print( '  Docket Number: {}'.format( args.docket_number ) )
-        print_optional_argument( 'Date', s_date )
-        print_optional_argument( 'Filer', s_filer )
+        print( 'Request timed out.' )
         print( '' )
-        driver.quit()
+        if s_date or s_filer:
+            print( '--> Please check argument values' )
+            print_optional_argument( 'Date', s_date )
+            print_optional_argument( 'Filer', s_filer )
         exit()
 
-    # Iterate over list of filers
-    for el_filer in ls_filers:
-
-        # Navigate to common ancestor
-        el_ancestor = el_filer.find_element( By.XPATH, XPATH_COMMON_ANCESTER )
-
-        # Find date element that corresponds with current filer element
-        el_date = el_ancestor.find_element( By.CLASS_NAME, 'mat-datepicker-input' )
-
-        # Extract text values
-        s_date_value = el_date.get_attribute( 'value' )
-        s_filer_value = el_filer.get_attribute( 'value' )
-
-        if user_requested_this_filing( s_date, s_date_value, s_filer, s_filer_value ):
-
-            # Find anchors corresponding with current filer element
-            ls_anchors = el_ancestor.find_element( By.CLASS_NAME, 'mat-chip-list-wrapper' ).find_elements( By.XPATH, XPATH_ANCHOR )
-
-            # Extract the download links
-            ls_links = []
-            for el_anchor in ls_anchors:
-                ls_links.append( el_anchor.get_attribute( 'href' ) )
-
-            # Save the current filing
-            ls_filings.append(
-                {
-                    DATE: s_date_value,
-                    FILER: s_filer_value,
-                    LINKS: ls_links,
-                }
-            )
-
-
-    # Find the Next Page button
-    next_button = driver.find_element( By.CSS_SELECTOR, 'button.mat-paginator-navigation-next' )
-
-    # Scroll the button into view
-    driver.execute_script( 'arguments[0].scrollIntoView(true);', next_button)
-
-    # If the button is enabled, load and process the next page
-    if next_button.is_enabled():
-        next_button.click()
-        ls_filings = get_filings( s_date, s_filer, ls_filings, page_number=(page_number+1) )
-
-    return ls_filings
-
-
-# Determine whether the current filing was requested via date and filer arguments
-def user_requested_this_filing( s_date, s_date_value, s_filer, s_filer_value ):
-
-    # Convert strings to lowercase before comparing
-    s_date = s_date.lower()
-    s_date_value = s_date_value.lower()
-    s_filer = s_filer.lower()
-    s_filer_value = s_filer_value.lower()
-
-    if s_date and s_filer:
-        # Both requested, both must match
-        b_rq = ( s_date == s_date_value ) and ( s_filer == s_filer_value )
-
-    elif s_date:
-        # Only date requested, only date must match
-        b_rq = ( s_date == s_date_value )
-
-    elif s_filer:
-        # Only filer requested, only filer must match
-        b_rq = ( s_filer == s_filer_value )
-
-    else:
-        # Neither date nor filer was requested, neither must match
-        b_rq = True
-
-    return b_rq
+    # Reverse the order, so in case of duplication, newer files overwrite older files
+    return reversed( ls_row_ids )
 
 
 # Download files to specified target directory
-def download_files( ls_filings, target_dir ):
+def download_files( driver, ls_row_ids, target_dir ):
 
     filename = None
 
@@ -262,10 +225,10 @@ def download_files( ls_filings, target_dir ):
 
     prev_download_dir = ''
 
-    for filing in reversed( ls_filings ):
+    for row_id in ls_row_ids:
 
         # Generate a directory name based on this row's date and filer and append to target directory
-        dir_name = make_dir_name( filing )
+        dir_name = make_dir_name( row_id )
         download_dir = os.path.join( target_dir, dir_name )
 
         # Create the directory if it does not already exist
@@ -278,8 +241,21 @@ def download_files( ls_filings, target_dir ):
             print( 'Downloading files to "{}":'.format( download_dir ) )
             prev_download_dir = download_dir
 
+        # Initialize xpath that would navigate to list of download links
+        xpath_parts = \
+        [
+            # Select the row
+            '//div[@id="files_' + row_id + '"]',
+            # Select the links in the row
+            '/a',
+        ]
+        xpath = ''.join( xpath_parts )
+
+        # Extract the links
+        ls_links = driver.find_elements( By.XPATH, xpath )
+
         # Iterate over list of links
-        for link in filing[LINKS]:
+        for link in ls_links:
 
             count += 1
 
@@ -288,7 +264,7 @@ def download_files( ls_filings, target_dir ):
                 for sec in range( 1, MAX_RETRY_SECONDS + 1 ):
                     try:
                         # Issue the request
-                        response = requests.get( link, stream=True )
+                        response = requests.get( link.get_attribute( 'href' ), stream=True )
                         response.raise_for_status()
                     except:
                         # Request failed
@@ -304,7 +280,7 @@ def download_files( ls_filings, target_dir ):
 
                     # Wait and retry
                     time.sleep( 5 )
-                    response = requests.get( link, stream=True )
+                    response = requests.get( link.get_attribute( 'href' ), stream=True )
                     response.raise_for_status()
 
                 # Extract filename from content disposition header
@@ -327,22 +303,51 @@ def download_files( ls_filings, target_dir ):
                 # Report error and abort
                 print( '{: >3d}: {}'.format( count, filename ) )
                 print( '  Download failed: {}'.format( e ) )
-                driver.quit()
                 exit()
 
     if count == 0:
         print( '  No files found' )
 
 
-# Generate a directory name from date and filer of identified filing
-def make_dir_name( filing ):
+# Generate a directory name from date and filer of identified row
+def make_dir_name( row_id ):
+
+    # Find the date of the current row
+    xpath_parts = \
+    [
+        # Select the row
+        '//div[@id="' + row_id + '"]',
+        # Select the left column of the row
+        '/div[@class="left"]',
+        # Select the element containing the date
+        '/span[@class="created"]',
+        # Select the element containing the date text
+        '/strong',
+    ]
+    xpath = ''.join( xpath_parts )
+    el = driver.find_element( By.XPATH, xpath )
+    s_date = el.get_attribute( 'innerHTML' )
+
+    # Find the filer of the current row
+    xpath_parts = \
+    [
+        # Select the row
+        '//div[@id="' + row_id + '"]',
+        # Select the right column of the row
+        '/div[@class="right"]',
+        # Select the element containing the filer
+        '/span[@class="filer"]',
+    ]
+    xpath = ''.join( xpath_parts )
+    el = driver.find_element( By.XPATH, xpath )
+    s_filer = el.get_attribute( 'innerHTML' )
 
     # Reformat date for directory name
-    d = datetime.strptime( filing[DATE], DATE_FORMAT_PARSE )
+    d = datetime.strptime( s_date, DATE_FORMAT_WEB )
     s_date = d.strftime( DATE_FORMAT_DIR )
 
     # Format valid directory name from combined date and filer
-    dir_name = sanitize_filename( s_date + ' ' + filing[FILER] )
+    dir_name = sanitize_filename( s_date + ' ' + s_filer )
     return dir_name
 
 
@@ -423,18 +428,16 @@ if __name__ == '__main__':
     driver = get_driver( args.target_directory )
 
     # Get the web page for the specified docket
-    get_docket( args.docket_number )
+    get_docket( driver, args.docket_number )
 
-    # Get docket filings
-    ls_filings = []
-    ls_filings = get_filings( s_date, args.filer, ls_filings )
+    # Get IDs of rows specified by date and filer
+    ls_row_ids = get_row_ids( driver, s_date, args.filer )
 
     # Download files listed in identified rows
-    download_files( ls_filings, args.target_directory )
+    download_files( driver, ls_row_ids, args.target_directory )
 
     # Close the browser
     driver.quit()
 
     # Report elapsed time
     report_elapsed_time()
-
