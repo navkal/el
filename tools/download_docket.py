@@ -152,7 +152,7 @@ def get_docket( s_docket_number ):
         exit()
 
     # Set docket number.  This triggers the website to load the docket.
-    input_element = driver.find_element_by_id( 'mat-input-1' )
+    input_element = driver.find_element( By.ID, 'mat-input-1' )
     input_element.send_keys( s_docket_number )
 
     return
