@@ -59,7 +59,7 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
 DASHBOARD_URL = 'https://eeaonline.eea.state.ma.us/dpu/fileroom/#/dashboard'
 
 XPATH_DASHBOARD = '//input[@id="mat-input-1"]'
-XPATH_DESCRIPTION = '//div[contains(@class, "text") and (@aria-label="Docket description")]'
+XPATH_DESCRIPTION = '//div[contains(@class, "text") and (@aria-label="Docket description") and (text() != "")]'
 XPATH_FILER = '//input[contains(@class, "mat-input-element") and (@type="text") and (@aria-label="Filer")]'
 XPATH_COMMON_ANCESTOR = '../../../../../../..'
 XPATH_ANCHOR = './/a'
@@ -163,7 +163,7 @@ def get_docket( s_docket_number, download_dir ):
 
     try:
         # Wait for docket description to load
-        WebDriverWait( driver, 30 ).until( EC.text_to_be_present_in_element( ( By.XPATH, XPATH_DESCRIPTION ), ' ' ) )
+        WebDriverWait( driver, 30 ).until( EC.presence_of_element_located( ( By.XPATH, XPATH_DESCRIPTION ) ) )
 
     except Exception as e:
         print( '' )
@@ -179,8 +179,10 @@ def get_docket( s_docket_number, download_dir ):
     # Save docket description in file
     filename = 'docket_' + args.docket_number + '_description.txt'
     s_descr = driver.find_element( By.XPATH, XPATH_DESCRIPTION ).text
+    filepath = os.path.join( download_dir, filename )
+    print( 'Saving docket description to', filepath )
 
-    with open( os.path.join( download_dir, filename ), 'w' ) as file:
+    with open( filepath, 'w' ) as file:
         file.write( s_descr )
 
     return
