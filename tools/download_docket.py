@@ -141,11 +141,14 @@ def get_docket( s_docket_number ):
 
     try:
         # Wait for dashboard to load
-        WebDriverWait( driver, 5 ).until( EC.presence_of_element_located( ( By.XPATH, XPATH_DASHBOARD ) ) )
-    except:
-        # Report error and abort
+        WebDriverWait( driver, 10 ).until( EC.presence_of_element_located( ( By.XPATH, XPATH_DASHBOARD ) ) )
+
+    except Exception as e:
         print( '' )
-        print( 'Error loading dashboard' )
+        print( 'Error loading dashboard.' )
+        if isinstance( e, TimeoutException ):
+            print( 'Request timed out.' )
+        print( '' )
         print( '  URL: {}'.format( DASHBOARD_URL ) )
         print( '' )
         driver.quit()
@@ -165,12 +168,14 @@ def get_filings( s_date, s_filer, ls_filings, page_number=1 ):
 
     # Wait for filer elements to load
     try:
-        ls_filers = WebDriverWait( driver, 10 ).until( EC.presence_of_all_elements_located( ( By.XPATH, XPATH_FILER ) ) )
-    except:
-        # Report error and abort
+        ls_filers = WebDriverWait( driver, 30 ).until( EC.presence_of_all_elements_located( ( By.XPATH, XPATH_FILER ) ) )
+
+    except Exception as e:
         print( '' )
-        print( 'Error loading filings' )
-        print( '-- Check your arguments --' )
+        print( 'Error loading filings.' )
+        if isinstance( e, TimeoutException ):
+            print( 'Request timed out.' )
+        print( '' )
         print( '  Docket Number: {}'.format( args.docket_number ) )
         print_optional_argument( 'Date', s_date )
         print_optional_argument( 'Filer', s_filer )
@@ -317,7 +322,7 @@ def download_files( ls_filings, target_dir ):
                             file.write( chunk )
 
                     # Report success
-                    print( '{: >3d}: {}'.format( count, filename ) )
+                    print( '{: >4d}: {}'.format( count, filename ) )
 
                 else:
                     # Report error
@@ -325,7 +330,7 @@ def download_files( ls_filings, target_dir ):
 
             except Exception as e:
                 # Report error and abort
-                print( '{: >3d}: {}'.format( count, filename ) )
+                print( '{: >4d}: {}'.format( count, filename ) )
                 print( '  Download failed: {}'.format( e ) )
                 driver.quit()
                 exit()
