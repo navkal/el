@@ -73,7 +73,7 @@ DATE_FORMAT_PARSE = '%m/%d/%Y'
 DATE_FORMAT_WEB = '%#m/%#d/%Y'
 DATE_FORMAT_DIR = '%Y-%m-%d'
 
-MAX_RETRY_SECONDS = 10
+MAX_RETRY_SECONDS = 15
 
 FILENAME_LABEL = 'filename='
 UTF_LABEL = '=?utf-8?B?'
@@ -103,6 +103,13 @@ def format_date( s_date ):
         exit()
 
     return s_date
+
+
+# Create a target directory for downloads, based on supplied target directory and docket number
+def make_target_directory( target_dir, docket_number ):
+    target_dir = os.path.join( target_dir, docket_number )
+    os.makedirs( target_dir, exist_ok=True )
+    return target_dir
 
 
 # Get the Chrome driver
@@ -145,7 +152,6 @@ def get_docket( s_docket_number, download_dir ):
         WebDriverWait( driver, 10 ).until( EC.presence_of_element_located( ( By.XPATH, XPATH_DASHBOARD ) ) )
 
     except Exception as e:
-        print( '' )
         print( 'Error loading dashboard.' )
         if isinstance( e, TimeoutException ):
             print( 'Request timed out.' )
@@ -159,28 +165,24 @@ def get_docket( s_docket_number, download_dir ):
     el_input = driver.find_element( By.ID, 'mat-input-1' )
     el_input.send_keys( s_docket_number )
 
+    print( '' )
     print( 'Waiting for docket description' )
 
     try:
         # Wait for docket description to load
         WebDriverWait( driver, 30 ).until( EC.presence_of_element_located( ( By.XPATH, XPATH_DESCRIPTION ) ) )
+        s_descr = driver.find_element( By.XPATH, XPATH_DESCRIPTION ).text
 
-    except Exception as e:
-        print( '' )
-        print( 'Error loading docket description.' )
-        if isinstance( e, TimeoutException ):
-            print( 'Request timed out.' )
-        print( '' )
-        print( '  Docket Number: {}'.format( args.docket_number ) )
-        print( '' )
-        driver.quit()
-        exit()
+    except:
+        msg = 'Docket description not found.'
+        print( msg )
+        s_descr = f'<{msg}>'
 
     # Save docket description in file
-    filename = 'docket_' + args.docket_number + '_description.txt'
-    s_descr = driver.find_element( By.XPATH, XPATH_DESCRIPTION ).text
+    filename = args.docket_number + ' docket_description.txt'
     filepath = os.path.join( download_dir, filename )
     print( 'Saving docket description to', filepath )
+    print( '' )
 
     with open( filepath, 'w' ) as file:
         file.write( s_descr )
@@ -244,15 +246,19 @@ def get_filings( s_date, s_filer, ls_filings, page_number=1 ):
 
 
     # Find the Next Page button
-    next_button = driver.find_element( By.CSS_SELECTOR, 'button.mat-paginator-navigation-next' )
+    ls_next_buttons = driver.find_elements( By.CSS_SELECTOR, 'button.mat-paginator-navigation-next' )
 
-    # Scroll the button into view
-    driver.execute_script( 'arguments[0].scrollIntoView(true);', next_button)
+    # If Next Page button exists, process it
+    if ls_next_buttons:
+        next_button = ls_next_buttons[0]
 
-    # If the button is enabled, load and process the next page
-    if next_button.is_enabled():
-        next_button.click()
-        ls_filings = get_filings( s_date, s_filer, ls_filings, page_number=(page_number+1) )
+        # Scroll the button into view
+        driver.execute_script( 'arguments[0].scrollIntoView(true);', next_button)
+
+        # If the button is enabled, load and process the next page
+        if next_button.is_enabled():
+            next_button.click()
+            ls_filings = get_filings( s_date, s_filer, ls_filings, page_number=(page_number+1) )
 
     return ls_filings
 
@@ -286,7 +292,16 @@ def user_requested_this_filing( s_date, s_date_value, s_filer, s_filer_value ):
 
 
 # Download files to specified target directory
-def download_files( ls_filings, target_dir ):
+def download_files( ls_filings, target_dir, docket_number ):
+
+    # Report what we collected
+    n_filings = len( ls_filings )
+    n_links = 0
+    for filing in ls_filings:
+        n_links += len( filing[LINKS] )
+
+    print( '' )
+    print( f'Found {n_filings} filings containing a total of {n_links} files.' )
 
     filename = None
 
@@ -294,10 +309,10 @@ def download_files( ls_filings, target_dir ):
 
     prev_download_dir = ''
 
-    for filing in reversed( ls_filings ):
+    for filing in ls_filings:
 
         # Generate a directory name based on this row's date and filer and append to target directory
-        dir_name = make_dir_name( filing )
+        dir_name = make_dir_name( filing, docket_number )
         download_dir = os.path.join( target_dir, dir_name )
 
         # Create the directory if it does not already exist
@@ -343,13 +358,19 @@ def download_files( ls_filings, target_dir ):
                 filename = get_filename( response.headers['content-disposition'], download_dir )
 
                 if filename:
-                    # Save the download
-                    with open( os.path.join( download_dir, filename ), 'wb' ) as file:
-                        for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
-                            file.write( chunk )
+
+                    # Save the download if it doesn't already exist
+                    filepath = os.path.join( download_dir, filename )
+                    if os.path.exists( filepath ):
+                        s_exists = ' (already exists)'
+                    else:
+                        s_exists = ''
+                        with open( filepath, 'wb' ) as file:
+                            for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
+                                file.write( chunk )
 
                     # Report success
-                    print( '{: >4d}: {}'.format( count, filename ) )
+                    print( '{: >4d}: {}{}'.format( count, filename, s_exists ) )
 
                 else:
                     # Report error
@@ -367,14 +388,14 @@ def download_files( ls_filings, target_dir ):
 
 
 # Generate a directory name from date and filer of identified filing
-def make_dir_name( filing ):
+def make_dir_name( filing, docket_number ):
 
     # Reformat date for directory name
     d = datetime.strptime( filing[DATE], DATE_FORMAT_PARSE )
     s_date = d.strftime( DATE_FORMAT_DIR )
 
     # Format valid directory name from combined date and filer
-    dir_name = sanitize_filename( s_date + ' ' + filing[FILER] )
+    dir_name = sanitize_filename( docket_number + ' ' + s_date + ' ' + filing[FILER] )
     return dir_name
 
 
@@ -451,18 +472,21 @@ if __name__ == '__main__':
     # Ensure that date is in format used by docket website
     s_date = format_date( args.date ) if args.date else ''
 
+    # Create target directory for downloads, named for the docket number
+    target_dir = make_target_directory( args.target_directory, args.docket_number )
+
     # Get the Chrome driver
-    driver = get_driver( args.target_directory )
+    driver = get_driver( target_dir )
 
     # Get the web page for the specified docket
-    get_docket( args.docket_number, args.target_directory )
+    get_docket( args.docket_number, target_dir )
 
     # Get docket filings
     ls_filings = []
     ls_filings = get_filings( s_date, args.filer, ls_filings )
 
     # Download files listed in identified rows
-    download_files( ls_filings, args.target_directory )
+    download_files( ls_filings, target_dir, args.docket_number )
 
     # Close the browser
     driver.quit()
