@@ -59,8 +59,9 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
 DASHBOARD_URL = 'https://eeaonline.eea.state.ma.us/dpu/fileroom/#/dashboard'
 
 XPATH_DASHBOARD = '//input[@id="mat-input-1"]'
+XPATH_DESCRIPTION = '//div[contains(@class, "text") and (@aria-label="Docket description")]'
 XPATH_FILER = '//input[contains(@class, "mat-input-element") and (@type="text") and (@aria-label="Filer")]'
-XPATH_COMMON_ANCESTER = '../../../../../../..'
+XPATH_COMMON_ANCESTOR = '../../../../../../..'
 XPATH_ANCHOR = './/a'
 
 DATE = 'date'
@@ -131,7 +132,7 @@ def get_driver( target_dir ):
 
 
 # Get the web page for the specified docket
-def get_docket( s_docket_number ):
+def get_docket( s_docket_number, download_dir ):
 
     # Open the dashboard
     driver.get( DASHBOARD_URL )
@@ -155,8 +156,32 @@ def get_docket( s_docket_number ):
         exit()
 
     # Set docket number.  This triggers the website to load the docket.
-    input_element = driver.find_element( By.ID, 'mat-input-1' )
-    input_element.send_keys( s_docket_number )
+    el_input = driver.find_element( By.ID, 'mat-input-1' )
+    el_input.send_keys( s_docket_number )
+
+    print( 'Waiting for docket description' )
+
+    try:
+        # Wait for docket description to load
+        WebDriverWait( driver, 30 ).until( EC.text_to_be_present_in_element( ( By.XPATH, XPATH_DESCRIPTION ), ' ' ) )
+
+    except Exception as e:
+        print( '' )
+        print( 'Error loading docket description.' )
+        if isinstance( e, TimeoutException ):
+            print( 'Request timed out.' )
+        print( '' )
+        print( '  Docket Number: {}'.format( args.docket_number ) )
+        print( '' )
+        driver.quit()
+        exit()
+
+    # Save docket description in file
+    filename = 'docket_' + args.docket_number + '_description.txt'
+    s_descr = driver.find_element( By.XPATH, XPATH_DESCRIPTION ).text
+
+    with open( os.path.join( download_dir, filename ), 'w' ) as file:
+        file.write( s_descr )
 
     return
 
@@ -187,7 +212,7 @@ def get_filings( s_date, s_filer, ls_filings, page_number=1 ):
     for el_filer in ls_filers:
 
         # Navigate to common ancestor
-        el_ancestor = el_filer.find_element( By.XPATH, XPATH_COMMON_ANCESTER )
+        el_ancestor = el_filer.find_element( By.XPATH, XPATH_COMMON_ANCESTOR )
 
         # Find date element that corresponds with current filer element
         el_date = el_ancestor.find_element( By.CLASS_NAME, 'mat-datepicker-input' )
@@ -428,7 +453,7 @@ if __name__ == '__main__':
     driver = get_driver( args.target_directory )
 
     # Get the web page for the specified docket
-    get_docket( args.docket_number )
+    get_docket( args.docket_number, args.target_directory )
 
     # Get docket filings
     ls_filings = []
