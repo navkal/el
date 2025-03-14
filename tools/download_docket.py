@@ -106,9 +106,10 @@ def format_date( s_date ):
 
 
 # Create a target directory for downloads, based on supplied target directory and docket number
-def make_target_directory( target_dir, docket_number ):
+def make_target_directory( target_dir, docket_number, report_only ):
     target_dir = os.path.join( target_dir, docket_number )
-    os.makedirs( target_dir, exist_ok=True )
+    if not report_only:
+        os.makedirs( target_dir, exist_ok=True )
     return target_dir
 
 
@@ -152,6 +153,7 @@ def get_docket( s_docket_number, download_dir ):
         WebDriverWait( driver, 10 ).until( EC.presence_of_element_located( ( By.XPATH, XPATH_DASHBOARD ) ) )
 
     except Exception as e:
+        print( '' )
         print( 'Error loading dashboard.' )
         if isinstance( e, TimeoutException ):
             print( 'Request timed out.' )
@@ -164,6 +166,12 @@ def get_docket( s_docket_number, download_dir ):
     # Set docket number.  This triggers the website to load the docket.
     el_input = driver.find_element( By.ID, 'mat-input-1' )
     el_input.send_keys( s_docket_number )
+
+    return
+
+
+# Get docket filings
+def save_docket_description( download_dir ):
 
     print( '' )
     print( 'Waiting for docket description' )
@@ -181,8 +189,7 @@ def get_docket( s_docket_number, download_dir ):
     # Save docket description in file
     filename = args.docket_number + ' docket_description.txt'
     filepath = os.path.join( download_dir, filename )
-    print( 'Saving docket description to', filepath )
-    print( '' )
+    print( '  Saving to', filepath )
 
     with open( filepath, 'w' ) as file:
         file.write( s_descr )
@@ -291,8 +298,7 @@ def user_requested_this_filing( s_date, s_date_value, s_filer, s_filer_value ):
     return b_rq
 
 
-# Download files to specified target directory
-def download_files( ls_filings, target_dir, docket_number ):
+def report_counts( ls_filings ):
 
     # Report what we collected
     n_filings = len( ls_filings )
@@ -301,12 +307,16 @@ def download_files( ls_filings, target_dir, docket_number ):
         n_links += len( filing[LINKS] )
 
     print( '' )
-    print( f'Found {n_filings} filings containing a total of {n_links} files.' )
+    print( 'To be processed:' )
+    print( '  Filings:', n_filings )
+    print( '  Downloads:', n_links )
+
+
+# Download files to specified target directory
+def download_files( ls_filings, target_dir, docket_number ):
 
     filename = None
-
     count = 0
-
     prev_download_dir = ''
 
     for filing in ls_filings:
@@ -322,7 +332,7 @@ def download_files( ls_filings, target_dir, docket_number ):
         # Report next download directory
         if download_dir != prev_download_dir:
             print( '' )
-            print( 'Downloading files to "{}":'.format( download_dir ) )
+            print( 'Downloading files to "{}"'.format( download_dir ) )
             prev_download_dir = download_dir
 
         # Iterate over list of links
@@ -455,15 +465,17 @@ if __name__ == '__main__':
     parser.add_argument( '-d', dest='date',  help='Date of filing', default='' )
     parser.add_argument( '-f', dest='filer',  help='Filer', default='' )
     parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory where downloads will be organized into subdirectories' )
+    parser.add_argument( '-r', dest='report_only', action='store_true', help='Report statistics; then exit without performing downloads.' )
     args = parser.parse_args()
 
     # Report argument list
     print( '' )
-    print( __file__, 'running with the following arguments',  )
+    print( 'Arguments:',  )
     print( '  Docket Number: {}'.format( args.docket_number ) )
     print_optional_argument( 'Date', args.date )
     print_optional_argument( 'Filer', args.filer )
     print( '  Target Directory: {}'.format( args.target_directory ) )
+    print( '  Report Only: {}'.format( args.report_only ) )
 
     # Report start time
     print( '' )
@@ -473,7 +485,7 @@ if __name__ == '__main__':
     s_date = format_date( args.date ) if args.date else ''
 
     # Create target directory for downloads, named for the docket number
-    target_dir = make_target_directory( args.target_directory, args.docket_number )
+    target_dir = make_target_directory( args.target_directory, args.docket_number, args.report_only )
 
     # Get the Chrome driver
     driver = get_driver( target_dir )
@@ -481,12 +493,21 @@ if __name__ == '__main__':
     # Get the web page for the specified docket
     get_docket( args.docket_number, target_dir )
 
+    # Save docket description
+    if not args.report_only:
+        save_docket_description( target_dir )
+
     # Get docket filings
+    print( '' )
     ls_filings = []
     ls_filings = get_filings( s_date, args.filer, ls_filings )
 
+    # Report counts of filings and files
+    report_counts( ls_filings )
+
     # Download files listed in identified rows
-    download_files( ls_filings, target_dir, args.docket_number )
+    if not args.report_only:
+        download_files( ls_filings, target_dir, args.docket_number )
 
     # Close the browser
     driver.quit()
