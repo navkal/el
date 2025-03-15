@@ -414,6 +414,9 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
             print( 'Downloading files to "{}"'.format( download_dir ) )
             prev_download_dir = download_dir
 
+        # Initialize flag indicating that all files in current filing have been downloaded
+        b_downloaded_all_documents_in_filing = True
+
         # Iterate over list of links
         for link in filing[LINKS].split( LINK_DELIMITER ):
 
@@ -459,21 +462,30 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
                                 file.write( chunk )
 
                     # Report success
-                    print( '{: >4d}: {}{}'.format( count, filename, s_exists ) )
+                    print( '{: >5d}: {}{}'.format( count, filename, s_exists ) )
 
                 else:
                     # Report error
-                    print( '  Error: {}'.format( 'Filename not found in content disposition header' ) )
+                    print( '       Error: {}'.format( 'Filename not found in content disposition header' ) )
 
             except Exception as e:
-                # Report error and abort
-                print( '{: >4d}: {}'.format( count, filename ) )
-                print( '  Download failed: {}'.format( e ) )
-                driver.quit()
-                exit()
 
-        # Mark filing as downloaded
-        df_filings.loc[index][DOWNLOADED] = True
+                # Note that we have failed to download at least one document from current filing
+                b_downloaded_all_documents_in_filing = False
+
+                # Report error
+                print( '{: >5d}: Download failed. {}'.format( count, e ) )
+
+                # Proceed to next link?
+                b_continue = \
+                    ( isinstance( e, requests.exceptions.HTTPError ) and ( response.status_code == 500 ) ) # Internal Server Error, occurs when link is not valid
+
+                if not b_continue:
+                    driver.quit()
+                    exit()
+
+        # Mark download status of the current filing
+        df_filings.loc[index][DOWNLOADED] = b_downloaded_all_documents_in_filing
 
         # Save current state in database
         if not s_date and not s_filer:
