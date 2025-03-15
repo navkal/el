@@ -12,6 +12,7 @@
 # -d <date>
 # -f <filer>
 # -t <target directory> (defaults to working directory)
+# -c <count_only>
 #
 # Sample parameter sequences:
 #
@@ -31,12 +32,20 @@
 
 
 import argparse
+
+import pandas as pd
+pd.set_option( 'display.max_columns', 500 )
+pd.set_option( 'display.width', 1000 )
+
 from datetime import datetime
 
 import os
 import requests
 import base64
 from pathvalidate import sanitize_filename
+
+import sqlite3
+import sqlalchemy
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -64,9 +73,20 @@ XPATH_FILER = '//input[contains(@class, "mat-input-element") and (@type="text") 
 XPATH_COMMON_ANCESTOR = '../../../../../../..'
 XPATH_ANCHOR = './/a'
 
+# Dataframe structure
 DATE = 'date'
 FILER = 'filer'
 LINKS = 'links'
+LINK_COUNT = 'link_count'
+DOWNLOADED = 'downloaded'
+COLUMNS = [ DATE, FILER, LINKS, LINK_COUNT, DOWNLOADED ]
+ROW = dict( ( el, 0 ) for el in COLUMNS )
+LINK_DELIMITER = ','
+SORT_1 = 'sort_1'
+SORT_2 = 'sort_2'
+
+# Database constants
+TABLE_NAME = 'Filings'
 
 # Date formats used in input, on web page, and in output directory name
 DATE_FORMAT_PARSE = '%m/%d/%Y'
@@ -84,6 +104,7 @@ REPLACEMENT_CHAR = '\uFFFD'     # Occurs in utf-8 encoded filenames
 # Report value of optional argument
 def print_optional_argument( s_label, s_value ):
     print( '  {}: {}'.format( s_label, s_value if s_value else '<any>' ) )
+    return
 
 
 # Ensure date format [m]m/[d]d/yyyy
@@ -106,9 +127,9 @@ def format_date( s_date ):
 
 
 # Create a target directory for downloads, based on supplied target directory and docket number
-def make_target_directory( target_dir, docket_number, report_only ):
+def make_target_directory( target_dir, docket_number, b_count_only ):
     target_dir = os.path.join( target_dir, docket_number )
-    if not report_only:
+    if not b_count_only:
         os.makedirs( target_dir, exist_ok=True )
     return target_dir
 
@@ -198,7 +219,57 @@ def save_docket_description( download_dir ):
 
 
 # Get docket filings
-def get_filings( s_date, s_filer, ls_filings, page_number=1 ):
+def get_filings( db_filepath, s_date, s_filer, b_count_only ):
+
+    print( '' )
+
+    # If processing full docket, retrieve filings from database
+    df_stored = pd.DataFrame( columns=COLUMNS )
+    if not ( b_count_only or s_date or s_filer ):
+        if os.path.exists( db_filepath ):
+            conn, cur, engine = open_database( db_filepath )
+            df_stored = pd.read_sql_table( TABLE_NAME, engine, index_col='id' )
+
+    # Scrape filings from website
+    df_scraped = pd.DataFrame( columns=COLUMNS )
+    df_scraped = scrape_filings( s_date, s_filer, df_scraped )
+
+    # Set up dataframe of all filings to be processed
+    if len( df_stored ):
+
+        # Sort the dataframes
+        df_scraped = sort_filings( df_scraped )
+        df_stored = sort_filings( df_stored )
+
+        # Determine most recent stored date
+        newest_stored_date = df_stored.iloc[0][SORT_1]
+
+        # Combine scraped and stored dataframes based on recent date
+        df_scraped = df_scraped.drop( df_scraped[ df_scraped[SORT_1] < newest_stored_date ].index )
+        df_stored = df_stored.drop( df_stored[ df_stored[SORT_1] == newest_stored_date ].index )
+        df_filings = df_scraped.append( df_stored )
+        df_filings = df_filings.drop( columns=[SORT_1, SORT_2] )
+
+    else:
+        df_filings = df_scraped
+
+    df_filings = df_filings.reset_index( drop=True )
+    return df_filings
+
+
+# Sort filings based on date and filer
+def sort_filings( df ):
+
+    # Sort
+    df[SORT_1] = pd.to_datetime( df[DATE] )
+    df[SORT_2] = df[FILER]
+    df = df.sort_values( by=[SORT_1, SORT_2], ascending=[False, True] )
+
+    return df
+
+
+# Scrape docket filings from website
+def scrape_filings( s_date, s_filer, df_filings, page_number=1 ):
 
     print( f'Waiting for filings, page {page_number}' )
 
@@ -242,15 +313,14 @@ def get_filings( s_date, s_filer, ls_filings, page_number=1 ):
             for el_anchor in ls_anchors:
                 ls_links.append( el_anchor.get_attribute( 'href' ) )
 
-            # Save the current filing
-            ls_filings.append(
-                {
-                    DATE: s_date_value,
-                    FILER: s_filer_value,
-                    LINKS: ls_links,
-                }
-            )
-
+            # If the current filing contains any links, save it
+            if ls_links:
+                ROW[DATE] = s_date_value
+                ROW[FILER] = s_filer_value
+                ROW[LINKS] = LINK_DELIMITER.join( ls_links )
+                ROW[LINK_COUNT] = len( ls_links )
+                ROW[DOWNLOADED] = False
+                df_filings = df_filings.append( ROW, ignore_index=True )
 
     # Find the Next Page button
     ls_next_buttons = driver.find_elements( By.CSS_SELECTOR, 'button.mat-paginator-navigation-next' )
@@ -265,9 +335,9 @@ def get_filings( s_date, s_filer, ls_filings, page_number=1 ):
         # If the button is enabled, load and process the next page
         if next_button.is_enabled():
             next_button.click()
-            ls_filings = get_filings( s_date, s_filer, ls_filings, page_number=(page_number+1) )
+            df_filings = scrape_filings( s_date, s_filer, df_filings, page_number=(page_number+1) )
 
-    return ls_filings
+    return df_filings
 
 
 # Determine whether the current filing was requested via date and filer arguments
@@ -298,28 +368,36 @@ def user_requested_this_filing( s_date, s_date_value, s_filer, s_filer_value ):
     return b_rq
 
 
-def report_counts( ls_filings ):
-
-    # Report what we collected
-    n_filings = len( ls_filings )
-    n_links = 0
-    for filing in ls_filings:
-        n_links += len( filing[LINKS] )
+def report_counts( df_filings ):
 
     print( '' )
     print( 'To be processed:' )
-    print( '  Filings:', n_filings )
-    print( '  Downloads:', n_links )
+    print( '  Filings:', len( df_filings ) )
+    print( '  Documents:', df_filings[LINK_COUNT].sum() )
+
+    # Optionally report partial progress
+    df_done = df_filings[df_filings[DOWNLOADED] == True]
+
+    if len( df_done ):
+        df_to_do = df_filings[df_filings[DOWNLOADED] == False]
+        print( '  Downloads done:', df_done[LINK_COUNT].sum() )
+        print( '  Downloads to do:', df_to_do[LINK_COUNT].sum() )
+
+    return
 
 
 # Download files to specified target directory
-def download_files( ls_filings, target_dir, docket_number ):
+def download_files( df_filings, target_dir, docket_number, db_filepath ):
 
     filename = None
     count = 0
     prev_download_dir = ''
 
-    for filing in ls_filings:
+    # Extract filings to be downloaded
+    df_download = df_filings[ df_filings[DOWNLOADED] == False ]
+
+    # Iterate over filings to be downloaded
+    for index, filing in df_download.iterrows():
 
         # Generate a directory name based on this row's date and filer and append to target directory
         dir_name = make_dir_name( filing, docket_number )
@@ -336,7 +414,7 @@ def download_files( ls_filings, target_dir, docket_number ):
             prev_download_dir = download_dir
 
         # Iterate over list of links
-        for link in filing[LINKS]:
+        for link in filing[LINKS].split( LINK_DELIMITER ):
 
             count += 1
 
@@ -393,8 +471,53 @@ def download_files( ls_filings, target_dir, docket_number ):
                 driver.quit()
                 exit()
 
+        # Mark filing as downloaded
+        df_filings.loc[index][DOWNLOADED] = True
+
+        # Save current state in database
+        save_progress( db_filepath, df_filings )
+
     if count == 0:
-        print( '  No files found' )
+        print( '  No files to download' )
+
+    return df_filings
+
+
+# Open the SQLite database
+def open_database( db_pathname ):
+
+    conn = sqlite3.connect( db_pathname )
+    cur = conn.cursor()
+
+    engine = sqlalchemy.create_engine( 'sqlite:///' + db_pathname )
+
+    return conn, cur, engine
+
+
+# Save current state of full-docket download
+def save_progress( db_filepath, df_filings ):
+
+    # Open the database
+    conn, cur, engine = open_database( db_filepath )
+
+    # Drop table if it already exists
+    cur.execute( 'DROP TABLE IF EXISTS ' + TABLE_NAME )
+
+    # Generate SQL command to create table
+    create_sql = 'CREATE TABLE ' + TABLE_NAME + ' ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
+    for col_name in df_filings.columns:
+        create_sql += ', "{0}"'.format( col_name )
+    create_sql += ' )'
+
+    # Create the empty table
+    cur.execute( create_sql )
+
+    # Load data into table
+    df_filings.to_sql( TABLE_NAME, conn, if_exists='append', index=False )
+
+    # Commit changes
+    conn.commit()
+    return
 
 
 # Generate a directory name from date and filer of identified filing
@@ -464,8 +587,8 @@ if __name__ == '__main__':
     parser.add_argument( '-n', dest='docket_number',  help='Docket number', required=True )
     parser.add_argument( '-d', dest='date',  help='Date of filing', default='' )
     parser.add_argument( '-f', dest='filer',  help='Filer', default='' )
-    parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory where downloads will be organized into subdirectories' )
-    parser.add_argument( '-r', dest='report_only', action='store_true', help='Report statistics; then exit without performing downloads.' )
+    parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory' )
+    parser.add_argument( '-c', dest='count_only', action='store_true', help='Only report count' )
     args = parser.parse_args()
 
     # Report argument list
@@ -475,7 +598,7 @@ if __name__ == '__main__':
     print_optional_argument( 'Date', args.date )
     print_optional_argument( 'Filer', args.filer )
     print( '  Target Directory: {}'.format( args.target_directory ) )
-    print( '  Report Only: {}'.format( args.report_only ) )
+    print( '  Count Only: {}'.format( args.count_only ) )
 
     # Report start time
     print( '' )
@@ -485,7 +608,7 @@ if __name__ == '__main__':
     s_date = format_date( args.date ) if args.date else ''
 
     # Create target directory for downloads, named for the docket number
-    target_dir = make_target_directory( args.target_directory, args.docket_number, args.report_only )
+    target_dir = make_target_directory( args.target_directory, args.docket_number, args.count_only )
 
     # Get the Chrome driver
     driver = get_driver( target_dir )
@@ -494,24 +617,22 @@ if __name__ == '__main__':
     get_docket( args.docket_number, target_dir )
 
     # Save docket description
-    if not args.report_only:
+    if not args.count_only:
         save_docket_description( target_dir )
 
     # Get docket filings
-    print( '' )
-    ls_filings = []
-    ls_filings = get_filings( s_date, args.filer, ls_filings )
+    db_filepath = os.path.join( target_dir, args.docket_number + '.sqlite' )
+    df_filings = get_filings( db_filepath, s_date, args.filer, args.count_only )
 
     # Report counts of filings and files
-    report_counts( ls_filings )
+    report_counts( df_filings )
 
     # Download files listed in identified rows
-    if not args.report_only:
-        download_files( ls_filings, target_dir, args.docket_number )
+    if not args.count_only:
+        df_filings = download_files( df_filings, target_dir, args.docket_number, db_filepath )
 
     # Close the browser
     driver.quit()
 
     # Report elapsed time
     report_elapsed_time()
-
