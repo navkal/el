@@ -387,7 +387,7 @@ def report_counts( df_filings ):
 
 
 # Download files to specified target directory
-def download_files( df_filings, target_dir, docket_number, db_filepath ):
+def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, s_filer ):
 
     filename = None
     count = 0
@@ -475,10 +475,12 @@ def download_files( df_filings, target_dir, docket_number, db_filepath ):
         df_filings.loc[index][DOWNLOADED] = True
 
         # Save current state in database
-        save_progress( db_filepath, df_filings )
+        if not s_date and not s_filer:
+            save_progress( db_filepath, df_filings )
 
     if count == 0:
-        print( '  No files to download' )
+        print( '' )
+        print( 'No files to download.' )
 
     return df_filings
 
@@ -629,7 +631,7 @@ if __name__ == '__main__':
 
     # Download files listed in identified rows
     if not args.count_only:
-        df_filings = download_files( df_filings, target_dir, args.docket_number, db_filepath )
+        df_filings = download_files( df_filings, target_dir, args.docket_number, db_filepath, s_date, args.filer )
 
     # Close the browser
     driver.quit()
