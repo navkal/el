@@ -245,15 +245,16 @@ def get_filings( db_filepath, s_date, s_filer, b_count_only ):
         newest_stored_date = df_stored.iloc[0][SORT_1]
 
         # Combine scraped and stored dataframes based on recent date
-        df_scraped = df_scraped.drop( df_scraped[ df_scraped[SORT_1] < newest_stored_date ].index )
-        df_stored = df_stored.drop( df_stored[ df_stored[SORT_1] == newest_stored_date ].index )
-        df_filings = df_scraped.append( df_stored )
+        df_scraped = df_scraped[df_scraped[SORT_1] >= newest_stored_date]
+        df_stored = df_stored[df_stored[SORT_1] < newest_stored_date]
+        df_filings = pd.concat( [df_scraped, df_stored], ignore_index=True )
         df_filings = df_filings.drop( columns=[SORT_1, SORT_2] )
 
     else:
         df_filings = df_scraped
 
     df_filings = df_filings.reset_index( drop=True )
+
     return df_filings
 
 
@@ -320,7 +321,7 @@ def scrape_filings( s_date, s_filer, df_filings, page_number=1 ):
                 ROW[LINKS] = LINK_DELIMITER.join( ls_links )
                 ROW[LINK_COUNT] = len( ls_links )
                 ROW[DOWNLOADED] = False
-                df_filings = df_filings.append( ROW, ignore_index=True )
+                df_filings = pd.concat( [df_filings, pd.DataFrame( [ROW] )], ignore_index=True )
 
     # Find the Next Page button
     ls_next_buttons = driver.find_elements( By.CSS_SELECTOR, 'button.mat-paginator-navigation-next' )
