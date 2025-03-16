@@ -30,7 +30,6 @@
 #
 ######################
 
-
 import argparse
 
 import pandas as pd
@@ -53,6 +52,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+
 
 # --> Reporting of elapsed time -->
 import time
@@ -93,9 +93,10 @@ DATE_FORMAT_PARSE = '%m/%d/%Y'
 DATE_FORMAT_WEB = '%#m/%#d/%Y'
 DATE_FORMAT_DIR = '%Y-%m-%d'
 
-MAX_RETRY_SECONDS = 15
-DB_RETRY_MIN_SEC = 10
-DB_RETRY_MAX_SEC = DB_RETRY_MIN_SEC + 20
+DOC_TIMEOUT_SEC_MIN = 1
+DOC_TIMEOUT_SEC_MAX = DOC_TIMEOUT_SEC_MIN + 10
+DB_RETRY_SEC_MIN = 10
+DB_RETRY_SEC_MAX = DB_RETRY_SEC_MIN + 10
 
 FILENAME_LABEL = 'filename='
 UTF_LABEL = '=?utf-8?B?'
@@ -425,28 +426,8 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
             count += 1
 
             try:
-                # Request the download in a retry loop
-                for sec in range( 1, MAX_RETRY_SECONDS + 1 ):
-                    try:
-                        # Issue the request
-                        response = requests.get( link, stream=True )
-                        response.raise_for_status()
-                    except:
-                        # Request failed
-                        if sec < MAX_RETRY_SECONDS:
-                            # Sleep and try again
-                            time.sleep( sec )
-                        else:
-                            # We're out of luck
-                            response.raise_for_status()
-                    else:
-                        # Request succeeded; exit loop
-                        break
-
-                    # Wait and retry
-                    time.sleep( 5 )
-                    response = requests.get( link, stream=True )
-                    response.raise_for_status()
+                # Try to download the document
+                response = try_to_download_document( link )
 
                 # Extract filename from content disposition header
                 filename = get_filename( response.headers['content-disposition'], download_dir )
@@ -480,7 +461,7 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
 
                 # Proceed to next link?
                 b_continue = \
-                    ( isinstance( e, requests.exceptions.HTTPError ) and ( response.status_code == 500 ) ) # Internal Server Error, occurs when link is not valid
+                    ( isinstance( e, requests.exceptions.HTTPError ) ) # Internal Server Error, occurs when link is not valid
 
                 if not b_continue:
                     driver.quit()
@@ -491,24 +472,7 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
 
         # Save current state in database
         if not s_date and not s_filer:
-
-            # Invoke save operation in retry loop, to accommodate high latency storage
-            for sec in range( DB_RETRY_MIN_SEC, DB_RETRY_MAX_SEC + 1 ):
-                try:
-                    # Issue the request
-                    save_progress( db_filepath, df_filings )
-                except:
-                    # Request failed
-                    if sec < DB_RETRY_MAX_SEC:
-                        # Sleep and try again
-                        time.sleep( sec )
-                    else:
-                        # Last chance, no exception handler
-                        time.sleep( sec )
-                        save_progress( db_filepath, df_filings )
-                else:
-                    # Request succeeded; exit loop
-                    break
+            try_to_save_progress( db_filepath, df_filings )
 
 
     if count == 0:
@@ -516,6 +480,56 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
         print( 'No files to download.' )
 
     return df_filings
+
+
+# Try to download document from server
+def try_to_download_document( link ):
+
+    # Request the document in a retry loop
+    for sec in range( DOC_TIMEOUT_SEC_MIN, DOC_TIMEOUT_SEC_MAX + 1 ):
+
+        try:
+            # Issue the request
+            response = requests.get( link, stream=True, timeout=sec )
+            response.raise_for_status()
+
+        except:
+            # Request failed
+            if sec == DOC_TIMEOUT_SEC_MAX:
+                # We're out of luck
+                response.raise_for_status()
+
+    return response
+
+
+# Save current state of full-docket download
+def try_to_save_progress( db_filepath, df_filings ):
+
+    # Invoke save operation in retry loop, to accommodate high latency storage
+    for sec in range( DB_RETRY_SEC_MIN, DB_RETRY_SEC_MAX + 1 ):
+        try:
+            # Issue the request
+            save_progress( db_filepath, df_filings )
+        except:
+            # Request failed
+            if sec < DB_RETRY_SEC_MAX:
+                # Sleep and try again
+                time.sleep( sec )
+            else:
+                # Last chance; no more retries
+                time.sleep( sec )
+                try:
+                    save_progress( db_filepath, df_filings )
+                except Exception as e:
+                    print( '' )
+                    print( f'Error writing to database: {e}' )
+                    driver.quit()
+                    exit()
+        else:
+            # Request succeeded; exit loop
+            break
+
+    return
 
 
 # Open the SQLite database
