@@ -94,6 +94,8 @@ DATE_FORMAT_WEB = '%#m/%#d/%Y'
 DATE_FORMAT_DIR = '%Y-%m-%d'
 
 MAX_RETRY_SECONDS = 15
+DB_RETRY_MIN_SEC = 10
+DB_RETRY_MAX_SEC = DB_RETRY_MIN_SEC + 20
 
 FILENAME_LABEL = 'filename='
 UTF_LABEL = '=?utf-8?B?'
@@ -485,11 +487,29 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
                     exit()
 
         # Mark download status of the current filing
-        df_filings.loc[index][DOWNLOADED] = b_downloaded_all_documents_in_filing
+        df_filings.loc[index, DOWNLOADED] = b_downloaded_all_documents_in_filing
 
         # Save current state in database
         if not s_date and not s_filer:
-            save_progress( db_filepath, df_filings )
+
+            # Invoke save operation in retry loop, to accommodate high latency storage
+            for sec in range( DB_RETRY_MIN_SEC, DB_RETRY_MAX_SEC + 1 ):
+                try:
+                    # Issue the request
+                    save_progress( db_filepath, df_filings )
+                except:
+                    # Request failed
+                    if sec < DB_RETRY_MAX_SEC:
+                        # Sleep and try again
+                        time.sleep( sec )
+                    else:
+                        # Last chance, no exception handler
+                        time.sleep( sec )
+                        save_progress( db_filepath, df_filings )
+                else:
+                    # Request succeeded; exit loop
+                    break
+
 
     if count == 0:
         print( '' )
