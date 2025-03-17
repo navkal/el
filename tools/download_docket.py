@@ -414,14 +414,7 @@ def download_files( df_docs, target_dir, docket_number, db_filepath, s_date, s_f
             if filename:
 
                 # Save the download if it doesn't already exist
-                filepath = os.path.join( download_dir, filename )
-                if os.path.exists( filepath ):
-                    s_exists = ' (already exists)'
-                else:
-                    s_exists = ''
-                    with open( filepath, 'wb' ) as file:
-                        for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
-                            file.write( chunk )
+                s_exists = save_download( download_dir, filename, response )
 
                 # Update current document in dataframe
                 df_docs.loc[index, FILENAME] = filename
@@ -455,6 +448,24 @@ def download_files( df_docs, target_dir, docket_number, db_filepath, s_date, s_f
         print( 'No files to download.' )
 
     return df_docs
+
+
+# Save download to disk
+def save_download( download_dir, filename, response ):
+
+    filepath = os.path.join( download_dir, filename )
+
+    if os.path.exists( filepath ):
+        s_exists = ' (already exists)'
+
+    else:
+        s_exists = ''
+
+        with open( filepath, 'wb' ) as file:
+            for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
+                file.write( chunk )
+
+    return
 
 
 # Try to download document from server
