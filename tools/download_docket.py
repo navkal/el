@@ -76,14 +76,12 @@ XPATH_ANCHOR = './/a'
 # Dataframe structure
 DATE = 'date'
 FILER = 'filer'
-LINKS = 'links'
-LINK_COUNT = 'link_count'
-DOWNLOADED = 'downloaded'
-COLUMNS = [ DATE, FILER, LINKS, LINK_COUNT, DOWNLOADED ]
+LABEL = 'label'
+LINK = 'link'
+FILENAME = 'filename'
+COLUMNS = [ DATE, FILER, LABEL, LINK, FILENAME ]
 ROW = dict( ( el, 0 ) for el in COLUMNS )
-LINK_DELIMITER = ','
-SORT_1 = 'sort_1'
-SORT_2 = 'sort_2'
+SORTABLE_DATE = 'sortable_date'
 
 # Database constants
 TABLE_NAME = 'Filings'
@@ -222,13 +220,13 @@ def save_docket_description( download_dir ):
 
 
 # Get docket filings
-def get_filings( db_filepath, s_date, s_filer, b_count_only ):
+def get_filings( db_filepath, s_date, s_filer ):
 
     print( '' )
 
     # If processing full docket, retrieve filings from database
     df_stored = pd.DataFrame( columns=COLUMNS )
-    if not ( b_count_only or s_date or s_filer ):
+    if not s_date and not s_filer:
         if os.path.exists( db_filepath ):
             conn, cur, engine = open_database( db_filepath )
             df_stored = pd.read_sql_table( TABLE_NAME, engine, index_col='id' )
@@ -240,36 +238,21 @@ def get_filings( db_filepath, s_date, s_filer, b_count_only ):
     # Set up dataframe of all filings to be processed
     if len( df_stored ):
 
-        # Sort the dataframes
-        df_scraped = sort_filings( df_scraped )
-        df_stored = sort_filings( df_stored )
-
-        # Determine most recent stored date
-        newest_stored_date = df_stored.iloc[0][SORT_1]
-
-        # Combine scraped and stored dataframes based on recent date
-        df_scraped = df_scraped[df_scraped[SORT_1] >= newest_stored_date]
-        df_stored = df_stored[df_stored[SORT_1] < newest_stored_date]
+        # Combine scraped and stored dataframes
         df_filings = pd.concat( [df_scraped, df_stored], ignore_index=True )
-        df_filings = df_filings.drop( columns=[SORT_1, SORT_2] )
+        df_filings = df_filings.sort_values( by=[FILENAME] )
+        df_filings = df_filings.drop_duplicates( subset=[DATE, FILER, LINK], keep='last' )
 
     else:
         df_filings = df_scraped
 
+    # Clean up
+    df_filings[SORTABLE_DATE] = pd.to_datetime( df_filings[DATE] )
+    df_filings = df_filings.sort_values( by=[SORTABLE_DATE, FILER, LABEL, LINK], ascending=[False, True, True, True] )
+    df_filings = df_filings.drop( columns=[SORTABLE_DATE] )
     df_filings = df_filings.reset_index( drop=True )
 
     return df_filings
-
-
-# Sort filings based on date and filer
-def sort_filings( df ):
-
-    # Sort
-    df[SORT_1] = pd.to_datetime( df[DATE] )
-    df[SORT_2] = df[FILER]
-    df = df.sort_values( by=[SORT_1, SORT_2], ascending=[False, True] )
-
-    return df
 
 
 # Scrape docket filings from website
@@ -315,15 +298,16 @@ def scrape_filings( s_date, s_filer, df_filings, page_number=1 ):
             # Extract the download links
             ls_links = []
             for el_anchor in ls_anchors:
-                ls_links.append( el_anchor.get_attribute( 'href' ) )
+                dc_link = { LABEL: el_anchor.text, LINK: el_anchor.get_attribute( 'href' ) }
+                ls_links.append( dc_link )
 
             # If the current filing contains any links, save it
-            if ls_links:
+            for dc_link in ls_links:
                 ROW[DATE] = s_date_value
                 ROW[FILER] = s_filer_value
-                ROW[LINKS] = LINK_DELIMITER.join( ls_links )
-                ROW[LINK_COUNT] = len( ls_links )
-                ROW[DOWNLOADED] = False
+                ROW[LABEL] = dc_link[LABEL]
+                ROW[LINK] = dc_link[LINK]
+                ROW[FILENAME] = ''
                 df_filings = pd.concat( [df_filings, pd.DataFrame( [ROW] )], ignore_index=True )
 
     # Find the Next Page button
@@ -376,16 +360,15 @@ def report_counts( df_filings ):
 
     print( '' )
     print( 'To be processed:' )
-    print( '  Filings:', len( df_filings ) )
-    print( '  Documents:', df_filings[LINK_COUNT].sum() )
+    print( '  Documents:', len( df_filings ) )
 
     # Optionally report partial progress
-    df_done = df_filings[df_filings[DOWNLOADED] == True]
+    n_done = len( df_filings[df_filings[FILENAME] != ''] )
 
-    if len( df_done ):
-        df_to_do = df_filings[df_filings[DOWNLOADED] == False]
-        print( '  Downloads done:', df_done[LINK_COUNT].sum() )
-        print( '  Downloads to do:', df_to_do[LINK_COUNT].sum() )
+    if n_done:
+        n_to_do = len( df_filings[df_filings[FILENAME] == ''] )
+        print( '  Downloads done:', n_done )
+        print( '  Downloads to do:', n_to_do )
 
     return
 
@@ -398,10 +381,12 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
     prev_download_dir = ''
 
     # Extract filings to be downloaded
-    df_download = df_filings[ df_filings[DOWNLOADED] == False ]
+    df_download = df_filings[ df_filings[FILENAME] == '' ]
 
     # Iterate over filings to be downloaded
     for index, filing in df_download.iterrows():
+
+        count += 1
 
         # Generate a directory name based on this row's date and filer and append to target directory
         dir_name = make_dir_name( filing, docket_number )
@@ -417,63 +402,51 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
             print( 'Downloading files to "{}"'.format( download_dir ) )
             prev_download_dir = download_dir
 
-        # Initialize flag indicating that all files in current filing have been downloaded
-        b_downloaded_all_documents_in_filing = True
+        try:
+            # Try to download current document
+            response = try_to_download_document( filing[LINK] )
 
-        # Iterate over list of links
-        for link in filing[LINKS].split( LINK_DELIMITER ):
+            # Extract filename from content disposition header
+            filename = get_filename( response.headers['content-disposition'], download_dir )
 
-            count += 1
+            if filename:
 
-            try:
-                # Try to download the document
-                response = try_to_download_document( link )
-
-                # Extract filename from content disposition header
-                filename = get_filename( response.headers['content-disposition'], download_dir )
-
-                if filename:
-
-                    # Save the download if it doesn't already exist
-                    filepath = os.path.join( download_dir, filename )
-                    if os.path.exists( filepath ):
-                        s_exists = ' (already exists)'
-                    else:
-                        s_exists = ''
-                        with open( filepath, 'wb' ) as file:
-                            for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
-                                file.write( chunk )
-
-                    # Report success
-                    print( '{: >5d}: {}{}'.format( count, filename, s_exists ) )
-
+                # Save the download if it doesn't already exist
+                filepath = os.path.join( download_dir, filename )
+                if os.path.exists( filepath ):
+                    s_exists = ' (already exists)'
                 else:
-                    # Report error
-                    print( '       Error: {}'.format( 'Filename not found in content disposition header' ) )
+                    s_exists = ''
+                    with open( filepath, 'wb' ) as file:
+                        for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
+                            file.write( chunk )
 
-            except Exception as e:
+                # Update current document in dataframe
+                df_filings.loc[index, FILENAME] = filename
 
-                # Note that we have failed to download at least one document from current filing
-                b_downloaded_all_documents_in_filing = False
+                # Report success
+                print( '{: >5d}: {}{}'.format( count, filename, s_exists ) )
 
+            else:
                 # Report error
-                print( '{: >5d}: Download failed. {}'.format( count, e ) )
+                print( '       Error: {}'.format( 'Filename not found in content disposition header' ) )
 
-                # Proceed to next link?
-                b_continue = \
-                    ( isinstance( e, requests.exceptions.HTTPError ) ) # Internal Server Error, occurs when link is not valid
+        except Exception as e:
 
-                if not b_continue:
-                    driver.quit()
-                    exit()
+            # Report error
+            print( '{: >5d}: Download failed. {}'.format( count, e ) )
 
-        # Mark download status of the current filing
-        df_filings.loc[index, DOWNLOADED] = b_downloaded_all_documents_in_filing
+            # Proceed to next link?
+            b_continue = \
+                ( isinstance( e, requests.exceptions.HTTPError ) ) # Internal Server Error, occurs when link is not valid
+
+            if not b_continue:
+                driver.quit()
+                exit()
 
         # Save current state in database
         if not s_date and not s_filer:
             try_to_save_progress( db_filepath, df_filings )
-
 
     if count == 0:
         print( '' )
@@ -671,7 +644,7 @@ if __name__ == '__main__':
 
     # Get docket filings
     db_filepath = os.path.join( target_dir, args.docket_number + '.sqlite' )
-    df_filings = get_filings( db_filepath, s_date, args.filer, args.count_only )
+    df_filings = get_filings( db_filepath, s_date, args.filer )
 
     # Report counts of filings and files
     report_counts( df_filings )
