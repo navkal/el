@@ -3,7 +3,10 @@
 ######################
 #
 # Download files from a specified docket into a collection
-# of subdirectories, organized by date and filer
+# of subdirectories, organized by date and filer.
+#
+# When operating on a full docket (not filtered by date or filer),
+# maintain a list of filed documents in a sqlite database.
 #
 # Required parameters:
 # -n <docket_number>
@@ -12,7 +15,7 @@
 # -d <date>
 # -f <filer>
 # -t <target directory> (defaults to working directory)
-# -c <count_only>
+# -b <brief>
 #
 # Sample parameter sequences:
 #
@@ -84,7 +87,7 @@ ROW = dict( ( el, 0 ) for el in COLUMNS )
 SORTABLE_DATE = 'sortable_date'
 
 # Database constants
-TABLE_NAME = 'Filings'
+TABLE_NAME = 'Documents'
 
 # Date formats used in input, on web page, and in output directory name
 DATE_FORMAT_PARSE = '%m/%d/%Y'
@@ -128,10 +131,9 @@ def format_date( s_date ):
 
 
 # Create a target directory for downloads, based on supplied target directory and docket number
-def make_target_directory( target_dir, docket_number, b_count_only ):
+def make_target_directory( target_dir, docket_number ):
     target_dir = os.path.join( target_dir, docket_number )
-    if not b_count_only:
-        os.makedirs( target_dir, exist_ok=True )
+    os.makedirs( target_dir, exist_ok=True )
     return target_dir
 
 
@@ -192,7 +194,7 @@ def get_docket( s_docket_number, download_dir ):
     return
 
 
-# Get docket filings
+# Save docket description in a text file
 def save_docket_description( download_dir ):
 
     print( '' )
@@ -219,44 +221,44 @@ def save_docket_description( download_dir ):
     return
 
 
-# Get docket filings
-def get_filings( db_filepath, s_date, s_filer ):
+# Get list of filed documents
+def get_filed_documents( db_filepath, s_date, s_filer ):
 
     print( '' )
 
-    # If processing full docket, retrieve filings from database
+    # If processing full docket, retrieve list of filed documents from database
     df_stored = pd.DataFrame( columns=COLUMNS )
     if not s_date and not s_filer:
         if os.path.exists( db_filepath ):
             conn, cur, engine = open_database( db_filepath )
             df_stored = pd.read_sql_table( TABLE_NAME, engine, index_col='id' )
 
-    # Scrape filings from website
+    # Scrape list of filed documents from website
     df_scraped = pd.DataFrame( columns=COLUMNS )
     df_scraped = scrape_filings( s_date, s_filer, df_scraped )
 
-    # Set up dataframe of all filings to be processed
+    # Set up dataframe of all filed documents to be processed
     if len( df_stored ):
 
         # Combine scraped and stored dataframes
-        df_filings = pd.concat( [df_scraped, df_stored], ignore_index=True )
-        df_filings = df_filings.sort_values( by=[FILENAME] )
-        df_filings = df_filings.drop_duplicates( subset=[DATE, FILER, LINK], keep='last' )
+        df_docs = pd.concat( [df_scraped, df_stored], ignore_index=True )
+        df_docs = df_docs.sort_values( by=[FILENAME] )
+        df_docs = df_docs.drop_duplicates( subset=[DATE, FILER, LINK], keep='last' )
 
     else:
-        df_filings = df_scraped
+        df_docs = df_scraped
 
     # Clean up
-    df_filings[SORTABLE_DATE] = pd.to_datetime( df_filings[DATE] )
-    df_filings = df_filings.sort_values( by=[SORTABLE_DATE, FILER, LABEL, LINK], ascending=[False, True, True, True] )
-    df_filings = df_filings.drop( columns=[SORTABLE_DATE] )
-    df_filings = df_filings.reset_index( drop=True )
+    df_docs[SORTABLE_DATE] = pd.to_datetime( df_docs[DATE] )
+    df_docs = df_docs.sort_values( by=[SORTABLE_DATE, FILER, LABEL, LINK], ascending=[False, True, True, True] )
+    df_docs = df_docs.drop( columns=[SORTABLE_DATE] )
+    df_docs = df_docs.reset_index( drop=True )
 
-    return df_filings
+    return df_docs
 
 
-# Scrape docket filings from website
-def scrape_filings( s_date, s_filer, df_filings, page_number=1 ):
+# Scrape list of filed documents from website
+def scrape_filings( s_date, s_filer, df_docs, page_number=1 ):
 
     print( f'Waiting for filings, page {page_number}' )
 
@@ -301,14 +303,14 @@ def scrape_filings( s_date, s_filer, df_filings, page_number=1 ):
                 dc_link = { LABEL: el_anchor.text, LINK: el_anchor.get_attribute( 'href' ) }
                 ls_links.append( dc_link )
 
-            # If the current filing contains any links, save it
+            # Save all links found in the current filing
             for dc_link in ls_links:
                 ROW[DATE] = s_date_value
                 ROW[FILER] = s_filer_value
                 ROW[LABEL] = dc_link[LABEL]
                 ROW[LINK] = dc_link[LINK]
                 ROW[FILENAME] = ''
-                df_filings = pd.concat( [df_filings, pd.DataFrame( [ROW] )], ignore_index=True )
+                df_docs = pd.concat( [df_docs, pd.DataFrame( [ROW] )], ignore_index=True )
 
     # Find the Next Page button
     ls_next_buttons = driver.find_elements( By.CSS_SELECTOR, 'button.mat-paginator-navigation-next' )
@@ -323,9 +325,9 @@ def scrape_filings( s_date, s_filer, df_filings, page_number=1 ):
         # If the button is enabled, load and process the next page
         if next_button.is_enabled():
             next_button.click()
-            df_filings = scrape_filings( s_date, s_filer, df_filings, page_number=(page_number+1) )
+            df_docs = scrape_filings( s_date, s_filer, df_docs, page_number=(page_number+1) )
 
-    return df_filings
+    return df_docs
 
 
 # Determine whether the current filing was requested via date and filer arguments
@@ -356,17 +358,17 @@ def user_requested_this_filing( s_date, s_date_value, s_filer, s_filer_value ):
     return b_rq
 
 
-def report_counts( df_filings ):
+def report_counts( df_docs ):
 
     print( '' )
     print( 'To be processed:' )
-    print( '  Documents:', len( df_filings ) )
+    print( '  Documents:', len( df_docs ) )
 
     # Optionally report partial progress
-    n_done = len( df_filings[df_filings[FILENAME] != ''] )
+    n_done = len( df_docs[df_docs[FILENAME] != ''] )
 
     if n_done:
-        n_to_do = len( df_filings[df_filings[FILENAME] == ''] )
+        n_to_do = len( df_docs[df_docs[FILENAME] == ''] )
         print( '  Downloads done:', n_done )
         print( '  Downloads to do:', n_to_do )
 
@@ -374,22 +376,22 @@ def report_counts( df_filings ):
 
 
 # Download files to specified target directory
-def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, s_filer ):
+def download_files( df_docs, target_dir, docket_number, db_filepath, s_date, s_filer ):
 
     filename = None
     count = 0
     prev_download_dir = ''
 
-    # Extract filings to be downloaded
-    df_download = df_filings[ df_filings[FILENAME] == '' ]
+    # Extract list of documents to be downloaded
+    df_download = df_docs[ df_docs[FILENAME] == '' ]
 
-    # Iterate over filings to be downloaded
-    for index, filing in df_download.iterrows():
+    # Iterate over documents to be downloaded
+    for index, doc in df_download.iterrows():
 
         count += 1
 
         # Generate a directory name based on this row's date and filer and append to target directory
-        dir_name = make_dir_name( filing, docket_number )
+        dir_name = make_dir_name( doc, docket_number )
         download_dir = os.path.join( target_dir, dir_name )
 
         # Create the directory if it does not already exist
@@ -404,7 +406,7 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
 
         try:
             # Try to download current document
-            response = try_to_download_document( filing[LINK] )
+            response = try_to_download_document( doc[LINK] )
 
             # Extract filename from content disposition header
             filename = get_filename( response.headers['content-disposition'], download_dir )
@@ -422,7 +424,7 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
                             file.write( chunk )
 
                 # Update current document in dataframe
-                df_filings.loc[index, FILENAME] = filename
+                df_docs.loc[index, FILENAME] = filename
 
                 # Report success
                 print( '{: >5d}: {}{}'.format( count, filename, s_exists ) )
@@ -446,13 +448,13 @@ def download_files( df_filings, target_dir, docket_number, db_filepath, s_date, 
 
         # Save current state in database
         if not s_date and not s_filer:
-            try_to_save_progress( db_filepath, df_filings )
+            try_to_save_progress( db_filepath, df_docs )
 
     if count == 0:
         print( '' )
         print( 'No files to download.' )
 
-    return df_filings
+    return df_docs
 
 
 # Try to download document from server
@@ -476,13 +478,13 @@ def try_to_download_document( link ):
 
 
 # Save current state of full-docket download
-def try_to_save_progress( db_filepath, df_filings ):
+def try_to_save_progress( db_filepath, df_docs ):
 
     # Invoke save operation in retry loop, to accommodate high latency storage
     for sec in range( DB_RETRY_SEC_MIN, DB_RETRY_SEC_MAX + 1 ):
         try:
             # Issue the request
-            save_progress( db_filepath, df_filings )
+            save_progress( db_filepath, df_docs )
         except:
             # Request failed
             if sec < DB_RETRY_SEC_MAX:
@@ -492,7 +494,7 @@ def try_to_save_progress( db_filepath, df_filings ):
                 # Last chance; no more retries
                 time.sleep( sec )
                 try:
-                    save_progress( db_filepath, df_filings )
+                    save_progress( db_filepath, df_docs )
                 except Exception as e:
                     print( '' )
                     print( f'Error writing to database: {e}' )
@@ -517,7 +519,7 @@ def open_database( db_pathname ):
 
 
 # Save current state of full-docket download
-def save_progress( db_filepath, df_filings ):
+def save_progress( db_filepath, df_docs ):
 
     # Open the database
     conn, cur, engine = open_database( db_filepath )
@@ -527,7 +529,7 @@ def save_progress( db_filepath, df_filings ):
 
     # Generate SQL command to create table
     create_sql = 'CREATE TABLE ' + TABLE_NAME + ' ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
-    for col_name in df_filings.columns:
+    for col_name in df_docs.columns:
         create_sql += ', "{0}"'.format( col_name )
     create_sql += ' )'
 
@@ -535,7 +537,7 @@ def save_progress( db_filepath, df_filings ):
     cur.execute( create_sql )
 
     # Load data into table
-    df_filings.to_sql( TABLE_NAME, conn, if_exists='append', index=False )
+    df_docs.to_sql( TABLE_NAME, conn, if_exists='append', index=False )
 
     # Commit changes
     conn.commit()
@@ -610,7 +612,7 @@ if __name__ == '__main__':
     parser.add_argument( '-d', dest='date',  help='Date of filing', default='' )
     parser.add_argument( '-f', dest='filer',  help='Filer', default='' )
     parser.add_argument( '-t', dest='target_directory', default=os.getcwd(), help='Target directory' )
-    parser.add_argument( '-c', dest='count_only', action='store_true', help='Only report count' )
+    parser.add_argument( '-b', dest='brief', action='store_true', help='Brief mode; stop before downloading any files' )
     args = parser.parse_args()
 
     # Report argument list
@@ -620,7 +622,7 @@ if __name__ == '__main__':
     print_optional_argument( 'Date', args.date )
     print_optional_argument( 'Filer', args.filer )
     print( '  Target Directory: {}'.format( args.target_directory ) )
-    print( '  Count Only: {}'.format( args.count_only ) )
+    print( '  Brief: {}'.format( args.brief ) )
 
     # Report start time
     print( '' )
@@ -630,7 +632,7 @@ if __name__ == '__main__':
     s_date = format_date( args.date ) if args.date else ''
 
     # Create target directory for downloads, named for the docket number
-    target_dir = make_target_directory( args.target_directory, args.docket_number, args.count_only )
+    target_dir = make_target_directory( args.target_directory, args.docket_number )
 
     # Get the Chrome driver
     driver = get_driver( target_dir )
@@ -639,19 +641,23 @@ if __name__ == '__main__':
     get_docket( args.docket_number, target_dir )
 
     # Save docket description
-    if not args.count_only:
-        save_docket_description( target_dir )
+    save_docket_description( target_dir )
 
-    # Get docket filings
+    # Get list of filed documents
     db_filepath = os.path.join( target_dir, args.docket_number + '.sqlite' )
-    df_filings = get_filings( db_filepath, s_date, args.filer )
+    df_docs = get_filed_documents( db_filepath, s_date, args.filer )
 
-    # Report counts of filings and files
-    report_counts( df_filings )
+    # Report counts of documents
+    report_counts( df_docs )
 
-    # Download files listed in identified rows
-    if not args.count_only:
-        df_filings = download_files( df_filings, target_dir, args.docket_number, db_filepath, s_date, args.filer )
+    # Decide what to do with list of filed documents
+    if args.brief:
+        if not os.path.exists( db_filepath ) and not s_date and not args.filer:
+            # Create new database from scraped list of documents
+            try_to_save_progress( db_filepath, df_docs )
+    else:
+        # Download listed documents
+        df_docs = download_files( df_docs, target_dir, args.docket_number, db_filepath, s_date, args.filer )
 
     # Close the browser
     driver.quit()
