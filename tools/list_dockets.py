@@ -198,8 +198,27 @@ def get_docket_list( df, n_page=1 ):
     return df
 
 
+# Convert dates to sortable format
+def parse_dates( df ):
+
+    print( '' )
+    print( 'Converting dates to sortable format' )
+
+    for col in df.columns:
+        try:
+            # Convert date to sortable format
+            df[col] = pd.to_datetime( df[col] )
+            df[col] = df[col].dt.strftime( '%Y-%m-%d' )
+
+        except:
+            pass
+
+    return df
+
+
 # Generate database table name from tile and option input values
 def make_table_name( s_tile, s_option ):
+
     s_tile = '_'.join( s_tile.split( ' ' ) )
     s_option = '_'.join( s_option.split( ' ' ) )
     s_table_name = s_tile + '__' + s_option
@@ -261,9 +280,9 @@ if __name__ == '__main__':
 
     # Read arguments
     parser = argparse.ArgumentParser( description='Scrape list of dockets and save in database' )
-    parser.add_argument( '-t', dest='tile', default=os.getcwd(), help='Tile of dashboard', required=True )
-    parser.add_argument( '-o', dest='option', default=os.getcwd(), help='Option to select from tile', required=True )
-    parser.add_argument( '-d', dest='db_filename',  help='Name of SQLite database file', required=True )
+    parser.add_argument( '-t', dest='tile', help='Tile of dashboard', required=True )
+    parser.add_argument( '-o', dest='option', help='Option to select from tile', required=True )
+    parser.add_argument( '-d', dest='db_filename', help='Name of SQLite database file', required=True )
     args = parser.parse_args()
 
     # Report argument list
@@ -286,6 +305,9 @@ if __name__ == '__main__':
     # Load the list of dockets
     df = pd.DataFrame()
     df = get_docket_list( df )
+
+    # Parse dates
+    df = parse_dates( df )
 
     # Save docket list in database
     save_docket_list( args.db_filename, args.tile, args.option, df )
