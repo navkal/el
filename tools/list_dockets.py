@@ -20,6 +20,8 @@ pd.set_option( 'display.width', 1000 )
 import sqlite3
 import sqlalchemy
 
+import warnings
+
 
 B_DEBUG = False
 if B_DEBUG:
@@ -227,15 +229,19 @@ def prepare_for_database( df ):
     # Clean up whitespace
     df = df.replace( r'\n', ' ', regex=True )
 
-    # Clean up date columns
-    for col in df.columns:
-        try:
-            # Convert date to sortable format
-            df[col] = pd.to_datetime( df[col], dayfirst=True )
-            df[col] = df[col].dt.strftime( '%Y-%m-%d' )
+    # Suppress version-specific warnings about pd.to_datetime()
+    with warnings.catch_warnings():
+        warnings.simplefilter( 'ignore' )
 
-        except:
-            pass
+        # Clean up date columns
+        for col in df.columns:
+            try:
+                # Convert date to sortable format
+                df[col] = pd.to_datetime( df[col] )
+                df[col] = df[col].dt.strftime( '%Y-%m-%d' )
+
+            except:
+                pass
 
     # Clean up index
     df = df.reset_index( drop=True )
