@@ -1,5 +1,24 @@
 # Copyright 2025 Energize Andover.  All rights reserved.
 
+######################
+#
+# Scrape list of dockets from DPU Fileroom Dashboard and save in sqlite database.
+#
+# Required parameters:
+# -t <tile>
+# -o <option>
+# -d <database filename>
+#
+# Sample parameter sequences:
+#
+#  -t "Dockets by Case Type" -o "Energy Efficiency Plan" -d ./out/docket_lists.sqlite
+#  -t "Dockets by Industry" -o "Gas" -d ./out/docket_lists.sqlite
+#  -t "Dockets by Division" -o "Consumer" -d ./out/docket_lists.sqlite
+#  -t "Dockets by Petitioner" -o "Energy Efficiency Advisory Council" -d ./out/docket_lists.sqlite
+#
+######################
+
+
 import argparse
 
 import os
