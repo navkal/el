@@ -231,7 +231,7 @@ def prepare_for_database( df ):
     for col in df.columns:
         try:
             # Convert date to sortable format
-            df[col] = pd.to_datetime( df[col] )
+            df[col] = pd.to_datetime( df[col], infer_datetime_format=True )
             df[col] = df[col].dt.strftime( '%Y-%m-%d' )
 
         except:
