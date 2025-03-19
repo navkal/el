@@ -198,24 +198,6 @@ def get_docket_list( df, n_page=1 ):
     return df
 
 
-# Convert dates to sortable format
-def parse_dates( df ):
-
-    print( '' )
-    print( 'Converting dates to sortable format' )
-
-    for col in df.columns:
-        try:
-            # Convert date to sortable format
-            df[col] = pd.to_datetime( df[col] )
-            df[col] = df[col].dt.strftime( '%Y-%m-%d' )
-
-        except:
-            pass
-
-    return df
-
-
 # Generate database table name from tile and option input values
 def make_table_name( s_tile, s_option ):
 
@@ -236,13 +218,33 @@ def open_database( db_filename ):
     return conn, cur, engine
 
 
+# Prepare dataframe for storing in database
+def prepare_for_database( df ):
+
+    # Clean up column names
+    df.columns = df.columns.str.replace(' ', '_')
+
+    # Clean up whitespace
+    df = df.replace( r'\n', ' ', regex=True )
+
+    # Clean up date columns
+    for col in df.columns:
+        try:
+            # Convert date to sortable format
+            df[col] = pd.to_datetime( df[col] )
+            df[col] = df[col].dt.strftime( '%Y-%m-%d' )
+
+        except:
+            pass
+
+    # Clean up index
+    df = df.reset_index( drop=True )
+
+    return df
+
+
 # Save scraped docket list
 def save_docket_list( db_filename, s_tile, s_option, df ):
-
-    # Prepare dataframe for saving
-    df.columns = df.columns.str.replace(' ', '_')
-    df = df.replace( r'\n', ' ', regex=True )
-    df = df.reset_index( drop=True )
 
     # Generate table name
     table_name = make_table_name( s_tile, s_option )
@@ -306,8 +308,8 @@ if __name__ == '__main__':
     df = pd.DataFrame()
     df = get_docket_list( df )
 
-    # Parse dates
-    df = parse_dates( df )
+    # Prepare dataframe for database
+    df = prepare_for_database( df )
 
     # Save docket list in database
     save_docket_list( args.db_filename, args.tile, args.option, df )
