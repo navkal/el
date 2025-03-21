@@ -631,6 +631,12 @@ LEAN = 'LEAN'
 LEAN_MULTI_FAMILY = 'LMF'
 LEAN_UNKNOWN = '?'
 LEAN_NA = 'n/a'
+SERVICE_DESCRIPTION = 'service_description'
+SERVICE_ADDRESS = 'service_address'
+SERVICE_CODE = 'service_code'
+RATE_CODE = 'rate_code'
+BARCODE = 'barcode'
+RATEPAYER_ID = 'ratepayer_id'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1537,9 +1543,8 @@ CONSISTENT_COLUMN_NAMES = \
         'Count': COUNT,
         'DailyVMT': DAILY_VMT,
     },
-    'RawNationalGridAccounts_L': \
+    'RawNgAccountsBs_L': \
     {
-        'DS/CS': BASIC_OR_TPS,
         'NAME': 'name',
         'ACCT_CODE': 'acct_code',
         'LDC_ACCT_NO': ACCOUNT,
@@ -1551,17 +1556,43 @@ CONSISTENT_COLUMN_NAMES = \
         'SERV_CITY': 'serv_city',
         'SERV_STATE': 'serv_state',
         'SERV_ZIP': 'serv_zip',
-        'SC': 'sc',
+        'SC': SERVICE_CODE,
+        'O_MAIL_ADDR_1': 'orig_mail_addr_1',
+        'O_MAIL_ADDR_2': 'orig_mail_addr_2',
+        'O_MAIL_CITY': 'orig_mail_city',
+        'O_MAIL_STATE': 'orig_mail_state',
+        'O_MAIL_ZIP': 'orig_mail_zip',
         'MAIL_ADDR_1': 'mail_addr_1',
         'MAIL_ADDR_2': 'mail_addr_2',
         'MAIL_CITY': 'mail_city',
         'MAIL_STATE': 'mail_state',
         'MAIL_ZIP': 'mail_zip',
         'ICAP': 'icap',
-        'Sort Order': 'sort_order',
-        'Account Type': ACCOUNT_TYPE,
-        'TX_TAR_SVC_DESC': 'tx_tar_svc_desc',
+        'TX_TAR_SVC_DESC': 'service_description',
         'CD_CITY_CNTY': 'cd_city_cnty',
+        'CITY ACCT?': 'is_city_account',
+    },
+    'RawNgAccountsTps_L': \
+    {
+        'BARCODE': BARCODE,
+        'CD_CO': 'cd_co',
+        'Agg': 'aggregator',
+        'AD_SERV_CITY': 'service_city',
+        'Service Name NM_COMPRESSED': 'service_name',
+        'Service AD_COMPRESSED': SERVICE_ADDRESS,
+        'MAIL Address': 'mail_addr_1',
+        'TX_TAR_SCH_DESC': 'service_description',
+        'Rate Code': RATE_CODE,
+        'Rat Summ': 'rate_description',
+        'CD_SERV_SUPP': 'cd_serv_supp',
+        'Mail Update': 'mail_addr_2',
+        'Street': 'mail_addr_3',
+        'Street with no * and cleaned up': 'mail_addr_4',
+        'Street #': 'mail_addr_5',
+        'City': CITY,
+        'State': STATE,
+        'Zip': ZIP,
+        'Concat': CITY + '_' + STATE + '_' + ZIP
     },
     'RawOwnerOccupied_L': \
     {
@@ -2440,9 +2471,9 @@ COLUMN_ORDER = \
         OFFICE,
         CANDIDATE,
     ],
-    'NationalGridMeters_L':
+    'NgAccountsR2_L':
     [
-        ACCOUNT,
+        RATEPAYER_ID,
         NORMALIZED_ADDRESS,
         THIRD_PARTY_SUPPLY,
     ],
