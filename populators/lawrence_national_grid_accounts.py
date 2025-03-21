@@ -18,6 +18,19 @@ OCCUPANCY = util.NORMALIZED_OCCUPANCY
 ADDITIONAL = util.NORMALIZED_ADDITIONAL_INFO
 
 
+RATE_CLASS_KEEP_COLUMNS = \
+[
+    util.RATEPAYER_ID,
+    util.THIRD_PARTY_SUPPLY,
+    util.SERVICE_NAME,
+    ADDR,
+    STREET_NUMBER,
+    STREET_NAME,
+    OCCUPANCY,
+    ADDITIONAL,
+]
+
+
 # Clean up garbage in address column
 def clean_address_column( df, col ):
     df[col] = df[col].fillna( '' )
@@ -27,6 +40,37 @@ def clean_address_column( df, col ):
     df[col] = df[col].str.strip()
 
     return df
+
+
+# Create a table of National Grid accounts selected by rate class
+def create_rate_class_table( s_rate_class, df_bs, df_tps ):
+
+    # Create table of Basic Service accounts
+    df_rate_class_bs = df_bs[df_bs[util.SERVICE_CODE] == 'R' + s_rate_class + 'A'].copy()
+    df_rate_class_bs[util.THIRD_PARTY_SUPPLY] = util.NO
+    df_rate_class_bs[util.RATEPAYER_ID] = df_rate_class_bs[util.ACCOUNT]
+
+    # Create table of TPS accounts
+    df_rate_class_tps = df_tps[df_tps[util.RATE_CODE] == 'R-1'].copy()
+    df_rate_class_tps[util.THIRD_PARTY_SUPPLY] = util.YES
+    df_rate_class_tps[util.RATEPAYER_ID] = df_rate_class_tps[util.BARCODE]
+
+    # Create table of all accounts
+    df_rate_class = pd.concat( [df_rate_class_bs, df_rate_class_tps], ignore_index=True )
+    df_rate_class = df_rate_class[RATE_CLASS_KEEP_COLUMNS]
+    df_rate_class = df_rate_class.drop_duplicates( subset=[util.RATEPAYER_ID] )
+    df_rate_class.reset_index( drop=True )
+
+    # Merge meters dataframe with assessment data
+    table_name = 'NgAccountsR' + s_rate_class + '_L'
+    df_rate_class = util.merge_with_assessment_data( table_name, df_rate_class, engine=engine, sort_by=util.COLUMN_ORDER[table_name], drop_subset=util.COLUMN_ORDER[table_name] )
+
+    # Save table
+    util.create_table( table_name, conn, cur, df=df_rate_class )
+
+    return
+
+
 
 
 ##################################
@@ -44,7 +88,7 @@ if __name__ == '__main__':
 
 
     # Retrieve raw basic service table from database
-    df_bs = pd.read_sql_table( 'RawNgAccountsBs_L', engine, index_col=util.ID, parse_dates=True )
+    df_bs = pd.read_sql_table( 'RawNgAccountsBasic_L', engine, index_col=util.ID, parse_dates=True )
     df_bs[util.ACCOUNT] = df_bs[util.ACCOUNT].fillna(0).astype( 'int64' )
 
     # Extract residential accounts
@@ -61,7 +105,7 @@ if __name__ == '__main__':
 
     # Save table
     df_bs.reset_index( drop=True )
-    util.create_table( 'RawNgAccountsBs_L', conn, cur, df=df_bs )
+    util.create_table( 'NgAccountsBasic_L', conn, cur, df=df_bs )
 
 
     # Retrieve raw third-party supplier table from database
@@ -83,26 +127,11 @@ if __name__ == '__main__':
     util.create_table( 'NgAccountsTps_L', conn, cur, df=df_tps )
 
 
-    # Create table of Basic Service R2 accounts
-    df_r2_bs = df_bs[df_bs[util.SERVICE_CODE] == 'R2A'].copy()
-    df_r2_bs[util.THIRD_PARTY_SUPPLY] = util.NO
-    df_r2_bs[util.RATEPAYER_ID] = df_r2_bs[util.ACCOUNT]
+    # Build and save table R1 accounts
+    create_rate_class_table( '1', df_bs, df_tps )
 
-    # Create table of TPS R2 accounts
-    df_r2_tps = df_tps[df_tps[util.RATE_CODE] == 'R-2'].copy()
-    df_r2_tps[util.THIRD_PARTY_SUPPLY] = util.YES
-    df_r2_tps[util.RATEPAYER_ID] = df_r2_tps[util.BARCODE]
+    # Build and save table R2 accounts
+    create_rate_class_table( '2', df_bs, df_tps )
 
-    # Create table of all R2 accounts
-    df_r2 = pd.concat( [df_r2_bs, df_r2_tps], ignore_index=True )
-    df_r2 = df_r2.drop_duplicates( subset=[util.RATEPAYER_ID] )
-    df_r2.reset_index( drop=True )
-
-    # Merge meters dataframe with assessment data
-    table_name = 'NgAccountsR2_L'
-    df_r2 = util.merge_with_assessment_data( table_name, df_r2, engine=engine, sort_by=util.COLUMN_ORDER[table_name], drop_subset=util.COLUMN_ORDER[table_name] )
-
-    # Save table
-    util.create_table( table_name, conn, cur, df=df_r2 )
 
     util.report_elapsed_time()

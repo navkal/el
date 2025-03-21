@@ -35,6 +35,7 @@ TABLE_NAMES = \
     'Businesses_L',
     'Census_L',
     'GlcacJobs_L',
+    'NgAccountsR1_L',
     'NgAccountsR2_L',
 ]
 

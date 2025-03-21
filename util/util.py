@@ -624,7 +624,7 @@ SERV_ADDR_2 = SERV_ADDR_ + '2'
 SERV_ADDR_3 = SERV_ADDR_ + '3'
 SERV_ADDR_4 = SERV_ADDR_ + '4'
 THIRD_PARTY_SUPPLY = 'third_party_supply'
-NATIONAL_GRID_ACCOUNT = 'ng_account'
+NATIONAL_GRID_R1_ACCOUNT = 'ng_r1_account'
 NATIONAL_GRID_R2_ACCOUNT = 'ng_r2_account'
 LEAN_ELIGIBILITY = 'lean_eligibility'
 LEAN = 'LEAN'
@@ -632,6 +632,7 @@ LEAN_MULTI_FAMILY = 'LMF'
 LEAN_UNKNOWN = '?'
 LEAN_NA = 'n/a'
 SERVICE_DESCRIPTION = 'service_description'
+SERVICE_NAME = 'service_name'
 SERVICE_ADDRESS = 'service_address'
 SERVICE_CODE = 'service_code'
 RATE_CODE = 'rate_code'
@@ -1543,9 +1544,9 @@ CONSISTENT_COLUMN_NAMES = \
         'Count': COUNT,
         'DailyVMT': DAILY_VMT,
     },
-    'RawNgAccountsBs_L': \
+    'RawNgAccountsBasic_L': \
     {
-        'NAME': 'name',
+        'NAME': SERVICE_NAME,
         'ACCT_CODE': 'acct_code',
         'LDC_ACCT_NO': ACCOUNT,
         'CYC/3ERT': 'cyc_3ert',
@@ -1568,7 +1569,7 @@ CONSISTENT_COLUMN_NAMES = \
         'MAIL_STATE': 'mail_state',
         'MAIL_ZIP': 'mail_zip',
         'ICAP': 'icap',
-        'TX_TAR_SVC_DESC': 'service_description',
+        'TX_TAR_SVC_DESC': SERVICE_DESCRIPTION,
         'CD_CITY_CNTY': 'cd_city_cnty',
         'CITY ACCT?': 'is_city_account',
     },
@@ -1578,10 +1579,10 @@ CONSISTENT_COLUMN_NAMES = \
         'CD_CO': 'cd_co',
         'Agg': 'aggregator',
         'AD_SERV_CITY': 'service_city',
-        'Service Name NM_COMPRESSED': 'service_name',
+        'Service Name NM_COMPRESSED': SERVICE_NAME,
         'Service AD_COMPRESSED': SERVICE_ADDRESS,
         'MAIL Address': 'mail_addr_1',
-        'TX_TAR_SCH_DESC': 'service_description',
+        'TX_TAR_SCH_DESC': SERVICE_DESCRIPTION,
         'Rate Code': RATE_CODE,
         'Rat Summ': 'rate_description',
         'CD_SERV_SUPP': 'cd_serv_supp',
@@ -2471,11 +2472,12 @@ COLUMN_ORDER = \
         OFFICE,
         CANDIDATE,
     ],
-    'NgAccountsR2_L':
+    'NgAccountsR1_L':
     [
         RATEPAYER_ID,
-        NORMALIZED_ADDRESS,
         THIRD_PARTY_SUPPLY,
+        SERVICE_NAME,
+        NORMALIZED_ADDRESS,
     ],
     'Partisans':
     [
@@ -2682,6 +2684,7 @@ COLUMN_ORDER['Assessment_L_Residential'] = COLUMN_ORDER['Assessment_L_Commercial
 COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ WARD_NUMBER, PRECINCT_NUMBER, CENSUS_GEO_ID, CENSUS_TRACT, CENSUS_BLOCK_GROUP ]
 COLUMN_ORDER['ElectricMeters_L'] = COLUMN_ORDER['ElectricMeters_A']
 COLUMN_ORDER['RawElectricMeters_L'] = COLUMN_ORDER['RawElectricMeters_A']
+COLUMN_ORDER['NgAccountsR2_L'] = COLUMN_ORDER['NgAccountsR1_L']
 
 
 COLUMN_ORDER_TRAILING = \

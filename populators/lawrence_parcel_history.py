@@ -106,14 +106,16 @@ def merge_glcac_job_numbers( df_parcels ):
 # Merge National Grid accounts to parcels dataframe
 def merge_national_grid_accounts( df_parcels ):
 
-    # Read specified table of National Grid accounts
-    df_r2_accounts = pd.read_sql_table( 'NgAccountsR2_L', engine, index_col=util.ID, parse_dates=True )
-
-    # Determine names of old, source column and new, output column
+    # Determine name of old, source column
     old_col_name = util.RATEPAYER_ID
 
+    # Merge R-1 (regular residential) accounts
+    df = pd.read_sql_table( 'NgAccountsR1_L', engine, index_col=util.ID, parse_dates=True )
+    df_parcels = merge_to_parcels_table( df_parcels, df, old_col_name, util.NATIONAL_GRID_R1_ACCOUNT )
+
     # Merge R-2 (residential assistance) accounts
-    df_parcels = merge_to_parcels_table( df_parcels, df_r2_accounts, old_col_name, util.NATIONAL_GRID_R2_ACCOUNT )
+    df = pd.read_sql_table( 'NgAccountsR2_L', engine, index_col=util.ID, parse_dates=True )
+    df_parcels = merge_to_parcels_table( df_parcels, df, old_col_name, util.NATIONAL_GRID_R2_ACCOUNT )
 
     # Return result
     return df_parcels
