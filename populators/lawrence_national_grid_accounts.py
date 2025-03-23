@@ -86,10 +86,21 @@ if __name__ == '__main__':
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
+    # Read table mapping street names misspelled by National Grid to correct spellings
+    df_street_names = pd.read_sql_table( 'RawNgStreetNames_L', engine, index_col=util.ID )
+    dc_street_names = dict( zip( df_street_names[util.BAD_SPELLING], df_street_names[util.GOOD_SPELLING] ) )
+
 
     # Retrieve raw basic service table from database
     df_bs = pd.read_sql_table( 'RawNgAccountsBasic_L', engine, index_col=util.ID, parse_dates=True )
     df_bs[util.ACCOUNT] = df_bs[util.ACCOUNT].fillna(0).astype( 'int64' )
+
+    # Edit misspelled street names
+    df_bs[util.SERV_ADDR_2] = df_bs[util.SERV_ADDR_2].replace( dc_street_names )
+
+    # Save table
+    util.create_table( 'NgAccountsBasic_L', conn, cur, df=df_bs )
+
 
     # Extract residential accounts
     df_bs = df_bs[ df_bs[util.SERVICE_DESCRIPTION].str.contains( 'Residential' ) ].copy()
@@ -103,28 +114,27 @@ if __name__ == '__main__':
     df_bs[ADDR] = df_bs[util.SERV_ADDR_1] + ' ' + df_bs[util.SERV_ADDR_2] + ' ' + df_bs[util.SERV_ADDR_3] + ' ' + df_bs[util.SERV_ADDR_4]
     df_bs[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_bs.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
-    # Save table
-    df_bs.reset_index( drop=True )
-    util.create_table( 'NgAccountsBasic_L', conn, cur, df=df_bs )
-
 
     # Retrieve raw third-party supplier table from database
     df_tps = pd.read_sql_table( 'RawNgAccountsTps_L', engine, index_col=util.ID, parse_dates=True )
-
-    # Extract residential accounts
-    df_tps = df_tps[ df_tps[util.SERVICE_DESCRIPTION].str.contains( 'Residential' ) ].copy()
 
     # Clean up address column
     df_tps = clean_address_column( df_tps, util.SERVICE_ADDRESS )
     df_tps[util.SERVICE_ADDRESS] = df_tps[util.SERVICE_ADDRESS].str.replace( ' LAWRENCE MA \d+$', '', regex=True )
 
-    # Normalize addresses.  Use result_type='expand' to load multiple columns!
-    df_tps[ADDR] = df_tps[util.SERVICE_ADDRESS]
-    df_tps[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_tps.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+    # Edit misspelled street names
+    df_tps[util.SERVICE_ADDRESS] = df_tps[util.SERVICE_ADDRESS].replace( dc_street_names )
 
     # Save table
     df_tps.reset_index( drop=True )
     util.create_table( 'NgAccountsTps_L', conn, cur, df=df_tps )
+
+    # Extract residential accounts
+    df_tps = df_tps[ df_tps[util.SERVICE_DESCRIPTION].str.contains( 'Residential' ) ].copy()
+
+    # Normalize addresses.  Use result_type='expand' to load multiple columns!
+    df_tps[ADDR] = df_tps[util.SERVICE_ADDRESS]
+    df_tps[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_tps.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
 
 
     # Build and save table R1 accounts

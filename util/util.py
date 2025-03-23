@@ -638,6 +638,8 @@ SERVICE_CODE = 'service_code'
 RATE_CODE = 'rate_code'
 BARCODE = 'barcode'
 RATEPAYER_ID = 'ratepayer_id'
+BAD_SPELLING = 'bad_spelling'
+GOOD_SPELLING = 'good_spelling'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -1594,6 +1596,11 @@ CONSISTENT_COLUMN_NAMES = \
         'State': STATE,
         'Zip': ZIP,
         'Concat': CITY + '_' + STATE + '_' + ZIP
+    },
+    'RawNgStreetNames_L': \
+    {
+        'bad_spelling': BAD_SPELLING,
+        'good_spelling': GOOD_SPELLING,
     },
     'RawOwnerOccupied_L': \
     {
