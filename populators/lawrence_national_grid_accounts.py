@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
-    # Read table mapping street names misspelled by National Grid to correct spellings
+    # Get mapping from street names misspelled by National Grid to correct spellings
     df_street_names = pd.read_sql_table( 'RawNgStreetNames_L', engine, index_col=util.ID )
     dc_street_names = dict( zip( df_street_names[util.BAD_SPELLING], df_street_names[util.GOOD_SPELLING] ) )
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # Edit misspelled street names
     df_bs[util.SERV_ADDR_2] = df_bs[util.SERV_ADDR_2].replace( dc_street_names, regex=True )
 
-    # Save table
+    # Save table of National Grid Basic Service accounts
     util.create_table( 'NgAccountsBasic_L', conn, cur, df=df_bs )
 
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     # Edit misspelled street names
     df_tps[util.SERVICE_ADDRESS] = df_tps[util.SERVICE_ADDRESS].replace( dc_street_names, regex=True )
 
-    # Save table
+    # Save table of third-party supplier accounts
     df_tps.reset_index( drop=True )
     util.create_table( 'NgAccountsTps_L', conn, cur, df=df_tps )
 
