@@ -96,7 +96,7 @@ if __name__ == '__main__':
     df_bs[util.ACCOUNT] = df_bs[util.ACCOUNT].fillna(0).astype( 'int64' )
 
     # Edit misspelled street names
-    df_bs[util.SERV_ADDR_2] = df_bs[util.SERV_ADDR_2].replace( dc_street_names )
+    df_bs[util.SERV_ADDR_2] = df_bs[util.SERV_ADDR_2].replace( dc_street_names, regex=True )
 
     # Save table
     util.create_table( 'NgAccountsBasic_L', conn, cur, df=df_bs )
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     df_tps[util.SERVICE_ADDRESS] = df_tps[util.SERVICE_ADDRESS].str.replace( ' LAWRENCE MA \d+$', '', regex=True )
 
     # Edit misspelled street names
-    df_tps[util.SERVICE_ADDRESS] = df_tps[util.SERVICE_ADDRESS].replace( dc_street_names )
+    df_tps[util.SERVICE_ADDRESS] = df_tps[util.SERVICE_ADDRESS].replace( dc_street_names, regex=True )
 
     # Save table
     df_tps.reset_index( drop=True )
