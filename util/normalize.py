@@ -135,7 +135,7 @@ EXPECTED_KEYS = \
 
 
 # Help usaddress parsing algorithm with troublesome address inputs
-def fix_inputs_we_dont_like( address, return_parts, verbose ):
+def fix_inputs_we_dont_like( address, city, return_parts, verbose ):
 
     # Miscellaneous typos
     address = re.sub( r' CI$', ' CIR', address )
@@ -164,16 +164,17 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     address = re.sub( r' NEW$', '', address ).strip()
 
     # Fix typos in addresses of Lawrence parcels scraped from the Vision website
-    address = re.sub( r'BEACONSFIED ST', 'BEACONSFIELD ST', address )
-    address = re.sub( r'BROOMFIELD ST', 'BROMFIELD ST', address )
-    address = re.sub( r'LANDSDOWNE CT', 'LANSDOWNE CT', address )
-    address = re.sub( r'MCABE CT', 'MCCABE CT', address )
-    address = re.sub( r'GENESSE ST', 'GENESEE ST', address )
-    address = re.sub( r'LINCOLN ST', 'LINCOLN CT', address )
-    address = re.sub( r'CENTRE ST', 'CENTER ST', address )
-    address = re.sub( r'170 E FERRY ST', '170E FERRY ST', address )
-    address = re.sub( r'MYTRLE CT', 'MYRTLE CT', address )
-    address = re.sub( r'GRAICHEN CT', 'GRAICHEN TER', address )
+    if city == 'LAWRENCE':
+        address = re.sub( r'BEACONSFIED ST', 'BEACONSFIELD ST', address )
+        address = re.sub( r'BROOMFIELD ST', 'BROMFIELD ST', address )
+        address = re.sub( r'LANDSDOWNE CT', 'LANSDOWNE CT', address )
+        address = re.sub( r'MCABE CT', 'MCCABE CT', address )
+        address = re.sub( r'GENESSE ST', 'GENESEE ST', address )
+        address = re.sub( r'LINCOLN ST', 'LINCOLN CT', address )
+        address = re.sub( r'CENTRE ST', 'CENTER ST', address )
+        address = re.sub( r'170 E FERRY ST', '170E FERRY ST', address )
+        address = re.sub( r'MYTRLE CT', 'MYRTLE CT', address )
+        address = re.sub( r'GRAICHEN CT', 'GRAICHEN TER', address )
 
 
     # Remove spaces around hyphens
@@ -429,7 +430,7 @@ def normalize_address( row, col_name, city='ANDOVER', return_parts=False, verbos
         print( 'Normalizing address in column "{0}": "{1}"'.format( col_name, address ) )
 
     # Help usaddress parsing algorithm with troublesome address inputs
-    address, additional_info = fix_inputs_we_dont_like( address, return_parts, verbose )
+    address, additional_info = fix_inputs_we_dont_like( address, city, return_parts, verbose )
 
     parts = {}
 
