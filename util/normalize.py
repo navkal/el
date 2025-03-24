@@ -162,7 +162,19 @@ def fix_inputs_we_dont_like( address, return_parts, verbose ):
     address = re.sub( r'^1 COMMONWEALTH DR/ 135 MARSTON$', '1 COMMONWEALTH DR', address )
     address = re.sub( r' ST STR$', ' ST', address ).strip()
     address = re.sub( r' NEW$', '', address ).strip()
-    address = re.sub( r' LAWRENCE BSMT$', ' LAWRENCE ST BSMT', address ).strip()
+
+    # Fix typos in addresses of Lawrence parcels scraped from the Vision website
+    address = re.sub( r'BEACONSFIED ST', 'BEACONSFIELD ST', address )
+    address = re.sub( r'BROOMFIELD ST', 'BROMFIELD ST', address )
+    address = re.sub( r'LANDSDOWNE CT', 'LANSDOWNE CT', address )
+    address = re.sub( r'MCABE CT', 'MCCABE CT', address )
+    address = re.sub( r'GENESSE ST', 'GENESEE ST', address )
+    address = re.sub( r'LINCOLN ST', 'LINCOLN CT', address )
+    address = re.sub( r'CENTRE ST', 'CENTER ST', address )
+    address = re.sub( r'170 E FERRY ST', '170E FERRY ST', address )
+    address = re.sub( r'MYTRLE CT', 'MYRTLE CT', address )
+    address = re.sub( r'GRAICHEN CT', 'GRAICHEN TER', address )
+
 
     # Remove spaces around hyphens
     address = re.sub( r' ?- ?', '-', address )
