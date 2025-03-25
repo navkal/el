@@ -1,5 +1,23 @@
 # Copyright 2025 Energize Andover.  All rights reserved.
 
+######################
+#
+# Extracts columns from Assessment_L_Parcels table in
+# specified database and saves them to specified CSV file.
+#
+# Required parameters:
+# -i input database filename
+# -o output CSV filename
+#
+# Optional parameters:
+# -c comma-separated list of columns to include; replaces COLUMNS_DEFAULT (see code below)
+#
+# Examplex:
+# -i lawrence_master.sqlite -o parcels.csv
+# -i lawrence_master.sqlite -o parcels.csv -c "latitude,longitude,account_number"
+#
+######################
+
 import argparse
 import os
 
