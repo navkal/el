@@ -120,6 +120,47 @@ def report_unmapped_addresses():
     print( 'Unmapped addresses: {}'.format( len( df_parcels.loc[ df_parcels[LAT].isnull() | df_parcels[LONG].isnull() | df_parcels[ZIP].isnull() ] ) ) )
 
 
+# Enhance normalization results by applying information found in MBLU
+def enhance_normalization_results( df_parcels ):
+
+    # Extract MBLU fragments
+    df_parcels[util.MBLU_M] = df_parcels[util.MBLU].str.extract( r'([^/]*)/[^/]*/[^/]*/[^/]*/$' )
+    df_parcels[util.MBLU_B] = df_parcels[util.MBLU].str.extract( r'([^/]*)/[^/]*/[^/]*/$' )
+    df_parcels[util.MBLU_L] = df_parcels[util.MBLU].str.extract( r'([^/]*)/[^/]*/$' )
+    df_parcels[util.MBLU_U] = df_parcels[util.MBLU].str.extract( r'([^/]*)/$' )
+
+    # Isolate residential parcels
+    df_res = df_parcels[df_parcels[util.IS_RESIDENTIAL] == util.YES]
+
+    # Look for groups of parcels with same address
+    for idx, df_group in df_res.groupby( by=[ADDR,util.MBLU_M,util.MBLU_B] ):
+
+        if len( df_group ) >= 4:
+
+            # Require the following from all parcels in the group
+            # - MBLU lot field is not empty
+            # - MBLU unit field is empty
+            # - OCCUPANCY field is empty
+            #
+            df_lots = df_group[df_group[util.MBLU_L] != '']
+            df_units = df_group[df_group[util.MBLU_U] != '']
+            df_occs = df_group[df_group[OCCUPANCY] != '']
+
+            b_enhance_address = \
+                ( len( df_lots ) == len( df_group ) ) and \
+                ( len( df_units ) == 0 ) and \
+                ( len( df_occs ) == 0 )
+
+            if b_enhance_address:
+                df_parcels.loc[df_group.index,OCCUPANCY] = df_group[util.MBLU_L]
+                df_parcels.loc[df_group.index,ADDR] = df_group[ADDR] + ' ' + df_group[util.MBLU_L]
+
+    # Clean up
+    df_parcels = df_parcels.drop( columns=[util.MBLU_M, util.MBLU_B, util.MBLU_L, util.MBLU_U] )
+
+    return df_parcels
+
+
 # Save parcels table and geolocation cache
 def save_progress():
 
@@ -168,6 +209,10 @@ if __name__ == '__main__':
     # Normalize parcel addresses
     df_parcels[ADDR] = df_parcels[LOCN]
     df_parcels[[ADDR,STREET_NUMBER,STREET_NAME,OCCUPANCY,ADDITIONAL]] = df_parcels.apply( lambda row: normalize.normalize_address( row, ADDR, city='LAWRENCE', return_parts=True ), axis=1, result_type='expand' )
+
+
+    # Enhance normalization results by applying information found in MBLU
+    df_parcels = enhance_normalization_results( df_parcels )
 
     # Merge parcels with coordinates from geolocation cache
     df_parcels = pd.merge( df_parcels, df_cache, how='left', on=[ADDR] )

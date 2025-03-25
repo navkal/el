@@ -556,6 +556,10 @@ BATHS_ = 'baths_'
 OCCUPANCY_ = 'occupancy_'
 
 MBLU = 'mblu' # Stands for Map, Block, Lot, Unit
+MBLU_M = 'mblu_m'
+MBLU_B = 'mblu_b'
+MBLU_L = 'mblu_l'
+MBLU_U = 'mblu_u'
 
 READ_DATE = 'read_date'
 READ_DAYS = 'read_days'
@@ -3142,8 +3146,13 @@ def read_parcels_table_for_merge( engine, columns=[NORMALIZED_ADDRESS, ACCOUNT_N
     df_parcels = df_parcels.drop( columns=[NORMALIZED_STREET_NUMBER, NORMALIZED_STREET_NAME] )
     return df_parcels
 
-
+#####################
 # Merge dataframe with commercial and residential assessment data based on normalized addresses
+#
+# This function adds two columns to the input dataframe:
+# - ACCOUNT_NUMBER: Uniquely identifies a parcel in the assessment table
+# - CONFIDENCE: Confidence that choice of account number is accurate
+#
 def merge_with_assessment_data( table_name, df_left, sort_by=[PERMIT_NUMBER, ACCOUNT_NUMBER], drop_subset=None, engine=None, df_parcels=None ):
 
     # If we have engine, retrieve the parcels table
