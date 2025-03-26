@@ -27,12 +27,8 @@ pd.options.display.width = 0
 import sqlite3
 import sqlalchemy
 
-import parcels_to_kml_map as map
-TABLE = map.TABLE
-COLUMNS = map.COLUMNS
-MAP = map.MAP
-
-import parcels_to_kml_util as util
+from parcels_to_kml_map import TABLE, COLUMNS, MAP
+from parcels_to_kml_util import create_kml
 
 
 ######################
@@ -121,7 +117,7 @@ if __name__ == '__main__':
     df.to_csv( args.csv_filename, index=False, header=True )
 
     # Convert CSV to KML
-    util.create_kml( args.csv_filename, args.kml_filename )
+    create_kml( args.csv_filename, args.kml_filename )
 
     print( '' )
     print( 'Done' )
