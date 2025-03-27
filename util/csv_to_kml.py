@@ -31,13 +31,13 @@ def create_kml(input_csv, output_kml):
                     
                     placemark = SubElement(document, "Placemark")
                     
-                    # Set an empty title
+                    # Set the title as the mouse-over text
                     name = SubElement(placemark, "name")
-                    name.text = ""
+                    name.text = ""  # Ensure mouse-over displays the first element in the CSV
                     
                     # Display the first item in the list on hover with clickable link
                     description = SubElement(placemark, "description")
-                    description.text = f"<![CDATA[{title}<br><a href='{link}' target='_blank'>Property Info</a>]]>"
+                    description.text = f"<![CDATA[{title}<br><a href='{link}' target='_blank'>Property Info</a>"
                     
                     style = SubElement(placemark, "Style")
                     icon_style = SubElement(style, "IconStyle")

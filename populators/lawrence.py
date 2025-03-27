@@ -6,6 +6,7 @@ import os
 import sys
 sys.path.append( '../util' )
 import util
+import kml
 
 
 # Main program
@@ -330,5 +331,9 @@ if __name__ == '__main__':
         ]
     }
     util.publish_database( input_db, args.research_filename, publish_info )
+
+    # Generate KML layers representing Lawrence parcels
+    print( '\n=======> KML' )
+    kml.make_kml_layers( args.master_filename, '../kml' )
 
     util.report_elapsed_time()
