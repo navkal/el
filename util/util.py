@@ -1,6 +1,7 @@
 # Copyright 2019 Energize Andover.  All rights reserved.
 
 import os
+import sys
 import sqlite3
 import sqlalchemy
 import pandas as pd
@@ -257,6 +258,8 @@ POSITION = 'position'
 
 NATIONAL_GRID = 'National Grid'
 ELECTRIC = 'Electric'
+GAS = 'Gas'
+OIL = 'Oil'
 
 GENDER = 'gender'
 
@@ -430,11 +433,12 @@ HEATING_FUEL_DESC = HEATING_FUEL + _DESC
 HEATING_TYPE_DESC = HEATING_TYPE + _DESC
 AC_TYPE_DESC = AC_TYPE + _DESC
 
+
 HEATING_FUEL_MAP = \
 {
-    'Electric': 'heating_fuel_electric',
-    'Gas': 'heating_fuel_gas',
-    'Oil': 'heating_fuel_oil',
+    ELECTRIC: 'heating_fuel_electric',
+    GAS: 'heating_fuel_gas',
+    OIL: 'heating_fuel_oil',
 }
 
 HEATING_TYPE_MAP = \
@@ -644,6 +648,9 @@ BARCODE = 'barcode'
 RATEPAYER_ID = 'ratepayer_id'
 BAD_SPELLING = 'bad_spelling'
 GOOD_SPELLING = 'good_spelling'
+
+LABEL = 'label'
+DIAMETER = 'diameter'
 
 CONSISTENT_COLUMN_NAMES = \
 {
@@ -3879,3 +3886,8 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
     minutes, seconds = divmod( elapsed_time, 60 )
     ms = round( ( elapsed_time - int( elapsed_time ) ) * 1000 )
     print( prefix + 'Elapsed time: {:02d}:{:02d}.{:d}'.format( int( minutes ), int( seconds ), ms ) )
+
+
+def exit():
+    report_elapsed_time()
+    sys.exit()
