@@ -7,7 +7,7 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
-from matplotlib import colors
+import simplekml
 
 import csv
 
@@ -24,6 +24,7 @@ import csv_to_kml
 TABLE = 'Assessment_L_Parcels'
 
 # Nicknames
+ADDR = util.NORMALIZED_ADDRESS
 IS_RES = util.IS_RESIDENTIAL
 FUEL = util.HEATING_FUEL_DESC
 WARD = util.WARD_NUMBER
@@ -38,7 +39,8 @@ LEAN_ELIG = util.LEAN_ELIGIBILITY
 LEAN = util.LEAN
 LMF = util.LEAN_MULTI_FAMILY
 LABEL = util.LABEL
-DIAMETER = util.DIAMETER
+COLOR = util.COLOR
+ICON = util.ICON
 
 
 # Filters for each KML layer
@@ -83,25 +85,49 @@ FILTERS = \
 # Map from column values to pin attributes
 dc_map = \
 {
-    WARD:
+    COLOR:
     {
-        'A': colors.to_hex( 'red' ),
-        'B': colors.to_hex( 'orange' ),
-        'C': colors.to_hex( 'yellow' ),
-        'D': colors.to_hex( 'blue' ),
-        'E': colors.to_hex( 'purple' ),
-        'F': colors.to_hex( 'pink' ),
+        'A': simplekml.Color.red,
+        'B': simplekml.Color.orange,
+        'C': simplekml.Color.yellow,
+        'D': simplekml.Color.blue,
+        'E': simplekml.Color.purple,
+        'F': simplekml.Color.pink,
     },
-    FUEL:
+    ICON:
     {
-        ELEC: 'star',
-        OIL: 'circle',
-        GAS: 'square',
+        ELEC: 'square|0.7',
+        OIL: 'placemark_circle|1',
+        GAS: 'star|0.9',
     },
 }
 
 
 ######################
+
+def make_klm_layer( df, kml_filepath ):
+    print( 'do_it_another_way()' )
+    kml = simplekml.Kml()
+
+    for index, row in df.iterrows():
+        point = kml.newpoint( name=row[ADDR], coords=[ ( row[LONG], row[LAT] ) ] )
+
+        # Hide the label
+        point.style.labelstyle.scale = 0
+
+        # Set icon attributes
+        point.style.iconstyle.color = row[COLOR]
+        shape_scale = str( row[ICON] ).split('|')
+        point.style.iconstyle.icon.href = 'https://maps.google.com/mapfiles/kml/shapes/' + shape_scale[0] + '.png'
+        point.style.iconstyle.scale = shape_scale[1]
+
+        # Set link
+        point.description = f'<a href={row[LINK]}>{row[ADDR]}</a>'
+
+    kml.save( kml_filepath )
+
+    return
+
 
 
 def make_filepath( output_directory, s_layer, s_ext ):
@@ -138,42 +164,27 @@ def make_kml_layers(  input_filename, output_directory ):
         print( f'Layer "{s_layer}" contains {len(df)} parcels' )
 
         # Edit Vision hyperlinks encoded for Excel
-        pattern = r'=HYPERLINK\(("http.*pid=\d+").*'
+        pattern = r'=HYPERLINK\("(http.*pid=\d+)".*'
         df = df.replace( to_replace=pattern, value=r'\1', regex=True )
 
-        # Select columns
-        df = df[[FUEL, LAT, LONG, WARD, LINK]]
-
-        # Add columns
-        df[LABEL] = df[WARD]
-        df[DIAMETER] = 0.00025
+        # Add columns to be replaced with mapped values
+        df[COLOR] = df[WARD]
+        df[ICON] = df[FUEL]
 
         # Reorder columns and rows
-        ls_columns = [LABEL, FUEL, LAT, LONG, WARD, DIAMETER, LINK]
+        ls_columns = [WARD, ICON, LAT, LONG, COLOR, ADDR, LINK]
         df = df[ls_columns]
         df = df.sort_values( by=ls_columns )
         df = df.reset_index( drop=True )
-
-        #------> Delete this ----------->
-        # Save to CSV
-        csv_filename = 'DELETE_THIS_' + s_layer + '.csv'
-        csv_filepath = os.path.join( output_directory, csv_filename )
-        df.to_csv( csv_filepath, index=False, header=True, quoting=csv.QUOTE_NONE )
-        #<------ Delete this <-----------
 
         # Replace column values with visualization attributes
         for col in dc_map:
             if col in df.columns:
                 df[col] = df[col].replace( dc_map[col] )
 
-        # Save to CSV
-        csv_filepath = make_filepath( output_directory, s_layer, 'csv' )
-        df.to_csv( csv_filepath, index=False, header=False, quoting=csv.QUOTE_NONE )
-
         # Convert CSV to KML
         print( 'Generating KML' )
-        kml_filepath = make_filepath( output_directory, s_layer, 'kml' )
-        csv_to_kml.create_kml( csv_filepath, kml_filepath )
+        make_klm_layer( df, make_filepath( output_directory, 'test_' + s_layer, 'kml' ) )
 
     print( '' )
     print( 'Done' )

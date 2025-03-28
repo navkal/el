@@ -651,6 +651,8 @@ GOOD_SPELLING = 'good_spelling'
 
 LABEL = 'label'
 DIAMETER = 'diameter'
+COLOR = 'color'
+ICON = 'icon'
 
 CONSISTENT_COLUMN_NAMES = \
 {
