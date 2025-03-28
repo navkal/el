@@ -334,6 +334,6 @@ if __name__ == '__main__':
 
     # Generate KML layers representing Lawrence parcels
     print( '\n=======> KML' )
-    kml.make_kml_layers( args.master_filename, '../kml' )
+    kml.make_kml_layers( args.master_filename, '../db/kml' )
 
     util.report_elapsed_time()
