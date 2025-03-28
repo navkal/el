@@ -465,7 +465,7 @@ def save_download( download_dir, filename, response ):
             for chunk in response.iter_content( chunk_size=8192 ):  # Adjust chunk_size as needed
                 file.write( chunk )
 
-    return
+    return s_exists
 
 
 # Try to download document from server
