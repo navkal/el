@@ -9,8 +9,6 @@ pd.set_option( 'display.width', 1000 )
 
 import simplekml
 
-import csv
-
 import sqlite3
 import sqlalchemy
 
@@ -53,7 +51,7 @@ F = 'F'
 
 
 
-# Filters for each KML layer
+# Filters for each KML file
 FILTERS = \
 {
     'lean_electric':
@@ -99,7 +97,7 @@ for ward in [A,B,C,D,E,F]:
         }
         print( f'{ward}_{fuel}'.lower() )
         print( FILTERS[f'{ward}_{fuel}'.lower()] )
-        
+
 
 # Map from column values to pin attributes
 dc_map = \
@@ -124,7 +122,7 @@ dc_map = \
 
 ######################
 
-def make_klm_layer( df, kml_filepath ):
+def make_kml_file( df, kml_filepath ):
 
     kml = simplekml.Kml()
 
@@ -165,15 +163,8 @@ def make_klm_layer( df, kml_filepath ):
     return
 
 
-
-def make_filepath( output_directory, s_layer, s_ext ):
-    filename = s_layer + '.' + s_ext
-    filepath = os.path.join( output_directory, filename )
-    return filepath
-
-
-# Generate KML layers, each represented by an intermediate CSV file and a KML result file
-def make_kml_layers(  input_filename, output_directory ):
+# Generate KML files
+def make_kml_files(  input_filename, output_directory ):
 
     # Report arguments
     print( '' )
@@ -187,17 +178,21 @@ def make_kml_layers(  input_filename, output_directory ):
     print( f'Reading {TABLE}' )
     df_parcels = pd.read_sql_table( TABLE, engine )
 
-    for s_layer in FILTERS:
+    for s_filter in FILTERS:
 
         df = df_parcels.copy()
 
         # Select rows based on specified filters
-        dc_filters = FILTERS[s_layer]
+        dc_filters = FILTERS[s_filter]
         for col in dc_filters:
             df = df[ df[col].isin( dc_filters[col] ) ]
 
+        # Count parcels and housing units that will be represented by this KML
+        n_parcels = len( df )
+        n_units = df[util.TOTAL_OCCUPANCY].sum()
+
         print( '' )
-        print( f'Layer "{s_layer}" contains {len(df)} parcels' )
+        print( f'KML "{s_filter}" contains {n_parcels} parcels, {n_units} units' )
 
         # Edit Vision hyperlinks encoded for Excel
         pattern = r'=HYPERLINK\("(http.*pid=\d+)".*'
@@ -218,9 +213,11 @@ def make_kml_layers(  input_filename, output_directory ):
             if col in df.columns:
                 df[col] = df[col].replace( dc_map[col] )
 
-        # Convert CSV to KML
+        # Convert dataframe to KML
         print( 'Generating KML' )
-        make_klm_layer( df, make_filepath( output_directory, s_layer, 'kml' ) )
+        filename = f'{s_filter}_{n_parcels}_{n_units}.kml'
+        filepath = os.path.join( output_directory, filename )
+        make_kml_file( df, filepath )
 
     print( '' )
     print( 'Done' )
@@ -233,9 +230,9 @@ def make_kml_layers(  input_filename, output_directory ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML layers, each represented by an intermediate CSV file and a KML result file' )
+    parser = argparse.ArgumentParser( description='Generate KML files representing Lawrence parcels with specific attributes' )
     parser.add_argument( '-i', dest='input_filename', help='Input filename - Name of SQLite database file', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
     args = parser.parse_args()
 
-    make_kml_layers( args.input_filename, args.output_directory )
+    make_kml_files( args.input_filename, args.output_directory )
