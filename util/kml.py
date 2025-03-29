@@ -3,6 +3,8 @@
 import argparse
 import os
 
+import copy
+
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
@@ -41,6 +43,7 @@ LABEL = util.LABEL
 COLOR = util.COLOR
 ICON = util.ICON
 OCC = util.TOTAL_OCCUPANCY
+WX_PERMIT = util.WX_PERMIT
 
 
 # Wards
@@ -52,7 +55,11 @@ E = 'E'
 F = 'F'
 
 
-# Filters for each KML file
+#
+# ==> Dictionary of filters ==>
+#
+
+# Each filter corresponds to a single KML output file
 FILTERS = \
 {
     'lean_electric':
@@ -111,6 +118,20 @@ for ward in [A,B,C,D,E,F]:
             FUEL: [fuel],
             LEAN_ELIG: [LEAN, LMF],
         }
+
+# For each existing filter, add a duplicate that selects unweatherized parcels
+FILTERS_COPY = copy.deepcopy( FILTERS )
+NWX_FILTERS = {}
+for s_filter, dc_filter in FILTERS_COPY.items():
+    s_nwx = f'{s_filter}_nwx'
+    dc_filter[WX_PERMIT] = [None]
+    NWX_FILTERS[s_nwx] = dc_filter
+
+FILTERS.update( NWX_FILTERS )
+
+#
+# <== Dictionary of filters <==
+#
 
 
 # Map from column values to pin attributes
@@ -172,7 +193,6 @@ def make_kml_file( df, kml_filepath ):
 
         point.stylemap = style_map
 
-    print( f'Saving file {kml_filepath}' )
     kml.save( kml_filepath )
 
     return
@@ -184,21 +204,28 @@ def make_kml_files(  input_filename, output_directory ):
     # Report arguments
     print( '' )
     print( 'Arguments' )
-    print( '  Input database:', input_filename )
-    print( '  Output directory:', output_directory )
+    print( ' Input database:', input_filename )
+    print( ' Output directory:', output_directory )
 
     # Read the parcels table
     conn, cur, engine = util.open_database( input_filename, False )
     print( '' )
     print( f'Reading {TABLE}' )
-    print( '' )
     df_parcels = pd.read_sql_table( TABLE, engine )
 
+    print( '' )
+    print( f'Generating {len( FILTERS )} KML files' )
+    print( '' )
+
+    n_files = 0
+
+    # Generate a KML for each filter in the FILTERS table
     for s_filter in FILTERS:
 
+        # Start with a copy of the full parcels table
         df = df_parcels.copy()
 
-        # Select rows based on specified filters
+        # Select rows based on current filter
         dc_filters = FILTERS[s_filter]
         for col in dc_filters:
             df = df[ df[col].isin( dc_filters[col] ) ]
@@ -231,8 +258,10 @@ def make_kml_files(  input_filename, output_directory ):
         filepath = os.path.join( output_directory, filename )
         make_kml_file( df, filepath )
 
-    print( '' )
-    print( 'Done' )
+        # Report progress
+        n_files += 1
+        print( '{: >3d}: {}'.format( n_files, filename ) )
+
     util.exit()
 
 
