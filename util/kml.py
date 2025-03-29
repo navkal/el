@@ -43,57 +43,75 @@ LABEL = util.LABEL
 COLOR = util.COLOR
 ICON = util.ICON
 
+A = 'A'
+B = 'B'
+C = 'C'
+D = 'D'
+E = 'E'
+F = 'F'
+
+
+
 
 # Filters for each KML layer
 FILTERS = \
 {
-    'fuel_electric':
-    {
-        IS_RES: [YES],
-        FUEL: [ELEC]
-    },
-    'fuel_oil':
-    {
-        IS_RES: [YES],
-        FUEL: [OIL]
-    },
     'lean_electric':
     {
-        IS_RES: [YES],
         LEAN_ELIG: [LEAN],
         FUEL: [ELEC],
     },
     'lean_oil':
     {
-        IS_RES: [YES],
         LEAN_ELIG: [LEAN],
         FUEL: [OIL],
     },
     'lmf_electric':
     {
-        IS_RES: [YES],
         LEAN_ELIG: [LMF],
         FUEL: [ELEC],
     },
     'lmf_oil':
     {
-        IS_RES: [YES],
         LEAN_ELIG: [LMF],
         FUEL: [OIL],
     },
+    'res_electric':
+    {
+        IS_RES: [YES],
+        FUEL: [ELEC]
+    },
+    'res_oil':
+    {
+        IS_RES: [YES],
+        FUEL: [OIL]
+    },
 }
+
+# Add filters for each ward and fuel
+for ward in [A,B,C,D,E,F]:
+    for fuel in [ELEC,OIL,GAS]:
+        FILTERS[f'{ward}_{fuel}'.lower()] = \
+        {
+            WARD: [ward],
+            FUEL: [fuel],
+            LEAN_ELIG: [LEAN, LMF],
+        }
+        print( f'{ward}_{fuel}'.lower() )
+        print( FILTERS[f'{ward}_{fuel}'.lower()] )
+        
 
 # Map from column values to pin attributes
 dc_map = \
 {
     COLOR:
     {
-        'A': f'{simplekml.Color.red}',
-        'B': f'{simplekml.Color.orange}',
-        'C': f'{simplekml.Color.yellow}',
-        'D': f'{simplekml.Color.chartreuse}',
-        'E': f'{simplekml.Color.cyan}|{simplekml.Color.green}',
-        'F': f'{simplekml.Color.hotpink}|{simplekml.Color.purple}',
+        A: f'{simplekml.Color.red}',
+        B: f'{simplekml.Color.orange}',
+        C: f'{simplekml.Color.yellow}',
+        D: f'{simplekml.Color.chartreuse}',
+        E: f'{simplekml.Color.cyan}|{simplekml.Color.green}',
+        F: f'{simplekml.Color.hotpink}|{simplekml.Color.purple}',
     },
     ICON:
     {
@@ -111,7 +129,7 @@ def make_klm_layer( df, kml_filepath ):
     kml = simplekml.Kml()
 
     for index, row in df.iterrows():
-        point = kml.newpoint( name=f'Ward {row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
+        point = kml.newpoint( name=f'{row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
 
         # Hide the label
         point.style.labelstyle.scale = 0
