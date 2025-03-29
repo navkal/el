@@ -20,10 +20,10 @@ import util
 # Name of parcels table
 TABLE = 'Assessment_L_Parcels'
 
+
 # Nicknames
 ADDR = util.NORMALIZED_ADDRESS
 STREET_NAME = util.NORMALIZED_STREET_NAME
-
 IS_RES = util.IS_RESIDENTIAL
 FUEL = util.HEATING_FUEL_DESC
 WARD = util.WARD_NUMBER
@@ -40,15 +40,16 @@ LMF = util.LEAN_MULTI_FAMILY
 LABEL = util.LABEL
 COLOR = util.COLOR
 ICON = util.ICON
+OCC = util.TOTAL_OCCUPANCY
 
+
+# Wards
 A = 'A'
 B = 'B'
 C = 'C'
 D = 'D'
 E = 'E'
 F = 'F'
-
-
 
 
 # Filters for each KML file
@@ -114,8 +115,8 @@ dc_map = \
     ICON:
     {
         ELEC: 'square|0.7',
-        OIL: 'placemark_circle|1',
-        GAS: 'star|0.9',
+        OIL: 'placemark_circle|1.1',
+        GAS: 'triangle|0.8',
     },
 }
 
@@ -189,7 +190,7 @@ def make_kml_files(  input_filename, output_directory ):
 
         # Count parcels and housing units that will be represented by this KML
         n_parcels = len( df )
-        n_units = df[util.TOTAL_OCCUPANCY].sum()
+        n_units = df[OCC].sum()
 
         print( '' )
         print( f'KML "{s_filter}" contains {n_parcels} parcels, {n_units} units' )
