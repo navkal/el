@@ -60,6 +60,11 @@ FILTERS = \
         LEAN_ELIG: [LEAN],
         FUEL: [ELEC],
     },
+    'lean_gas':
+    {
+        LEAN_ELIG: [LEAN],
+        FUEL: [GAS],
+    },
     'lean_oil':
     {
         LEAN_ELIG: [LEAN],
@@ -70,6 +75,11 @@ FILTERS = \
         LEAN_ELIG: [LMF],
         FUEL: [ELEC],
     },
+    'lmf_gas':
+    {
+        LEAN_ELIG: [LMF],
+        FUEL: [GAS],
+    },
     'lmf_oil':
     {
         LEAN_ELIG: [LMF],
@@ -79,6 +89,11 @@ FILTERS = \
     {
         IS_RES: [YES],
         FUEL: [ELEC]
+    },
+    'res_gas':
+    {
+        IS_RES: [YES],
+        FUEL: [GAS]
     },
     'res_oil':
     {
@@ -96,8 +111,6 @@ for ward in [A,B,C,D,E,F]:
             FUEL: [fuel],
             LEAN_ELIG: [LEAN, LMF],
         }
-        print( f'{ward}_{fuel}'.lower() )
-        print( FILTERS[f'{ward}_{fuel}'.lower()] )
 
 
 # Map from column values to pin attributes
@@ -159,6 +172,7 @@ def make_kml_file( df, kml_filepath ):
 
         point.stylemap = style_map
 
+    print( f'Saving file {kml_filepath}' )
     kml.save( kml_filepath )
 
     return
@@ -177,6 +191,7 @@ def make_kml_files(  input_filename, output_directory ):
     conn, cur, engine = util.open_database( input_filename, False )
     print( '' )
     print( f'Reading {TABLE}' )
+    print( '' )
     df_parcels = pd.read_sql_table( TABLE, engine )
 
     for s_filter in FILTERS:
@@ -191,9 +206,6 @@ def make_kml_files(  input_filename, output_directory ):
         # Count parcels and housing units that will be represented by this KML
         n_parcels = len( df )
         n_units = df[OCC].sum()
-
-        print( '' )
-        print( f'KML "{s_filter}" contains {n_parcels} parcels, {n_units} units' )
 
         # Edit Vision hyperlinks encoded for Excel
         pattern = r'=HYPERLINK\("(http.*pid=\d+)".*'
@@ -215,7 +227,6 @@ def make_kml_files(  input_filename, output_directory ):
                 df[col] = df[col].replace( dc_map[col] )
 
         # Convert dataframe to KML
-        print( 'Generating KML' )
         filename = f'{s_filter}_{n_parcels}_{n_units}.kml'
         filepath = os.path.join( output_directory, filename )
         make_kml_file( df, filepath )
