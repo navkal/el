@@ -118,7 +118,7 @@ def create_ward_parcels_tables( df_parcels ):
 
 
 # Create wards summary table
-def create_wards_summary_table( df_wards, df_parcels ):
+def create_wards_summary_table( df_wards, df_parcels, table_name ):
 
     # Initialize wards summary table
     df_summary = df_wards.copy()
@@ -130,7 +130,7 @@ def create_wards_summary_table( df_wards, df_parcels ):
     # Build common fields
     df_summary = add_common_summary_columns( df_summary, df_parcels )
 
-    util.create_table( 'WardSummary', conn, cur, df=df_summary )
+    util.create_table( table_name, conn, cur, df=df_summary )
 
     return
 
@@ -241,12 +241,16 @@ if __name__ == '__main__':
     df_wards = pd.read_sql_table( 'RawWards_L', engine, index_col=util.ID, parse_dates=True )
 
     # Create wards summary table
-    create_wards_summary_table( df_wards, df_parcels )
+    create_wards_summary_table( df_wards, df_parcels, 'WardSummary' )
 
     # Create wards summary of small rentals
     create_wards_summary_table_small( df_wards, df_parcels )
 
     # Create wards summary of large rentals
     create_wards_summary_table_large( df_wards, df_parcels )
+
+    # Create wards summary table of LEAN-eligible properties that have not been weatherized
+    df_lean_nwx = df_parcels[ df_parcels[util.LEAN_ELIGIBILITY].isin( [util.LEAN, util.LEAN_MULTI_FAMILY] ) & df_parcels[util.WX_PERMIT].isna() ]
+    create_wards_summary_table( df_wards, df_lean_nwx, 'WardSummary_Lean_Nwx' )
 
     util.report_elapsed_time()

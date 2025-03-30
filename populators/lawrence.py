@@ -6,7 +6,6 @@ import os
 import sys
 sys.path.append( '../util' )
 import util
-import kml
 
 
 # Main program
@@ -274,6 +273,15 @@ if __name__ == '__main__':
     print( '\n=======> Copyright' )
     util.create_about_table( 'Lawrence', util.make_df_about_energize_lawrence(), args.master_filename )
 
+    # ----------------------------------------------------
+    # <-- Lawrence master database build ends here <--
+    # ----------------------------------------------------
+
+
+    # Generate KML files showing Lawrence parcels partitioned in various ways
+    print( '\n=======> KML' )
+    os.system( 'python lawrence_kml.py -o ../db/kml -m {0}'.format( args.master_filename ) )
+
 
     # ----------------------------------------------------
     # --> Lawrence research database build starts here -->
@@ -331,9 +339,5 @@ if __name__ == '__main__':
         ]
     }
     util.publish_database( input_db, args.research_filename, publish_info )
-
-    # Generate KML layers representing Lawrence parcels
-    print( '\n=======> KML' )
-    kml.make_kml_layers( args.master_filename, '../db/kml' )
 
     util.report_elapsed_time()

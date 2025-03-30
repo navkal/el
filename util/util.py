@@ -2705,6 +2705,7 @@ COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ WARD_NUMBER, PRECIN
 COLUMN_ORDER['ElectricMeters_L'] = COLUMN_ORDER['ElectricMeters_A']
 COLUMN_ORDER['RawElectricMeters_L'] = COLUMN_ORDER['RawElectricMeters_A']
 COLUMN_ORDER['NgAccountsR2_L'] = COLUMN_ORDER['NgAccountsR1_L']
+COLUMN_ORDER['WardSummary_Lean_Nwx'] = COLUMN_ORDER['WardSummary']
 
 
 COLUMN_ORDER_TRAILING = \

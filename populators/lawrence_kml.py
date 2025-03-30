@@ -15,7 +15,7 @@ import sqlite3
 import sqlalchemy
 
 import sys
-sys.path.append('')
+sys.path.append( '../util' )
 import util
 
 
@@ -199,16 +199,16 @@ def make_kml_file( df, kml_filepath ):
 
 
 # Generate KML files
-def make_kml_files(  input_filename, output_directory ):
+def make_kml_files( master_filename, output_directory ):
 
     # Report arguments
     print( '' )
     print( 'Arguments' )
-    print( ' Input database:', input_filename )
+    print( ' Input database:', master_filename )
     print( ' Output directory:', output_directory )
 
     # Read the parcels table
-    conn, cur, engine = util.open_database( input_filename, False )
+    conn, cur, engine = util.open_database( master_filename, False )
     print( '' )
     print( f'Reading {TABLE}' )
     df_parcels = pd.read_sql_table( TABLE, engine )
@@ -271,9 +271,9 @@ def make_kml_files(  input_filename, output_directory ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML files representing Lawrence parcels with specific attributes' )
-    parser.add_argument( '-i', dest='input_filename', help='Input filename - Name of SQLite database file', required=True )
+    parser = argparse.ArgumentParser( description='Generate KML files showing Lawrence parcels partitioned in various ways' )
+    parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
     args = parser.parse_args()
 
-    make_kml_files( args.input_filename, args.output_directory )
+    make_kml_files( args.master_filename, args.output_directory )
