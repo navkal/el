@@ -1,6 +1,7 @@
 # Copyright 2019 Energize Andover.  All rights reserved.
 
 import os
+import glob
 import sys
 import sqlite3
 import sqlalchemy
@@ -439,6 +440,13 @@ HEATING_FUEL_MAP = \
     ELECTRIC: 'heating_fuel_electric',
     GAS: 'heating_fuel_gas',
     OIL: 'heating_fuel_oil',
+}
+
+LEAN_NWX_FUEL_MAP = \
+{
+    ELECTRIC: 'occupancy_lean_nwx_electric',
+    GAS: 'occupancy_lean_nwx_gas',
+    OIL: 'occupancy_lean_nwx_oil',
 }
 
 HEATING_TYPE_MAP = \
@@ -2056,6 +2064,12 @@ COLUMN_GROUP = \
         HEATING_FUEL_MAP['Oil'],
         HEATING_FUEL_MAP['Gas'],
     ],
+    'WARD_SUMMARY_LEAN_NWX':
+    [
+        LEAN_NWX_FUEL_MAP['Electric'],
+        LEAN_NWX_FUEL_MAP['Oil'],
+        LEAN_NWX_FUEL_MAP['Gas'],
+    ],
     'WARD_SUMMARY_HEATING_TYPE':
     [
         HEATING_TYPE_MAP['Electr Basebrd'],
@@ -2636,6 +2650,7 @@ COLUMN_ORDER = \
         PARCEL_COUNT,
         WX_PERMIT + _COUNT,
         SOLAR_PERMIT + _COUNT,
+        * COLUMN_GROUP['WARD_SUMMARY_LEAN_NWX'],
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
         * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
@@ -2705,7 +2720,6 @@ COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ WARD_NUMBER, PRECIN
 COLUMN_ORDER['ElectricMeters_L'] = COLUMN_ORDER['ElectricMeters_A']
 COLUMN_ORDER['RawElectricMeters_L'] = COLUMN_ORDER['RawElectricMeters_A']
 COLUMN_ORDER['NgAccountsR2_L'] = COLUMN_ORDER['NgAccountsR1_L']
-COLUMN_ORDER['WardSummary_Lean_Nwx'] = COLUMN_ORDER['WardSummary']
 
 
 COLUMN_ORDER_TRAILING = \
@@ -3311,6 +3325,15 @@ def read_excel_with_hyperlinks( input_filename, skiprows ):
     df = df.dropna( how='all', axis=1 )
 
     return df
+
+
+# Clear all files from a specified directory
+def clear_directory( dir ):
+    filepath = os.path.join( dir, '*' )
+    files = glob.glob( filepath )
+    for f in files:
+        os.remove(f)
+    return
 
 
 # Read series of input files in specified directory

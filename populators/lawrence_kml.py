@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import glob
 
 import copy
 
@@ -262,7 +263,9 @@ def make_kml_files( master_filename, output_directory ):
         n_files += 1
         print( '{: >3d}: {}'.format( n_files, filename ) )
 
-    util.exit()
+    return
+
+
 
 
 ######################
@@ -274,6 +277,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Generate KML files showing Lawrence parcels partitioned in various ways' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
+    parser.add_argument( '-c', dest='clear_directory', action='store_true', help='Clear target directory first?' )
+
     args = parser.parse_args()
 
+    # Optionally clear target directory
+    if args.clear_directory:
+        util.clear_directory( args.output_directory )
+
+    # Make KML files
     make_kml_files( args.master_filename, args.output_directory )
+
+    util.report_elapsed_time()

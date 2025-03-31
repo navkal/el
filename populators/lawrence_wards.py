@@ -118,7 +118,7 @@ def create_ward_parcels_tables( df_parcels ):
 
 
 # Create wards summary table
-def create_wards_summary_table( df_wards, df_parcels, table_name ):
+def create_wards_summary_table( df_wards, df_parcels ):
 
     # Initialize wards summary table
     df_summary = df_wards.copy()
@@ -127,10 +127,24 @@ def create_wards_summary_table( df_wards, df_parcels, table_name ):
     for s_permit_type in BUILDING_PERMIT_TYPES:
         df_summary = util.add_permit_counts( df_summary, df_parcels, util.WARD_NUMBER, s_permit_type )
 
+    # Add columns containing total occupancy per fuel type for unweatherized, LEAN-eligible parcels
+    df_lean_nwx = df_parcels[ df_parcels[util.LEAN_ELIGIBILITY].isin( [util.LEAN, util.LEAN_MULTI_FAMILY] ) & df_parcels[util.WX_PERMIT].isna() ]
+    for ward, df_ward in df_lean_nwx.groupby( by=[util.WARD_NUMBER] ):
+
+        # Calculate total occupancy for each fuel
+        summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
+        for s_fuel in util.HEATING_FUEL_MAP:
+            df_fuel = df_ward[ df_ward[util.HEATING_FUEL_DESC] == s_fuel ]
+            df_summary.at[summary_row_index, util.LEAN_NWX_FUEL_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
+
+    # Fix datatype
+    for s_fuel in util.HEATING_FUEL_MAP:
+        df_summary[util.LEAN_NWX_FUEL_MAP[s_fuel]] = df_summary[util.LEAN_NWX_FUEL_MAP[s_fuel]].astype(int)
+
     # Build common fields
     df_summary = add_common_summary_columns( df_summary, df_parcels )
 
-    util.create_table( table_name, conn, cur, df=df_summary )
+    util.create_table( 'WardSummary', conn, cur, df=df_summary )
 
     return
 
@@ -241,16 +255,12 @@ if __name__ == '__main__':
     df_wards = pd.read_sql_table( 'RawWards_L', engine, index_col=util.ID, parse_dates=True )
 
     # Create wards summary table
-    create_wards_summary_table( df_wards, df_parcels, 'WardSummary' )
+    create_wards_summary_table( df_wards, df_parcels )
 
     # Create wards summary of small rentals
     create_wards_summary_table_small( df_wards, df_parcels )
 
     # Create wards summary of large rentals
     create_wards_summary_table_large( df_wards, df_parcels )
-
-    # Create wards summary table of LEAN-eligible properties that have not been weatherized
-    df_lean_nwx = df_parcels[ df_parcels[util.LEAN_ELIGIBILITY].isin( [util.LEAN, util.LEAN_MULTI_FAMILY] ) & df_parcels[util.WX_PERMIT].isna() ]
-    create_wards_summary_table( df_wards, df_lean_nwx, 'WardSummary_Lean_Nwx' )
 
     util.report_elapsed_time()

@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
     # Generate KML files showing Lawrence parcels partitioned in various ways
     print( '\n=======> KML' )
-    os.system( 'python lawrence_kml.py -o ../db/kml -m {0}'.format( args.master_filename ) )
+    os.system( 'python lawrence_kml.py -o ../db/kml -m {0} -c'.format( args.master_filename ) )
 
 
     # ----------------------------------------------------
