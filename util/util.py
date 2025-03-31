@@ -330,6 +330,7 @@ ANNUAL_GAS_SAVINGS = ANNUAL + GAS_SAVINGS
 ELECTRIC_INCENTIVES = 'electric_incentives_$'
 GAS_INCENTIVES = 'gas_incentives_$'
 POPULATION = 'population'
+WARD_POPULATION = 'ward_population'
 TRACT_POPULATION = 'tract_population'
 PCT_LOW_INCOME = 'pct_low_income'
 PCT_ENERGY_BURDENED = 'pct_energy_burdened'
@@ -434,9 +435,6 @@ HEATING_FUEL_DESC = HEATING_FUEL + _DESC
 HEATING_TYPE_DESC = HEATING_TYPE + _DESC
 AC_TYPE_DESC = AC_TYPE + _DESC
 
-LEAN_NWX_PARCELS = 'lean_nwx_parcels'
-LEAN_NWX_OCCUPANCY = 'lean_nwx_occupancy'
-
 HEATING_FUEL_MAP = \
 {
     ELECTRIC: 'heating_fuel_electric',
@@ -444,18 +442,11 @@ HEATING_FUEL_MAP = \
     OIL: 'heating_fuel_oil',
 }
 
-LEAN_NWX_FUEL_PARCELS_MAP = \
-{
-    ELECTRIC: 'lean_nwx_electric_parcels',
-    GAS: 'lean_nwx_gas_parcels',
-    OIL: 'lean_nwx_oil_parcels',
-}
-
 LEAN_NWX_FUEL_OCCUPANCY_MAP = \
 {
-    ELECTRIC: 'lean_nwx_electric_occupancy',
-    GAS: 'lean_nwx_gas_occupancy',
-    OIL: 'lean_nwx_oil_occupancy',
+    ELECTRIC: 'electric_occupancy',
+    GAS: 'gas_occupancy',
+    OIL: 'oil_occupancy',
 }
 
 HEATING_TYPE_MAP = \
@@ -1861,7 +1852,7 @@ CONSISTENT_COLUMN_NAMES = \
     {
         'ward': WARD_NUMBER,
         'councilor': COUNCILOR_NAME,
-        'population': POPULATION,
+        'population': WARD_POPULATION,
     },
     'Solar': \
     {
@@ -2064,7 +2055,7 @@ COLUMN_GROUP = \
     [
         WARD_NUMBER,
         COUNCILOR_NAME,
-        POPULATION,
+        WARD_POPULATION,
         TOTAL_OCCUPANCY,
     ],
     'WARD_SUMMARY_HEATING_FUEL':
@@ -2075,13 +2066,8 @@ COLUMN_GROUP = \
     ],
     'WARD_SUMMARY_LEAN_NWX':
     [
-        LEAN_NWX_PARCELS,
-        LEAN_NWX_OCCUPANCY,
-        LEAN_NWX_FUEL_PARCELS_MAP['Electric'],
         LEAN_NWX_FUEL_OCCUPANCY_MAP['Electric'],
-        LEAN_NWX_FUEL_PARCELS_MAP['Gas'],
         LEAN_NWX_FUEL_OCCUPANCY_MAP['Gas'],
-        LEAN_NWX_FUEL_PARCELS_MAP['Oil'],
         LEAN_NWX_FUEL_OCCUPANCY_MAP['Oil'],
     ],
     'WARD_SUMMARY_HEATING_TYPE':
@@ -2664,8 +2650,18 @@ COLUMN_ORDER = \
         PARCEL_COUNT,
         WX_PERMIT + _COUNT,
         SOLAR_PERMIT + _COUNT,
-        * COLUMN_GROUP['WARD_SUMMARY_LEAN_NWX'],
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
+        * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
+    ],
+    'WardSummary_Lean_Nwx':
+    [
+        * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
+        PARCEL_COUNT,
+        WX_PERMIT + _COUNT,
+        SOLAR_PERMIT + _COUNT,
+        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_LEAN_NWX'],
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
         * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
     ],
