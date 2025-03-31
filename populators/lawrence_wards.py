@@ -127,19 +127,28 @@ def create_wards_summary_table( df_wards, df_parcels ):
     for s_permit_type in BUILDING_PERMIT_TYPES:
         df_summary = util.add_permit_counts( df_summary, df_parcels, util.WARD_NUMBER, s_permit_type )
 
-    # Add columns containing total occupancy per fuel type for unweatherized, LEAN-eligible parcels
+    # Add columns pertaining to unweatherized, LEAN-eligible parcels
     df_lean_nwx = df_parcels[ df_parcels[util.LEAN_ELIGIBILITY].isin( [util.LEAN, util.LEAN_MULTI_FAMILY] ) & df_parcels[util.WX_PERMIT].isna() ]
-    for ward, df_ward in df_lean_nwx.groupby( by=[util.WARD_NUMBER] ):
 
-        # Calculate total occupancy for each fuel
+    for ward, df_ward in df_lean_nwx.groupby( by=[util.WARD_NUMBER] ):
         summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
+
+        # Calculate parcels and occupancy for unweatherized LEAN-eligible parcels in current ward
+        df_summary.at[summary_row_index, util.LEAN_NWX_PARCELS] = len( df_ward )
+        df_summary.at[summary_row_index, util.LEAN_NWX_OCCUPANCY] = df_ward[util.TOTAL_OCCUPANCY].sum()
+
+        # Calculate parcels and occupancy for each fuel in current ward
         for s_fuel in util.HEATING_FUEL_MAP:
             df_fuel = df_ward[ df_ward[util.HEATING_FUEL_DESC] == s_fuel ]
-            df_summary.at[summary_row_index, util.LEAN_NWX_FUEL_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
+            df_summary.at[summary_row_index, util.LEAN_NWX_FUEL_PARCELS_MAP[s_fuel]] = len( df_fuel )
+            df_summary.at[summary_row_index, util.LEAN_NWX_FUEL_OCCUPANCY_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
 
     # Fix datatype
+    df_summary[util.LEAN_NWX_PARCELS] = df_summary[util.LEAN_NWX_PARCELS].astype(int)
+    df_summary[util.LEAN_NWX_OCCUPANCY] = df_summary[util.LEAN_NWX_OCCUPANCY].astype(int)
     for s_fuel in util.HEATING_FUEL_MAP:
-        df_summary[util.LEAN_NWX_FUEL_MAP[s_fuel]] = df_summary[util.LEAN_NWX_FUEL_MAP[s_fuel]].astype(int)
+        df_summary[util.LEAN_NWX_FUEL_PARCELS_MAP[s_fuel]] = df_summary[util.LEAN_NWX_FUEL_PARCELS_MAP[s_fuel]].astype(int)
+        df_summary[util.LEAN_NWX_FUEL_OCCUPANCY_MAP[s_fuel]] = df_summary[util.LEAN_NWX_FUEL_OCCUPANCY_MAP[s_fuel]].astype(int)
 
     # Build common fields
     df_summary = add_common_summary_columns( df_summary, df_parcels )

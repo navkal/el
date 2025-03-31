@@ -434,6 +434,8 @@ HEATING_FUEL_DESC = HEATING_FUEL + _DESC
 HEATING_TYPE_DESC = HEATING_TYPE + _DESC
 AC_TYPE_DESC = AC_TYPE + _DESC
 
+LEAN_NWX_PARCELS = 'lean_nwx_parcels'
+LEAN_NWX_OCCUPANCY = 'lean_nwx_occupancy'
 
 HEATING_FUEL_MAP = \
 {
@@ -442,11 +444,18 @@ HEATING_FUEL_MAP = \
     OIL: 'heating_fuel_oil',
 }
 
-LEAN_NWX_FUEL_MAP = \
+LEAN_NWX_FUEL_PARCELS_MAP = \
 {
-    ELECTRIC: 'occupancy_lean_nwx_electric',
-    GAS: 'occupancy_lean_nwx_gas',
-    OIL: 'occupancy_lean_nwx_oil',
+    ELECTRIC: 'lean_nwx_electric_parcels',
+    GAS: 'lean_nwx_gas_parcels',
+    OIL: 'lean_nwx_oil_parcels',
+}
+
+LEAN_NWX_FUEL_OCCUPANCY_MAP = \
+{
+    ELECTRIC: 'lean_nwx_electric_occupancy',
+    GAS: 'lean_nwx_gas_occupancy',
+    OIL: 'lean_nwx_oil_occupancy',
 }
 
 HEATING_TYPE_MAP = \
@@ -2066,9 +2075,14 @@ COLUMN_GROUP = \
     ],
     'WARD_SUMMARY_LEAN_NWX':
     [
-        LEAN_NWX_FUEL_MAP['Electric'],
-        LEAN_NWX_FUEL_MAP['Oil'],
-        LEAN_NWX_FUEL_MAP['Gas'],
+        LEAN_NWX_PARCELS,
+        LEAN_NWX_OCCUPANCY,
+        LEAN_NWX_FUEL_PARCELS_MAP['Electric'],
+        LEAN_NWX_FUEL_OCCUPANCY_MAP['Electric'],
+        LEAN_NWX_FUEL_PARCELS_MAP['Oil'],
+        LEAN_NWX_FUEL_OCCUPANCY_MAP['Oil'],
+        LEAN_NWX_FUEL_PARCELS_MAP['Gas'],
+        LEAN_NWX_FUEL_OCCUPANCY_MAP['Gas'],
     ],
     'WARD_SUMMARY_HEATING_TYPE':
     [
