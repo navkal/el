@@ -93,12 +93,20 @@ def add_common_summary_columns( df_summary, df_details, parcel_count_suffix='' )
 
     # Count total residential units and total parcels in each ward
     parcel_count_col_name = util.PARCEL_COUNT + parcel_count_suffix
-    for ward, df_group in df_details.groupby( by=[util.WARD_NUMBER] ):
+    for ward, df_ward in df_details.groupby( by=[util.WARD_NUMBER] ):
         summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
-        df_summary.at[summary_row_index, util.TOTAL_OCCUPANCY] = df_group[util.TOTAL_OCCUPANCY].sum()
-        df_summary.at[summary_row_index, parcel_count_col_name] = len( df_group )
+        df_summary.at[summary_row_index, util.TOTAL_OCCUPANCY] = df_ward[util.TOTAL_OCCUPANCY].sum()
+        df_summary.at[summary_row_index, parcel_count_col_name] = len( df_ward )
+
+        for s_fuel in util.HEATING_FUEL_MAP:
+            df_fuel = df_ward[ df_ward[util.HEATING_FUEL_DESC] == s_fuel ]
+            df_summary.at[summary_row_index, util.HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
+
+    # Fix datatype
     df_summary[util.TOTAL_OCCUPANCY] = df_summary[util.TOTAL_OCCUPANCY].astype(int)
     df_summary[parcel_count_col_name] = df_summary[parcel_count_col_name].astype(int)
+    for s_fuel in util.HEATING_FUEL_MAP:
+        df_summary[util.HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_summary[util.HEATING_FUEL_OCCUPANCY_MAP[s_fuel]].astype(int)
 
     return df_summary
 
@@ -147,17 +155,6 @@ def create_wards_summary_table_lean_nwx( df_wards, df_parcels ):
     # Add columns containing per-ward solar and wx permit counts
     for s_permit_type in BUILDING_PERMIT_TYPES:
         df_summary = util.add_permit_counts( df_summary, df_parcels, util.WARD_NUMBER, s_permit_type )
-
-    # Iterate over wards and heating fuels to calculate fuel-specific occupancy
-    for ward, df_ward in df_lean_nwx.groupby( by=[util.WARD_NUMBER] ):
-        summary_row_index = df_summary.loc[ df_summary[util.WARD_NUMBER] == ward ].index
-        for s_fuel in util.HEATING_FUEL_MAP:
-            df_fuel = df_ward[ df_ward[util.HEATING_FUEL_DESC] == s_fuel ]
-            df_summary.at[summary_row_index, util.LEAN_NWX_FUEL_OCCUPANCY_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
-
-    # Fix datatype
-    for s_fuel in util.HEATING_FUEL_MAP:
-        df_summary[util.LEAN_NWX_FUEL_OCCUPANCY_MAP[s_fuel]] = df_summary[util.LEAN_NWX_FUEL_OCCUPANCY_MAP[s_fuel]].astype(int)
 
     # Build common fields
     df_summary = add_common_summary_columns( df_summary, df_lean_nwx )
