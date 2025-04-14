@@ -31,6 +31,7 @@ WARD_PARCELS_COLUMNS = \
     util.HEAT_AC,
     util.LAND_USE_CODE,
     util.LAND_USE_CODE_DESC,
+    util.ROOF_PERMIT,
     util.SOLAR_PERMIT,
     util.WX_PERMIT,
     util.TOTAL_ACRES,
@@ -46,6 +47,9 @@ WARD_PARCELS_COLUMNS = \
     util.CENSUS_TRACT,
     util.CENSUS_BLOCK_GROUP,
     util.VISION_LINK,
+    util.NATIONAL_GRID_R1_ACCOUNT,
+    util.NATIONAL_GRID_R2_ACCOUNT,
+    util.LEAN_ELIGIBILITY,
 ]
 
 HEATING_FUEL_MAP = util.HEATING_FUEL_MAP
@@ -75,6 +79,7 @@ RENTAL_MAP_5_7 = \
 
 BUILDING_PERMIT_TYPES = \
 [
+    util.ROOF,
     util.SOLAR,
     util.WX,
 ]

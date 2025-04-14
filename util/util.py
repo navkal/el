@@ -510,6 +510,7 @@ DATE_DUE_FOR_INSPECTION = 'date_due_for_inspection'
 INSPECTION_STATUS = 'inspection_status'
 PROPERTY_MANAGER = 'property_manager'
 
+ROOF = 'roof'
 SOLAR = 'solar'
 WX = 'wx'
 BUILDING_PERMIT_TYPES = \
@@ -518,13 +519,14 @@ BUILDING_PERMIT_TYPES = \
     'electrical',
     'gas',
     'plumbing',
-    'roof',
+    ROOF,
     'siding',
     SOLAR,
     WX,
 ]
 
 _PERMIT = '_permit'
+ROOF_PERMIT = ROOF + _PERMIT
 SOLAR_PERMIT = SOLAR + _PERMIT
 WX_PERMIT = WX + _PERMIT
 _COUNT = '_count'
@@ -2648,6 +2650,7 @@ COLUMN_ORDER = \
     [
         * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
         PARCEL_COUNT,
+        ROOF_PERMIT + _COUNT,
         WX_PERMIT + _COUNT,
         SOLAR_PERMIT + _COUNT,
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
