@@ -449,6 +449,9 @@ HEATING_FUEL_OCCUPANCY_MAP = \
     OIL: 'oil_occupancy',
 }
 
+ELEC_OIL_PARCELS = 'elec_oil_parcels'
+ELEC_OIL_OCCUPANCY = 'elec_oil_occupancy'
+
 HEATING_TYPE_MAP = \
 {
     'Steam': 'heating_type_steam',
@@ -2064,12 +2067,14 @@ COLUMN_GROUP = \
     [
         HEATING_FUEL_MAP['Electric'],
         HEATING_FUEL_MAP['Oil'],
+        ELEC_OIL_PARCELS,
         HEATING_FUEL_MAP['Gas'],
     ],
     'WARD_SUMMARY_FUEL_OCCUPANCY':
     [
         HEATING_FUEL_OCCUPANCY_MAP['Electric'],
         HEATING_FUEL_OCCUPANCY_MAP['Oil'],
+        ELEC_OIL_OCCUPANCY,
         HEATING_FUEL_OCCUPANCY_MAP['Gas'],
     ],
     'WARD_SUMMARY_HEATING_TYPE':

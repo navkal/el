@@ -54,6 +54,15 @@ WARD_PARCELS_COLUMNS = \
 
 HEATING_FUEL_MAP = util.HEATING_FUEL_MAP
 HEATING_TYPE_MAP = util.HEATING_TYPE_MAP
+HEATING_FUEL_OCCUPANCY_MAP = util.HEATING_FUEL_OCCUPANCY_MAP
+
+ELECTRIC_PARCELS = HEATING_FUEL_MAP[util.ELECTRIC]
+ELECTRIC_OCCUPANCY = HEATING_FUEL_OCCUPANCY_MAP[util.ELECTRIC]
+OIL_PARCELS = HEATING_FUEL_MAP[util.OIL]
+OIL_OCCUPANCY = HEATING_FUEL_OCCUPANCY_MAP[util.OIL]
+ELEC_OIL_PARCELS = util.ELEC_OIL_PARCELS
+ELEC_OIL_OCCUPANCY = util.ELEC_OIL_OCCUPANCY
+
 
 ZIP_CODE_MAP = \
 {
@@ -105,13 +114,19 @@ def add_common_summary_columns( df_summary, df_details, parcel_count_suffix='' )
 
         for s_fuel in util.HEATING_FUEL_MAP:
             df_fuel = df_ward[ df_ward[util.HEATING_FUEL_DESC] == s_fuel ]
-            df_summary.at[summary_row_index, util.HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
+            df_summary.at[summary_row_index, HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
+
+    # Combine statisics for electric and oil
+    df_summary[ELEC_OIL_PARCELS] = df_summary[ELECTRIC_PARCELS] + df_summary[OIL_PARCELS]
+    df_summary[ELEC_OIL_OCCUPANCY] = df_summary[ELECTRIC_OCCUPANCY] + df_summary[OIL_OCCUPANCY]
 
     # Fix datatype
+    df_summary[ELEC_OIL_PARCELS] = df_summary[ELEC_OIL_PARCELS].astype(int)
+    df_summary[ELEC_OIL_OCCUPANCY] = df_summary[ELEC_OIL_OCCUPANCY].astype(int)
     df_summary[util.TOTAL_OCCUPANCY] = df_summary[util.TOTAL_OCCUPANCY].astype(int)
     df_summary[parcel_count_col_name] = df_summary[parcel_count_col_name].astype(int)
     for s_fuel in util.HEATING_FUEL_MAP:
-        df_summary[util.HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_summary[util.HEATING_FUEL_OCCUPANCY_MAP[s_fuel]].astype(int)
+        df_summary[HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_summary[HEATING_FUEL_OCCUPANCY_MAP[s_fuel]].astype(int)
 
     return df_summary
 
