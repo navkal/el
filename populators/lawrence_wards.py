@@ -88,9 +88,9 @@ RENTAL_MAP_5_7 = \
 
 BUILDING_PERMIT_TYPES = \
 [
-    util.ROOF,
-    util.SOLAR,
     util.WX,
+    util.SOLAR,
+    util.ROOF,
 ]
 
 
