@@ -435,11 +435,11 @@ HEATING_FUEL_DESC = HEATING_FUEL + _DESC
 HEATING_TYPE_DESC = HEATING_TYPE + _DESC
 AC_TYPE_DESC = AC_TYPE + _DESC
 
-HEATING_FUEL_MAP = \
+HEATING_FUEL_PARCELS_MAP = \
 {
-    ELECTRIC: 'heating_fuel_electric',
-    GAS: 'heating_fuel_gas',
-    OIL: 'heating_fuel_oil',
+    ELECTRIC: 'electric_parcels',
+    GAS: 'gas_parcels',
+    OIL: 'oil_parcels',
 }
 
 HEATING_FUEL_OCCUPANCY_MAP = \
@@ -2065,10 +2065,10 @@ COLUMN_GROUP = \
     ],
     'WARD_SUMMARY_HEATING_FUEL':
     [
-        HEATING_FUEL_MAP['Electric'],
-        HEATING_FUEL_MAP['Oil'],
+        HEATING_FUEL_PARCELS_MAP['Electric'],
+        HEATING_FUEL_PARCELS_MAP['Oil'],
         ELEC_OIL_PARCELS,
-        HEATING_FUEL_MAP['Gas'],
+        HEATING_FUEL_PARCELS_MAP['Gas'],
     ],
     'WARD_SUMMARY_FUEL_OCCUPANCY':
     [
@@ -2891,14 +2891,14 @@ def add_value_counts( df_summary, df_details, s_groupby_col, s_parcels_col, valu
         df_summary[value_map[s_key]] = 0
 
     # Iterate over rows of detailed dataframe, grouped by specified column
-    for census_geo_id, df_group in df_details.groupby( by=[s_groupby_col] ):
+    for group_value, df_group in df_details.groupby( by=[s_groupby_col] ):
 
         # Find corresponding summary row
-        ej_row_index = df_summary.loc[df_summary[s_groupby_col] == census_geo_id].index[0]
+        summary_row_index = df_summary.loc[df_summary[s_groupby_col] == group_value].index[0]
 
         # Save the counts in the summary table
         for s_key in value_map:
-            df_summary.at[ej_row_index, value_map[s_key]] = len( df_group[df_group[s_parcels_col] == s_key] )
+            df_summary.at[summary_row_index, value_map[s_key]] = len( df_group[df_group[s_parcels_col] == s_key] )
 
     return df_summary
 

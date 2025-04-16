@@ -52,13 +52,13 @@ WARD_PARCELS_COLUMNS = \
     util.LEAN_ELIGIBILITY,
 ]
 
-HEATING_FUEL_MAP = util.HEATING_FUEL_MAP
+HEATING_FUEL_PARCELS_MAP = util.HEATING_FUEL_PARCELS_MAP
 HEATING_TYPE_MAP = util.HEATING_TYPE_MAP
 HEATING_FUEL_OCCUPANCY_MAP = util.HEATING_FUEL_OCCUPANCY_MAP
 
-ELECTRIC_PARCELS = HEATING_FUEL_MAP[util.ELECTRIC]
+ELECTRIC_PARCELS = HEATING_FUEL_PARCELS_MAP[util.ELECTRIC]
 ELECTRIC_OCCUPANCY = HEATING_FUEL_OCCUPANCY_MAP[util.ELECTRIC]
-OIL_PARCELS = HEATING_FUEL_MAP[util.OIL]
+OIL_PARCELS = HEATING_FUEL_PARCELS_MAP[util.OIL]
 OIL_OCCUPANCY = HEATING_FUEL_OCCUPANCY_MAP[util.OIL]
 ELEC_OIL_PARCELS = util.ELEC_OIL_PARCELS
 ELEC_OIL_OCCUPANCY = util.ELEC_OIL_OCCUPANCY
@@ -97,7 +97,7 @@ BUILDING_PERMIT_TYPES = \
 def add_common_summary_columns( df_summary, df_details, parcel_count_suffix='' ):
 
     # Add columns counting per-ward occurrences of specified heating fuels
-    df_summary = util.add_value_counts( df_summary, df_details, util.WARD_NUMBER, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
+    df_summary = util.add_value_counts( df_summary, df_details, util.WARD_NUMBER, util.HEATING_FUEL_DESC, HEATING_FUEL_PARCELS_MAP )
 
     # Add columns counting per-ward occurrences of specified heating types
     df_summary = util.add_value_counts( df_summary, df_details, util.WARD_NUMBER, util.HEATING_TYPE_DESC, HEATING_TYPE_MAP )
@@ -112,7 +112,7 @@ def add_common_summary_columns( df_summary, df_details, parcel_count_suffix='' )
         df_summary.at[summary_row_index, util.TOTAL_OCCUPANCY] = df_ward[util.TOTAL_OCCUPANCY].sum()
         df_summary.at[summary_row_index, parcel_count_col_name] = len( df_ward )
 
-        for s_fuel in util.HEATING_FUEL_MAP:
+        for s_fuel in util.HEATING_FUEL_PARCELS_MAP:
             df_fuel = df_ward[ df_ward[util.HEATING_FUEL_DESC] == s_fuel ]
             df_summary.at[summary_row_index, HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_fuel[util.TOTAL_OCCUPANCY].sum()
 
@@ -125,7 +125,7 @@ def add_common_summary_columns( df_summary, df_details, parcel_count_suffix='' )
     df_summary[ELEC_OIL_OCCUPANCY] = df_summary[ELEC_OIL_OCCUPANCY].astype(int)
     df_summary[util.TOTAL_OCCUPANCY] = df_summary[util.TOTAL_OCCUPANCY].astype(int)
     df_summary[parcel_count_col_name] = df_summary[parcel_count_col_name].astype(int)
-    for s_fuel in util.HEATING_FUEL_MAP:
+    for s_fuel in util.HEATING_FUEL_PARCELS_MAP:
         df_summary[HEATING_FUEL_OCCUPANCY_MAP[s_fuel]] = df_summary[HEATING_FUEL_OCCUPANCY_MAP[s_fuel]].astype(int)
 
     return df_summary

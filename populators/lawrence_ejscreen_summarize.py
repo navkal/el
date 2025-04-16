@@ -73,7 +73,7 @@ MV_COLUMNS= \
     util.PHEV,
 ]
 
-HEATING_FUEL_MAP = util.HEATING_FUEL_MAP
+HEATING_FUEL_PARCELS_MAP = util.HEATING_FUEL_PARCELS_MAP
 HEATING_TYPE_MAP = util.HEATING_TYPE_MAP
 
 
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.CENSUS_GEO_ID] != 0 )]
 
     # Add columns counting per-block-group occurrences of specified heating fuels
-    df_ej = util.add_value_counts( df_ej, df_parcels, util.CENSUS_GEO_ID, util.HEATING_FUEL_DESC, HEATING_FUEL_MAP )
+    df_ej = util.add_value_counts( df_ej, df_parcels, util.CENSUS_GEO_ID, util.HEATING_FUEL_DESC, HEATING_FUEL_PARCELS_MAP )
 
     # Add columns counting per-block-group occurrences of specified heating types
     df_ej = util.add_value_counts( df_ej, df_parcels, util.CENSUS_GEO_ID, util.HEATING_TYPE_DESC, HEATING_TYPE_MAP )
@@ -190,8 +190,8 @@ if __name__ == '__main__':
     # Fix datatypes
     df_ej[util.PCT_OWNER_OCCUPIED] = df_ej[util.PCT_OWNER_OCCUPIED].fillna( 0 ).astype( int )
     df_ej[util.OWNER_HOUSEHOLDS] = df_ej[util.OWNER_HOUSEHOLDS].fillna( 0 ).astype( int )
-    for s_key in HEATING_FUEL_MAP:
-        df_ej[HEATING_FUEL_MAP[s_key]] = df_ej[HEATING_FUEL_MAP[s_key]].fillna( 0 ).astype( int )
+    for s_key in HEATING_FUEL_PARCELS_MAP:
+        df_ej[HEATING_FUEL_PARCELS_MAP[s_key]] = df_ej[HEATING_FUEL_PARCELS_MAP[s_key]].fillna( 0 ).astype( int )
     for s_key in HEATING_TYPE_MAP:
         df_ej[HEATING_TYPE_MAP[s_key]] = df_ej[HEATING_TYPE_MAP[s_key]].fillna( 0 ).astype( int )
 
