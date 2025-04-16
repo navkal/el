@@ -151,7 +151,7 @@ def create_wards_summary_table( df_wards, df_parcels ):
     # Initialize wards summary table
     df_summary = df_wards.copy()
 
-    # Add columns containing per-ward solar and wx permit counts
+    # Add columns containing per-ward permit counts
     for s_permit_type in BUILDING_PERMIT_TYPES:
         df_summary = util.add_permit_counts( df_summary, df_parcels, util.WARD_NUMBER, s_permit_type )
 
@@ -172,9 +172,9 @@ def create_wards_summary_table_lean_nwx( df_wards, df_parcels ):
     # Initialize wards summary table
     df_summary = df_wards.copy()
 
-    # Add columns containing per-ward solar and wx permit counts
+    # Add columns containing per-ward permit counts
     for s_permit_type in BUILDING_PERMIT_TYPES:
-        df_summary = util.add_permit_counts( df_summary, df_parcels, util.WARD_NUMBER, s_permit_type )
+        df_summary = util.add_permit_counts( df_summary, df_lean_nwx, util.WARD_NUMBER, s_permit_type )
 
     # Build common fields
     df_summary = add_common_summary_columns( df_summary, df_lean_nwx )

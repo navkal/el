@@ -2061,9 +2061,19 @@ COLUMN_GROUP = \
         WARD_NUMBER,
         COUNCILOR_NAME,
         WARD_POPULATION,
+    ],
+    'WARD_SUMMARY_COUNTS':
+    [
+        PARCEL_COUNT,
         TOTAL_OCCUPANCY,
     ],
-    'WARD_SUMMARY_HEATING_FUEL':
+    'WARD_SUMMARY_PERMITS':
+    [
+        ROOF_PERMIT + _COUNT,
+        WX_PERMIT + _COUNT,
+        SOLAR_PERMIT + _COUNT,
+    ],
+    'WARD_SUMMARY_FUEL_PARCELS':
     [
         HEATING_FUEL_PARCELS_MAP['Electric'],
         HEATING_FUEL_PARCELS_MAP['Oil'],
@@ -2654,29 +2664,17 @@ COLUMN_ORDER = \
     'WardSummary':
     [
         * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
-        PARCEL_COUNT,
-        ROOF_PERMIT + _COUNT,
-        WX_PERMIT + _COUNT,
-        SOLAR_PERMIT + _COUNT,
-        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_COUNTS'],
+        * COLUMN_GROUP['WARD_SUMMARY_FUEL_PARCELS'],
         * COLUMN_GROUP['WARD_SUMMARY_FUEL_OCCUPANCY'],
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
         * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
-    ],
-    'WardSummary_Lean_Nwx':
-    [
-        * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
-        PARCEL_COUNT,
-        WX_PERMIT + _COUNT,
-        SOLAR_PERMIT + _COUNT,
-        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
-        * COLUMN_GROUP['WARD_SUMMARY_FUEL_OCCUPANCY'],
-        * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
-        * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
+        * COLUMN_GROUP['WARD_SUMMARY_PERMITS'],
     ],
     'WardSummary_Rentals_2_4':
     [
         * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
+        TOTAL_OCCUPANCY,
         PARCEL_COUNT + with_units( '2_4' ),
         PARCEL_COUNT + with_units( 2 ),
         PARCEL_COUNT + with_units( 3 ),
@@ -2685,7 +2683,7 @@ COLUMN_ORDER = \
         WX_PERMIT + _COUNT + with_units( 2 ),
         WX_PERMIT + _COUNT + with_units( 3 ),
         WX_PERMIT + _COUNT + with_units( 4 ),
-        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_FUEL_PARCELS'],
         * COLUMN_GROUP['WARD_SUMMARY_FUEL_OCCUPANCY'],
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
         * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
@@ -2697,6 +2695,7 @@ COLUMN_ORDER = \
     'WardSummary_Rentals_Gt4':
     [
         * COLUMN_GROUP['WARD_SUMMARY_HEAD'],
+        TOTAL_OCCUPANCY,
         PARCEL_COUNT + with_units( 4, gt=True ),
         PARCEL_COUNT + with_units( 5 ),
         PARCEL_COUNT + with_units( 6 ),
@@ -2707,7 +2706,7 @@ COLUMN_ORDER = \
         WX_PERMIT + _COUNT + with_units( 6 ),
         WX_PERMIT + _COUNT + with_units( 7 ),
         WX_PERMIT + _COUNT + with_units( 8, plus=True ),
-        * COLUMN_GROUP['WARD_SUMMARY_HEATING_FUEL'],
+        * COLUMN_GROUP['WARD_SUMMARY_FUEL_PARCELS'],
         * COLUMN_GROUP['WARD_SUMMARY_FUEL_OCCUPANCY'],
         * COLUMN_GROUP['WARD_SUMMARY_HEATING_TYPE'],
         * COLUMN_GROUP['WARD_SUMMARY_ZIP'],
@@ -2741,6 +2740,7 @@ COLUMN_ORDER['Parcels_L'] = COLUMN_ORDER['GeoParcels_L'] + [ WARD_NUMBER, PRECIN
 COLUMN_ORDER['ElectricMeters_L'] = COLUMN_ORDER['ElectricMeters_A']
 COLUMN_ORDER['RawElectricMeters_L'] = COLUMN_ORDER['RawElectricMeters_A']
 COLUMN_ORDER['NgAccountsR2_L'] = COLUMN_ORDER['NgAccountsR1_L']
+COLUMN_ORDER['WardSummary_Lean_Nwx'] = COLUMN_ORDER['WardSummary']
 
 
 COLUMN_ORDER_TRAILING = \
