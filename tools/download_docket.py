@@ -33,6 +33,17 @@
 #
 ######################
 
+
+
+B_DEBUG = False
+if B_DEBUG:
+    print( '' )
+    print( '---------------------' )
+    print( 'Running in debug mode' )
+    print( '---------------------' )
+    print( '' )
+
+
 import argparse
 
 import pandas as pd
@@ -105,6 +116,14 @@ MAX_PATH_LEN = 220
 REPLACEMENT_CHAR = '\uFFFD'     # Occurs in utf-8 encoded filenames
 
 
+
+# Click element
+def click_element( el ):
+    if B_DEBUG:
+        driver.execute_script( 'arguments[0].style.backgroundColor = "red"', el )
+    el.click()
+
+
 # Report value of optional argument
 def print_optional_argument( s_label, s_value ):
     print( '  {}: {}'.format( s_label, s_value if s_value else '<any>' ) )
@@ -132,7 +151,7 @@ def format_date( s_date ):
 
 # Create a target directory for downloads, based on supplied target directory and docket number
 def make_target_directory( target_dir, docket_number ):
-    target_dir = os.path.join( target_dir, docket_number )
+    target_dir = os.path.abspath( os.path.join( target_dir, docket_number ) )
     os.makedirs( target_dir, exist_ok=True )
     return target_dir
 
@@ -140,7 +159,20 @@ def make_target_directory( target_dir, docket_number ):
 # Get the Chrome driver
 def get_driver( target_dir ):
 
+    #
     # Set up Selenium WebDriver
+    #
+    # Note:
+    #
+    #   The options initialized below are necessary
+    #   only if downloads are triggered by Selenium
+    #   WebElement.click().
+    #
+    #   Since, in the current implementation
+    #   of this script, we use requests.get() to
+    #   retrieve filings from the server, these
+    #   options are superfluous.
+    #
     options = webdriver.ChromeOptions()
     options.add_experimental_option(
         'prefs',
@@ -151,7 +183,10 @@ def get_driver( target_dir ):
             'safebrowsing.enabled': True
         }
     )
-    options.add_argument( '--headless' )
+
+    # Display browser window if we are in debug mode
+    if not B_DEBUG:
+        options.add_argument( '--headless' )
 
     # Initialize the driver
     try:
@@ -159,6 +194,9 @@ def get_driver( target_dir ):
     except:
         # Retry using syntax from a different Selenium version
         driver = webdriver.Chrome( ChromeDriverManager().install(), options=options )
+
+    # Maximize the browser window to better expose elements that we might want to click
+    driver.maximize_window()
 
     return driver
 
@@ -324,7 +362,7 @@ def scrape_filings( s_date, s_filer, df_docs, page_number=1 ):
 
         # If the button is enabled, load and process the next page
         if next_button.is_enabled():
-            next_button.click()
+            click_element( next_button )
             df_docs = scrape_filings( s_date, s_filer, df_docs, page_number=(page_number+1) )
 
     return df_docs
