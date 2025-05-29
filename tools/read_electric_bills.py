@@ -17,6 +17,8 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import tabula
+
 
 # --> Reporting of elapsed time -->
 import time
@@ -31,6 +33,7 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
 
 ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 SERVICE_FOR = 'SERVICE FOR'
+
 
 # Get lines of text from electric bill PDF
 def get_lines( filepath ):
@@ -95,13 +98,94 @@ def get_ng_service_address( ls_lines ):
     return s_descr, ls_address_lines
 
 
+# Test whether dataframe is a table of itemized charges
+def is_charges_table( df ):
+
+    b_is = False
+
+    col = df.columns[0]
+    df[col] = df[col].astype(str)
+
+    if df[col].str.contains( r'\s' ).any():
+
+        ls_last_word = list( df[col].str.rsplit( n=1, expand=True )[1] )
+
+        if ( 'Charge' in ls_last_word ) or ( 'Chg' in ls_last_word ):
+            b_is = True
+
+    return b_is
+
+
+# Test whether string represents a numeric value
+def is_number( s ):
+    try:
+        float( s )
+        return True
+    except ValueError:
+        return False
+
+
+# Extract charges in dataframe to dictionary
+def df_to_dc_charges( df ):
+
+    col_1 = df.columns[0]
+    col_n = df.columns[-1]
+
+    dc_charges = {}
+
+    for index, row in df.iterrows():
+
+        # Extract label from first column, value from last column
+        s_label = row[col_1]
+        s_value = row[col_n]
+
+        if ( s_label.endswith( ' Charge' ) or s_label.endswith( ' Chg' ) ) and is_number( s_value ):
+            s_key = s_label.lower().replace( ' ', '_' )
+            dc_charges[s_key] = float( s_value )
+
+    return dc_charges
+
+
+# Extract itemized charges from bill content
+def get_itemized_charges( filepath ):
+
+    # Initialize empty dictionary of itemized charges
+    dc_charges = {}
+
+    try:
+        # Extract tables from the bill
+        ls_dfs = tabula.read_pdf( filepath, pages='all', multiple_tables=True, lattice=False, )
+
+        # Iterate over dataframes
+        for df in ls_dfs:
+            df = df.copy()
+
+            # Determine whether this dataframe represents table of charges
+            b_is = is_charges_table( df )
+
+            if not b_is:
+                # Drop first column and retry
+                df = df[df.columns[1:]]
+                b_is = is_charges_table( df )
+
+            if b_is:
+                dc_charges = df_to_dc_charges( df )
+
+    except Exception as e:
+        pass
+
+    return dc_charges
+
+
+###############################
+
 
 # Main program
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Extract data from PDF-format electric bills' )
     parser.add_argument( '-i', dest='input_directory', default=os.getcwd(), help='Input directory containing electric bills' )
-    parser.add_argument( '-o', dest='output_filename', default=os.getcwd(), help='Full path to output excel file' )
+    parser.add_argument( '-o', dest='output_filename', default=os.getcwd(), help='Full path to output CSV file' )
     args = parser.parse_args()
 
     print( '' )
@@ -133,6 +217,9 @@ if __name__ == '__main__':
             # Extract service address
             s_descr, ls_address_lines = get_ng_service_address( ls_lines )
 
+            # Extract itemized charges
+            dc_charges = get_itemized_charges( filepath )
+
             # Report extracted account number
             s_report = f'{n_file} - {filename}: {s_account_number}'
             if s_account_number != filename[:10]:
@@ -152,6 +239,15 @@ if __name__ == '__main__':
             {
                 'account_number': s_account_number,
                 'description': s_descr,
+                'address_line_1': None,
+                'address_line_2': None,
+                'address_line_3': None,
+                'address_line_4': None,
+                'address_line_5': None,
+                'address_line_6': None,
+                'address_line_7': None,
+                'address_line_8': None,
+                'address_line_9': None,
                 'city_state_zip': ls_address_lines[-1]
             }
 
@@ -161,18 +257,22 @@ if __name__ == '__main__':
                 n_address_line += 1
                 dc_bill['address_line_' + str( n_address_line )] = s_line
 
+            for s_key in dc_charges.keys():
+                dc_bill[s_key] = dc_charges[s_key]
+
             # Append dictionary to list
             ls_bills.append( dc_bill )
 
 
     # Construct dataframe from list of bills
     df_bills = pd.DataFrame( ls_bills )
-    ls_cols = list( df_bills.columns )
-    ls_cols.append( ls_cols.pop( ls_cols.index( 'city_state_zip' ) ) )
-    df_bills = df_bills[ls_cols]
-
+    
+    # Clean up
+    df_bills = df_bills.dropna( axis='columns', how='all' )
     df_bills = df_bills.sort_values( by=['account_number'] )
-    df_bills.to_excel( args.output_filename, index=False )
+    
+    # Save to CSV
+    df_bills.to_csv( args.output_filename, index=False )
 
     # Report trouble
     if len( ls_trouble ):
