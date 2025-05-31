@@ -2,22 +2,47 @@
 
 ######################
 #
-# Extract information from PDF-format electric bills in given directory
+# Extract information from collection of PDF-format electric bills
+#
+# Optional parameters:
+# -i <input directory> - defaults to current working directory
+#
+# Required parameters:
+# -o <output CSV file path>
+#
+# Sample parameter sequences:
+#
+#  -i ./in/electric_bills -o ./out/electric_bills.csv
 #
 ######################
 
+LS_TROUBLE_ACCOUNTS = \
+[
+]
+
+B_DEBUG = False
+N_DEBUG = 5
+if B_DEBUG:
+    print( '' )
+    print( '---------------------' )
+    print( 'Running in debug mode' )
+    print( '---------------------' )
+    print( '' )
 
 
 import argparse
 import os
+
 import pdfminer.high_level as pdf_miner
+import pdfplumber
+import tabula
+
 import re
 
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
-import tabula
 
 
 # --> Reporting of elapsed time -->
@@ -31,8 +56,45 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
 # <-- Reporting of elapsed time <--
 
 
+# Format regular expression as a capture group
+def capture( s ):
+    return '(' + s + ')'
+
+
+# Print in debug mode
+def debug_print( s ):
+    if B_DEBUG:
+        print( s )
+
+
+# Track bills missing customer charge or line item
+LS_CC_NOT_FOUND = []
+LS_LI_NOT_FOUND = []
+
+
+# Literal text that appears in bills
 ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 SERVICE_FOR = 'SERVICE FOR'
+CUSTOMER_CHARGE = 'Customer Charge'
+
+
+# Mappings of words that appear in labels
+LABEL_WORDS = \
+{
+    'Charge': 'Chg',
+    'Pk': 'Peak',
+    'Distribution': 'Dist',
+}
+
+
+# Regular expressions
+RE_LABEL = '[A-Z][a-z]+(?: [A-Z][a-z]+)*'
+RE_NUMBER = '-?(?:\d+(?:\.\d+)?|\.\d+)'
+RE_UNITS = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
+RE_SPACES = ' +'
+RE_WHITESPACE = '\s+'
+RE_CUSTOMER_CHARGE = capture( CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
+RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNITS ) + RE_SPACES + capture( RE_NUMBER )
 
 
 # Get lines of text from electric bill PDF
@@ -98,83 +160,74 @@ def get_ng_service_address( ls_lines ):
     return s_descr, ls_address_lines
 
 
-# Test whether dataframe is a table of itemized charges
-def is_charges_table( df ):
+# Generate key from label string
+def make_key( s ):
 
-    b_is = False
+    # Normalize
+    for s_key in LABEL_WORDS.keys():
+        s = s.replace( s_key, LABEL_WORDS[s_key] )
 
-    col = df.columns[0]
-    df[col] = df[col].astype(str)
+    # Change case and delimiters
+    s_key = s.lower().replace( ' ', '_' )
 
-    if df[col].str.contains( r'\s' ).any():
-
-        ls_last_word = list( df[col].str.rsplit( n=1, expand=True )[1] )
-
-        if ( 'Charge' in ls_last_word ) or ( 'Chg' in ls_last_word ):
-            b_is = True
-
-    return b_is
+    return s_key
 
 
-# Test whether string represents a numeric value
-def is_number( s ):
-    try:
-        float( s )
-        return True
-    except ValueError:
-        return False
+# Save matches in dictionary
+def matches_to_dc_charges( matches, dc_charges ):
 
+    debug_print( '' )
+    n = 0
+    for m in matches:
 
-# Extract charges in dataframe to dictionary
-def df_to_dc_charges( df ):
+        n += 1
+        debug_print( f' {n}:{m}' )
 
-    col_1 = df.columns[0]
-    col_n = df.columns[-1]
+        s_key = make_key( m[0] )
+        s_value = m[-1]
 
-    dc_charges = {}
-
-    for index, row in df.iterrows():
-
-        # Extract label from first column, value from last column
-        s_label = row[col_1]
-        s_value = row[col_n]
-
-        if ( s_label.endswith( ' Charge' ) or s_label.endswith( ' Chg' ) ) and is_number( s_value ):
-            s_key = s_label.lower().replace( ' ', '_' )
-            dc_charges[s_key] = float( s_value )
+        dc_charges[s_key] = float( s_value )
 
     return dc_charges
 
 
-# Extract itemized charges from bill content
-def get_itemized_charges( filepath ):
+# Extract charges from bill content
+def get_charges( filepath ):
 
-    # Initialize empty dictionary of itemized charges
+    # Initialize empty dictionary of charges
     dc_charges = {}
 
-    try:
-        # Extract tables from the bill
-        ls_dfs = tabula.read_pdf( filepath, pages='all', multiple_tables=True, lattice=False, )
+    b_got_cc = False
+    b_got_li = False
 
-        # Iterate over dataframes
-        for df in ls_dfs:
-            df = df.copy()
+    # Open the file
+    with pdfplumber.open( filepath ) as pdf:
 
-            # Determine whether this dataframe represents table of charges
-            b_is = is_charges_table( df )
+        # Iterate over PDF pages
+        for page in pdf.pages:
 
-            if not b_is:
-                # Drop first column and retry
-                df = df[df.columns[1:]]
-                b_is = is_charges_table( df )
+            # Extract customer charge
+            matches = re.findall( RE_CUSTOMER_CHARGE, page.extract_text() )
+            if matches:
+                b_got_cc = True
+                matches_to_dc_charges( matches, dc_charges )
 
-            if b_is:
-                dc_charges = df_to_dc_charges( df )
+            # Extract line iterms
+            matches = re.findall( RE_LINE_ITEM, page.extract_text() )
+            if matches:
+                b_got_li = True
+                matches_to_dc_charges( matches, dc_charges )
 
-    except Exception as e:
-        pass
+    # Track whether this bill contains Customer Charge
+    if not b_got_cc:
+        LS_CC_NOT_FOUND.append( { filename: s_account_number } )
+
+    # Track whether this bill contains line items
+    if not b_got_li:
+        LS_LI_NOT_FOUND.append( { filename: s_account_number } )
 
     return dc_charges
+
 
 
 ###############################
@@ -185,12 +238,16 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Extract data from PDF-format electric bills' )
     parser.add_argument( '-i', dest='input_directory', default=os.getcwd(), help='Input directory containing electric bills' )
-    parser.add_argument( '-o', dest='output_filename', default=os.getcwd(), help='Full path to output CSV file' )
+    parser.add_argument( '-o', dest='output_filename', help='Full path to output CSV file', required=True )
     args = parser.parse_args()
 
     print( '' )
     print( f'Reading electric bills from: {args.input_directory}' )
     print( f'Saving bill attributes to: {args.output_filename}' )
+    print( '' )
+
+    # Report start time
+    print( 'Starting at', time.strftime( '%H:%M:%S', time.localtime( START_TIME ) ) )
     print( '' )
 
     ls_bills = []
@@ -205,6 +262,10 @@ if __name__ == '__main__':
 
             n_file += 1
 
+            # Debug mode: quit early
+            if B_DEBUG and ( n_file > N_DEBUG ):
+                break
+
             # Find the file
             filepath = os.path.join( args.input_directory, filename )
 
@@ -214,12 +275,6 @@ if __name__ == '__main__':
             # Extract National Grid account number
             s_account_number = get_ng_account_number( ls_lines )
 
-            # Extract service address
-            s_descr, ls_address_lines = get_ng_service_address( ls_lines )
-
-            # Extract itemized charges
-            dc_charges = get_itemized_charges( filepath )
-
             # Report extracted account number
             s_report = f'{n_file} - {filename}: {s_account_number}'
             if s_account_number != filename[:10]:
@@ -227,12 +282,18 @@ if __name__ == '__main__':
                 ls_trouble.append( { filename: s_account_number } )
             print( s_report )
 
+            # Extract service address
+            s_descr, ls_address_lines = get_ng_service_address( ls_lines )
+
             # Report extracted service address
             s_report = f'Description: <{s_descr}>, Address: {ls_address_lines}'
             if not( ls_address_lines and re.search( r'^\d{5}$', ls_address_lines[-1].split()[-1] ) ):
                 s_report += ' - TROUBLE!'
                 ls_trouble.append( { filename: s_account_number } )
             print( s_report )
+
+            # Extract charges from bill
+            dc_charges = get_charges( filepath )
 
             # Construct dictionary from bill attributes
             dc_bill = \
@@ -257,7 +318,7 @@ if __name__ == '__main__':
                 n_address_line += 1
                 dc_bill['address_line_' + str( n_address_line )] = s_line
 
-            for s_key in dc_charges.keys():
+            for s_key in sorted( dc_charges.keys() ):
                 dc_bill[s_key] = dc_charges[s_key]
 
             # Append dictionary to list
@@ -266,11 +327,11 @@ if __name__ == '__main__':
 
     # Construct dataframe from list of bills
     df_bills = pd.DataFrame( ls_bills )
-    
+
     # Clean up
     df_bills = df_bills.dropna( axis='columns', how='all' )
     df_bills = df_bills.sort_values( by=['account_number'] )
-    
+
     # Save to CSV
     df_bills.to_csv( args.output_filename, index=False )
 
@@ -280,6 +341,24 @@ if __name__ == '__main__':
         print( 'Possible trouble:' )
         for dc_trouble in ls_trouble:
             print( dc_trouble )
+
+    # Report Customer Charge not found
+    if len( LS_CC_NOT_FOUND ):
+        print( '' )
+        print( 'Customer Charge not found:' )
+        n = 0
+        for dc in LS_CC_NOT_FOUND:
+            n += 1
+            print( f' {n}: {dc}' )
+
+    # Report Line Items not found
+    if len( LS_LI_NOT_FOUND ):
+        print( '' )
+        print( 'Line Items not found:' )
+        n = 0
+        for dc in LS_LI_NOT_FOUND:
+            n += 1
+            print( f' {n}: {dc}' )
 
     # Report elapsed time
     report_elapsed_time()
