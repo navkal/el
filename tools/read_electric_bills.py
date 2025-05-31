@@ -89,16 +89,16 @@ LABEL_WORDS = \
 # Regular expressions
 RE_LABEL = '[A-Z][a-z]+(?: [A-Z][a-z]+)*'
 RE_NUMBER = '-?(?:\d+(?:\.\d+)?|\.\d+)'
-RE_UNITS = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
+RE_UNIT = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
 RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
 RE_CUSTOMER_CHARGE = capture( CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
-RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNITS ) + RE_SPACES + capture( RE_NUMBER )
+RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
 
 # Label suffixes
-_RATE = '_rate'         # Rate charged per unit
-_USED = '_used'       # Quantity used
-_UNIT = '_unit'         # Unit of measure
+_DLRS = '_$'
+_RATE = '_rate' + _DLRS
+_USED = '_used'
 
 
 # Get lines of text from electric bill PDF
@@ -164,17 +164,17 @@ def get_ng_service_address( ls_lines ):
     return s_descr, ls_address_lines
 
 
-# Generate key from label string
-def make_key( s ):
+# Generate column name from label string
+def make_column_name( s_label ):
 
-    # Normalize
-    for s_key in LABEL_WORDS.keys():
-        s = s.replace( s_key, LABEL_WORDS[s_key] )
+    # Normalize label words that have inconsistent spellings
+    for s_word in LABEL_WORDS.keys():
+        s_label = s_label.replace( s_word, LABEL_WORDS[s_word] )
 
     # Change case and delimiters
-    s_key = s.lower().replace( ' ', '_' )
+    s_column_name = s_label.lower().replace( ' ', '_' )
 
-    return s_key
+    return s_column_name
 
 
 # Save matches in dictionary
@@ -187,15 +187,24 @@ def matches_to_dc_charges( matches, dc_charges ):
         n += 1
         debug_print( f' {n}:{m}' )
 
-        # First and last matches are label and charge
-        s_key = make_key( m[0] )
-        dc_charges[s_key] = float( m[-1] )
+        # First match is label; make it into a column name
+        s_column_name = make_column_name( m[0] )
 
-        # Middle matches, if present, are rate, usage, and units
+        # Middle matches, if present, are rate, usage, and unit
         if len( m ) >= 5:
-            dc_charges[s_key + _RATE] = float( m[1] )
-            dc_charges[s_key + _USED] = float( m[2] )
-            dc_charges[s_key + _UNIT] = m[3]
+
+            # Incorporate unit into column name
+            s_unit = m[3].lower()
+            s_column_name += '_' + s_unit
+
+            # Save rate
+            dc_charges[s_column_name + _RATE] = float( m[1] )
+
+            # Save usage applicable to current unit
+            dc_charges[s_unit + _USED] = float( m[2] )
+
+        # Last match is dollar amount charged
+        dc_charges[s_column_name + _DLRS] = float( m[-1] )
 
     return dc_charges
 
@@ -318,7 +327,10 @@ if __name__ == '__main__':
                 'address_line_7': None,
                 'address_line_8': None,
                 'address_line_9': None,
-                'city_state_zip': ls_address_lines[-1]
+                'city_state_zip': ls_address_lines[-1],
+                'kwh_used': None,
+                'kw_used': None,
+                'customer_chg_$': None,
             }
 
             ls_address_lines = ls_address_lines[:-1]
