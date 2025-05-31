@@ -35,7 +35,6 @@ import os
 
 import pdfminer.high_level as pdf_miner
 import pdfplumber
-import tabula
 
 import re
 
@@ -95,6 +94,11 @@ RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
 RE_CUSTOMER_CHARGE = capture( CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNITS ) + RE_SPACES + capture( RE_NUMBER )
+
+# Label suffixes
+_RATE = '_rate'         # Rate charged per unit
+_USED = '_used'       # Quantity used
+_UNIT = '_unit'         # Unit of measure
 
 
 # Get lines of text from electric bill PDF
@@ -183,10 +187,15 @@ def matches_to_dc_charges( matches, dc_charges ):
         n += 1
         debug_print( f' {n}:{m}' )
 
+        # First and last matches are label and charge
         s_key = make_key( m[0] )
-        s_value = m[-1]
+        dc_charges[s_key] = float( m[-1] )
 
-        dc_charges[s_key] = float( s_value )
+        # Middle matches, if present, are rate, usage, and units
+        if len( m ) >= 5:
+            dc_charges[s_key + _RATE] = float( m[1] )
+            dc_charges[s_key + _USED] = float( m[2] )
+            dc_charges[s_key + _UNIT] = m[3]
 
     return dc_charges
 
