@@ -75,11 +75,12 @@ LS_LI_NOT_FOUND = []
 LBL_ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 LBL_SERVICE_FOR = 'SERVICE FOR'
 LBL_CUSTOMER_CHARGE = 'Customer Charge'
-
+LBL_LATE_PAYMENT_CHARGE = 'Late Payment Charges'
 
 # Mappings of words that appear in labels
 LABEL_WORDS = \
 {
+    'Charges': 'Chg',
     'Charge': 'Chg',
     'Pk': 'Peak',
     'Distribution': 'Dist',
@@ -99,6 +100,7 @@ RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
 
 RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
+RE_LATE_PAYMENT_CHARGE = capture( LBL_LATE_PAYMENT_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
 
 # Label suffixes
@@ -120,6 +122,7 @@ LOADZONE = 'loadzone'
 KWH_USED = 'kwh' + _USED
 KW_USED = 'kw' + _USED
 CUSTOMER_CHG = 'customer_chg_$'
+LATE_PAYMENT_CHG = 'late_payment_chg_$'
 
 # Dataframe leading columns
 LEADING_COLUMNS = \
@@ -144,6 +147,7 @@ LEADING_COLUMNS = \
     KWH_USED: None,
     KW_USED: None,
     CUSTOMER_CHG: None,
+    LATE_PAYMENT_CHG: None,
 }
 
 
@@ -310,6 +314,11 @@ def get_charges( filepath ):
             matches = re.findall( RE_CUSTOMER_CHARGE, text )
             if matches:
                 b_got_cc = True
+                matches_to_dc_charges( matches, dc_charges )
+
+            # Extract late charge
+            matches = re.findall( RE_LATE_PAYMENT_CHARGE, text )
+            if matches:
                 matches_to_dc_charges( matches, dc_charges )
 
             # Extract line items
