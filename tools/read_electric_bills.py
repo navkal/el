@@ -21,7 +21,7 @@ LS_TROUBLE_ACCOUNTS = \
 ]
 
 B_DEBUG = False
-N_DEBUG = 5
+N_DEBUG = 20
 if B_DEBUG:
     print( '' )
     print( '---------------------' )
@@ -72,9 +72,9 @@ LS_LI_NOT_FOUND = []
 
 
 # Literal text that appears in bills
-ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
-SERVICE_FOR = 'SERVICE FOR'
-CUSTOMER_CHARGE = 'Customer Charge'
+LBL_ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
+LBL_SERVICE_FOR = 'SERVICE FOR'
+LBL_CUSTOMER_CHARGE = 'Customer Charge'
 
 
 # Mappings of words that appear in labels
@@ -92,13 +92,43 @@ RE_NUMBER = '-?(?:\d+(?:\.\d+)?|\.\d+)'
 RE_UNIT = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
 RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
-RE_CUSTOMER_CHARGE = capture( CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
+RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
 
 # Label suffixes
 _DLRS = '_$'
 _RATE = '_rate' + _DLRS
 _USED = '_used'
+
+
+# Dataframe column names
+ACCOUNT_NUMBER = 'account_number'
+DESCRIPTION = 'description'
+ADDRESS_LINE_ = 'address_line_'
+CITY_STATE_ZIP = 'city_state_zip'
+KWH_USED = 'kwh' + _USED
+KW_USED = 'kw' + _USED
+CUSTOMER_CHG = 'customer_chg_$'
+
+# Dataframe leading columns
+LEADING_COLUMNS = \
+{
+    ACCOUNT_NUMBER: None,
+    DESCRIPTION: None,
+    ADDRESS_LINE_ + '1': None,
+    ADDRESS_LINE_ + '2': None,
+    ADDRESS_LINE_ + '3': None,
+    ADDRESS_LINE_ + '4': None,
+    ADDRESS_LINE_ + '5': None,
+    ADDRESS_LINE_ + '6': None,
+    ADDRESS_LINE_ + '7': None,
+    ADDRESS_LINE_ + '8': None,
+    ADDRESS_LINE_ + '9': None,
+    CITY_STATE_ZIP: None,
+    KWH_USED: None,
+    KW_USED: None,
+    CUSTOMER_CHG: None,
+}
 
 
 # Get lines of text from electric bill PDF
@@ -120,7 +150,7 @@ def get_lines( filepath ):
 def get_ng_account_number( ls_lines ):
 
     # Find first occurrence of label
-    n_line = ls_lines.index( ACCOUNT_NUMBER )
+    n_line = ls_lines.index( LBL_ACCOUNT_NUMBER )
     ls_lines = ls_lines[n_line:]
 
     # Find first line bearing account number format
@@ -145,9 +175,9 @@ def get_ng_service_address( ls_lines ):
     # Find start
     n_start = -1
     for s_line in ls_lines:
-        if s_line.startswith( SERVICE_FOR ):
+        if s_line.startswith( LBL_SERVICE_FOR ):
             n_start = ls_lines.index( s_line ) + 1
-            s_descr = s_line.replace( SERVICE_FOR, '' ).strip().lstrip( '(' ).rstrip( ')' )
+            s_descr = s_line.replace( LBL_SERVICE_FOR, '' ).strip().lstrip( '(' ).rstrip( ')' )
 
     # Find end
     if n_start >= 0:
@@ -180,12 +210,7 @@ def make_column_name( s_label ):
 # Save matches in dictionary
 def matches_to_dc_charges( matches, dc_charges ):
 
-    debug_print( '' )
-    n = 0
     for m in matches:
-
-        n += 1
-        debug_print( f' {n}:{m}' )
 
         # First match is label; make it into a column name
         s_column_name = make_column_name( m[0] )
@@ -246,6 +271,32 @@ def get_charges( filepath ):
 
     return dc_charges
 
+
+# Construct dataframe from list of bills
+def make_df_bills( ls_bills ):
+
+    df = pd.DataFrame( ls_bills )
+
+    # Sort trailing columns alphabetically
+    n_leading = len( LEADING_COLUMNS )
+    ls_cols = list( df.columns )
+    n_cols = len( ls_cols )
+    n_start = n_leading - n_cols
+
+    ls_trailing = ls_cols[n_start:]
+    ls_trailing_sorted = sorted( ls_trailing )
+    ls_leading = list( df.columns[:n_start] )
+    ls_reordered = ls_leading + ls_trailing_sorted
+
+    df = df.reindex( columns=ls_reordered )
+
+    # Drop empty columns
+    df = df.dropna( axis='columns', how='all' )
+
+    # Sort dataframe on account number
+    df = df.sort_values( by=[ACCOUNT_NUMBER] )
+
+    return df
 
 
 ###############################
@@ -314,30 +365,16 @@ if __name__ == '__main__':
             dc_charges = get_charges( filepath )
 
             # Construct dictionary from bill attributes
-            dc_bill = \
-            {
-                'account_number': s_account_number,
-                'description': s_descr,
-                'address_line_1': None,
-                'address_line_2': None,
-                'address_line_3': None,
-                'address_line_4': None,
-                'address_line_5': None,
-                'address_line_6': None,
-                'address_line_7': None,
-                'address_line_8': None,
-                'address_line_9': None,
-                'city_state_zip': ls_address_lines[-1],
-                'kwh_used': None,
-                'kw_used': None,
-                'customer_chg_$': None,
-            }
+            dc_bill = LEADING_COLUMNS.copy()
+            dc_bill[ACCOUNT_NUMBER] = s_account_number
+            dc_bill[DESCRIPTION] = s_descr
+            dc_bill[CITY_STATE_ZIP] = ls_address_lines[-1]
 
             ls_address_lines = ls_address_lines[:-1]
             n_address_line = 0
             for s_line in ls_address_lines:
                 n_address_line += 1
-                dc_bill['address_line_' + str( n_address_line )] = s_line
+                dc_bill[ADDRESS_LINE_ + str( n_address_line )] = s_line
 
             for s_key in sorted( dc_charges.keys() ):
                 dc_bill[s_key] = dc_charges[s_key]
@@ -347,11 +384,7 @@ if __name__ == '__main__':
 
 
     # Construct dataframe from list of bills
-    df_bills = pd.DataFrame( ls_bills )
-
-    # Clean up
-    df_bills = df_bills.dropna( axis='columns', how='all' )
-    df_bills = df_bills.sort_values( by=['account_number'] )
+    df_bills = make_df_bills( ls_bills )
 
     # Save to CSV
     df_bills.to_csv( args.output_filename, index=False )
