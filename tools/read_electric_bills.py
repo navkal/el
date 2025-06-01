@@ -87,11 +87,16 @@ LABEL_WORDS = \
 
 
 # Regular expressions
+RE_TOTAL_ENERGY = 'Total Energy (.*) kWh'
+RE_METER_NUMBER = 'METER NUMBER (.*) NEXT SCHEDULED READ DATE ON OR ABOUT'
+RE_RATE_VOLTAGE = 'RATE (.*) VOLTAGE DELIVERY LEVEL (.*)'
+
 RE_LABEL = '[A-Z][a-z]+(?: [A-Z][a-z]+)*'
 RE_NUMBER = '-?(?:\d+(?:\.\d+)?|\.\d+)'
 RE_UNIT = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
 RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
+
 RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
 
@@ -106,6 +111,10 @@ ACCOUNT_NUMBER = 'account_number'
 DESCRIPTION = 'description'
 ADDRESS_LINE_ = 'address_line_'
 CITY_STATE_ZIP = 'city_state_zip'
+TOTAL_ENERGY = 'total_energy'
+METER_NUMBER = 'meter_number'
+RATE_CLASS = 'rate_class'
+VOLTAGE_LEVEL = 'voltage_level'
 KWH_USED = 'kwh' + _USED
 KW_USED = 'kw' + _USED
 CUSTOMER_CHG = 'customer_chg_$'
@@ -125,6 +134,10 @@ LEADING_COLUMNS = \
     ADDRESS_LINE_ + '8': None,
     ADDRESS_LINE_ + '9': None,
     CITY_STATE_ZIP: None,
+    TOTAL_ENERGY: None,
+    METER_NUMBER: None,
+    RATE_CLASS: None,
+    VOLTAGE_LEVEL: None,
     KWH_USED: None,
     KW_USED: None,
     CUSTOMER_CHG: None,
@@ -194,6 +207,40 @@ def get_ng_service_address( ls_lines ):
     return s_descr, ls_address_lines
 
 
+# Extract fields from Delivery Services section of bill
+def get_delivery_services( filepath ):
+
+    dc_ds = {}
+
+    # Open the file
+    with pdfplumber.open( filepath ) as pdf:
+
+        # Iterate over PDF pages
+        for page in pdf.pages:
+
+            text = page.extract_text()
+            # Extract customer charge
+            matches = re.findall( RE_TOTAL_ENERGY, text )
+            for m in matches:
+                dc_ds[TOTAL_ENERGY] = m[0]
+
+            # Extract customer charge
+            matches = re.findall( RE_METER_NUMBER, text )
+            for m in matches:
+                dc_ds[METER_NUMBER] = m[0]
+
+            # Extract customer charge
+            matches = re.findall( RE_RATE_VOLTAGE, text )
+            for m in matches:
+                dc_ds[RATE_CLASS] = m[0]
+                dc_ds[VOLTAGE_LEVEL] = m[1]
+
+    debug_print( dc_ds )
+
+    return dc_ds
+
+
+
 # Generate column name from label string
 def make_column_name( s_label ):
 
@@ -249,14 +296,16 @@ def get_charges( filepath ):
         # Iterate over PDF pages
         for page in pdf.pages:
 
+            text = page.extract_text()
+
             # Extract customer charge
-            matches = re.findall( RE_CUSTOMER_CHARGE, page.extract_text() )
+            matches = re.findall( RE_CUSTOMER_CHARGE, text )
             if matches:
                 b_got_cc = True
                 matches_to_dc_charges( matches, dc_charges )
 
             # Extract line iterms
-            matches = re.findall( RE_LINE_ITEM, page.extract_text() )
+            matches = re.findall( RE_LINE_ITEM, text )
             if matches:
                 b_got_li = True
                 matches_to_dc_charges( matches, dc_charges )
@@ -361,6 +410,9 @@ if __name__ == '__main__':
                 ls_trouble.append( { filename: s_account_number } )
             print( s_report )
 
+            # Extract fields from Delivery Services section
+            dc_ds = get_delivery_services( filepath )
+
             # Extract charges from bill
             dc_charges = get_charges( filepath )
 
@@ -376,7 +428,12 @@ if __name__ == '__main__':
                 n_address_line += 1
                 dc_bill[ADDRESS_LINE_ + str( n_address_line )] = s_line
 
-            for s_key in sorted( dc_charges.keys() ):
+            # Add fields from Delivery Services section
+            for s_key in dc_ds.keys():
+                dc_bill[s_key] = dc_ds[s_key]
+
+            # Add itemized charges
+            for s_key in dc_charges.keys():
                 dc_bill[s_key] = dc_charges[s_key]
 
             # Append dictionary to list
