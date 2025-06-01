@@ -16,10 +16,6 @@
 #
 ######################
 
-LS_TROUBLE_ACCOUNTS = \
-[
-]
-
 B_DEBUG = False
 N_DEBUG = 20
 if B_DEBUG:
@@ -214,45 +210,6 @@ def get_ng_service_address( ls_lines ):
     return s_descr, ls_address_lines
 
 
-# Extract miscellaneous fields from bill
-def get_miscellaneous( filepath ):
-
-    dc_misc = {}
-
-    # Open the file
-    with pdfplumber.open( filepath ) as pdf:
-
-        # Iterate over PDF pages
-        for page in pdf.pages:
-
-            text = page.extract_text()
-
-            # Extract total energy
-            matches = re.findall( RE_TOTAL_ENERGY, text )
-            for m in matches:
-                dc_misc[TOTAL_ENERGY] = m
-
-            # Extract meter number
-            matches = re.findall( RE_METER_NUMBER, text )
-            for m in matches:
-                dc_misc[METER_NUMBER] = m
-
-            # Extract rate and voltage level
-            matches = re.findall( RE_RATE_VOLTAGE, text )
-            for m in matches:
-                dc_misc[RATE_CLASS] = m[0]
-                dc_misc[VOLTAGE_LEVEL] = m[1]
-
-            # Extract loadzone
-            matches = re.findall( RE_LOADZONE, text )
-            for m in matches:
-                dc_misc[LOADZONE] = m
-
-    debug_print( dc_misc )
-
-    return dc_misc
-
-
 # Generate column name from label string
 def make_column_name( s_label ):
 
@@ -266,8 +223,8 @@ def make_column_name( s_label ):
     return s_column_name
 
 
-# Save matches in dictionary
-def matches_to_dc_charges( matches, dc_charges ):
+# Save charges in dictionary
+def charges_to_dc_values( matches, dc_values ):
 
     for m in matches:
 
@@ -282,22 +239,22 @@ def matches_to_dc_charges( matches, dc_charges ):
             s_column_name += '_' + s_unit
 
             # Save rate
-            dc_charges[s_column_name + _RATE] = float( m[1] )
+            dc_values[s_column_name + _RATE] = float( m[1] )
 
             # Save usage applicable to current unit
-            dc_charges[s_unit + _USED] = float( m[2] )
+            dc_values[s_unit + _USED] = float( m[2] )
 
         # Last match is dollar amount charged
-        dc_charges[s_column_name + _DLRS] = float( m[-1] )
+        dc_values[s_column_name + _DLRS] = float( m[-1] )
 
-    return dc_charges
+    return dc_values
 
 
-# Extract charges from bill content
-def get_charges( filepath ):
+# Extract values of interest from bill content
+def get_bill_values( filepath ):
 
-    # Initialize empty dictionary of charges
-    dc_charges = {}
+    # Initialize empty dictionary of bill values
+    dc_values = {}
 
     b_got_cc = False
     b_got_li = False
@@ -314,18 +271,39 @@ def get_charges( filepath ):
             matches = re.findall( RE_CUSTOMER_CHARGE, text )
             if matches:
                 b_got_cc = True
-                matches_to_dc_charges( matches, dc_charges )
+                charges_to_dc_values( matches, dc_values )
 
             # Extract late charge
             matches = re.findall( RE_LATE_PAYMENT_CHARGE, text )
             if matches:
-                matches_to_dc_charges( matches, dc_charges )
+                charges_to_dc_values( matches, dc_values )
 
             # Extract line items
             matches = re.findall( RE_LINE_ITEM, text )
             if matches:
                 b_got_li = True
-                matches_to_dc_charges( matches, dc_charges )
+                charges_to_dc_values( matches, dc_values )
+
+            # Extract total energy
+            matches = re.findall( RE_TOTAL_ENERGY, text )
+            for m in matches:
+                dc_values[TOTAL_ENERGY] = m
+
+            # Extract meter number
+            matches = re.findall( RE_METER_NUMBER, text )
+            for m in matches:
+                dc_values[METER_NUMBER] = m
+
+            # Extract rate and voltage level
+            matches = re.findall( RE_RATE_VOLTAGE, text )
+            for m in matches:
+                dc_values[RATE_CLASS] = m[0]
+                dc_values[VOLTAGE_LEVEL] = m[1]
+
+            # Extract loadzone
+            matches = re.findall( RE_LOADZONE, text )
+            for m in matches:
+                dc_values[LOADZONE] = m
 
     # Track whether this bill contains Customer Charge
     if not b_got_cc:
@@ -335,7 +313,7 @@ def get_charges( filepath ):
     if not b_got_li:
         LS_LI_NOT_FOUND.append( { filename: s_account_number } )
 
-    return dc_charges
+    return dc_values
 
 
 # Construct dataframe from list of bills
@@ -387,8 +365,6 @@ if __name__ == '__main__':
 
     ls_bills = []
 
-    ls_trouble = []
-
     n_file = 0
 
     for filename in os.listdir( args.input_directory ):
@@ -409,29 +385,11 @@ if __name__ == '__main__':
 
             # Extract National Grid account number
             s_account_number = get_ng_account_number( ls_lines )
-
-            # Report extracted account number
-            s_report = f'{n_file} - {filename}: {s_account_number}'
-            if s_account_number != filename[:10]:
-                s_report += ' - TROUBLE!'
-                ls_trouble.append( { filename: s_account_number } )
-            print( s_report )
+            print( f'{n_file} - {filename}: {s_account_number}' )
 
             # Extract service address
             s_descr, ls_address_lines = get_ng_service_address( ls_lines )
-
-            # Report extracted service address
-            s_report = f'Description: <{s_descr}>, Address: {ls_address_lines}'
-            if not( ls_address_lines and re.search( r'^\d{5}$', ls_address_lines[-1].split()[-1] ) ):
-                s_report += ' - TROUBLE!'
-                ls_trouble.append( { filename: s_account_number } )
-            print( s_report )
-
-            # Extract miscellaneous fields
-            dc_misc = get_miscellaneous( filepath )
-
-            # Extract charges from bill
-            dc_charges = get_charges( filepath )
+            print( f'Description: <{s_descr}>, Address: {ls_address_lines}' )
 
             # Construct dictionary from bill attributes
             dc_bill = LEADING_COLUMNS.copy()
@@ -445,15 +403,12 @@ if __name__ == '__main__':
                 n_address_line += 1
                 dc_bill[ADDRESS_LINE_ + str( n_address_line )] = s_line
 
-            # Add miscellaneous fields
-            for s_key in dc_misc.keys():
-                dc_bill[s_key] = dc_misc[s_key]
+            # Extract and add other bill values
+            dc_values = get_bill_values( filepath )
+            for s_key in dc_values.keys():
+                dc_bill[s_key] = dc_values[s_key]
 
-            # Add itemized charges
-            for s_key in dc_charges.keys():
-                dc_bill[s_key] = dc_charges[s_key]
-
-            # Append dictionary to list
+            # Append dictionary representing current bill to list of bills
             ls_bills.append( dc_bill )
 
 
@@ -462,13 +417,6 @@ if __name__ == '__main__':
 
     # Save to CSV
     df_bills.to_csv( args.output_filename, index=False )
-
-    # Report trouble
-    if len( ls_trouble ):
-        print( '' )
-        print( 'Possible trouble:' )
-        for dc_trouble in ls_trouble:
-            print( dc_trouble )
 
     # Report Customer Charge not found
     if len( LS_CC_NOT_FOUND ):
