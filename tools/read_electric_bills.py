@@ -62,11 +62,6 @@ def debug_print( s ):
         print( s )
 
 
-# Track bills missing customer charge or line item
-LS_CC_NOT_FOUND = []
-LS_LI_NOT_FOUND = []
-
-
 # Literal text that appears in bills
 LBL_ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 LBL_SERVICE_FOR = 'SERVICE FOR'
@@ -256,9 +251,6 @@ def get_bill_values( filepath ):
     # Initialize empty dictionary of bill values
     dc_values = {}
 
-    b_got_cc = False
-    b_got_li = False
-
     # Open the file
     with pdfplumber.open( filepath ) as pdf:
 
@@ -270,7 +262,6 @@ def get_bill_values( filepath ):
             # Extract customer charge
             matches = re.findall( RE_CUSTOMER_CHARGE, text )
             if matches:
-                b_got_cc = True
                 charges_to_dc_values( matches, dc_values )
 
             # Extract late charge
@@ -281,7 +272,6 @@ def get_bill_values( filepath ):
             # Extract line items
             matches = re.findall( RE_LINE_ITEM, text )
             if matches:
-                b_got_li = True
                 charges_to_dc_values( matches, dc_values )
 
             # Extract total energy
@@ -304,14 +294,6 @@ def get_bill_values( filepath ):
             matches = re.findall( RE_LOADZONE, text )
             for m in matches:
                 dc_values[LOADZONE] = m
-
-    # Track whether this bill contains Customer Charge
-    if not b_got_cc:
-        LS_CC_NOT_FOUND.append( { filename: s_account_number } )
-
-    # Track whether this bill contains line items
-    if not b_got_li:
-        LS_LI_NOT_FOUND.append( { filename: s_account_number } )
 
     return dc_values
 
@@ -339,6 +321,14 @@ def make_df_bills( ls_bills ):
 
     # Sort dataframe on account number
     df = df.sort_values( by=[ACCOUNT_NUMBER] )
+
+    # Number columns
+    n_cols = len( df.columns )
+    n_digits = len( str( n_cols ) )
+    n_col = 0
+    for col in df.columns:
+        n_col += 1
+        df = df.rename( columns={ col: str( n_col ).zfill( n_digits ) + '-' + col } )
 
     return df
 
@@ -417,24 +407,6 @@ if __name__ == '__main__':
 
     # Save to CSV
     df_bills.to_csv( args.output_filename, index=False )
-
-    # Report Customer Charge not found
-    if len( LS_CC_NOT_FOUND ):
-        print( '' )
-        print( 'Customer Charge not found:' )
-        n = 0
-        for dc in LS_CC_NOT_FOUND:
-            n += 1
-            print( f' {n}: {dc}' )
-
-    # Report Line Items not found
-    if len( LS_LI_NOT_FOUND ):
-        print( '' )
-        print( 'Line Items not found:' )
-        n = 0
-        for dc in LS_LI_NOT_FOUND:
-            n += 1
-            print( f' {n}: {dc}' )
 
     # Report elapsed time
     report_elapsed_time()
