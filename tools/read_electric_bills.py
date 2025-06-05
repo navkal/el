@@ -298,9 +298,10 @@ def get_bill_values( filepath ):
             # Extract supplier
             matches = re.findall( RE_SUPPLIER, text )
             for m in matches:
-                # Kludge to remove random spaces from word 'Grid'
-                ls_parts = m.split()
-                m = ' '.join( [ls_parts[0], ''.join( ls_parts[1:] )] ).strip()
+                if m.startswith( 'National G' ):
+                    # Kludge to remove random spaces from word 'Grid'
+                    ls_parts = m.split()
+                    m = ' '.join( [ls_parts[0], ''.join( ls_parts[1:] )] )
                 dc_values[SUPPLIER] = m
 
             # Extract loadzone
