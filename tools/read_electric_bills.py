@@ -12,7 +12,7 @@
 #
 # Sample parameter sequences:
 #
-#  -i ./in/electric_bills -o ./out/electric_bills.csv
+# -i ./in/electric_bills -o ./out/electric_bills.csv
 #
 ######################
 
@@ -82,6 +82,7 @@ LABEL_WORDS = \
 RE_TOTAL_ENERGY = 'Total Energy (.*) kWh'
 RE_METER_NUMBER = 'METER NUMBER (.*) NEXT SCHEDULED READ DATE ON OR ABOUT'
 RE_RATE_VOLTAGE = 'RATE (.*) VOLTAGE DELIVERY LEVEL (.*)'
+RE_SUPPLIER = 'SUPPLIER (\w+(?: \w+)*)'
 RE_LOADZONE = 'Loadzone ([A-Z/]+)'
 
 RE_LABEL = '[A-Z][a-z]+(?: [A-Z][a-z]+)*'
@@ -94,7 +95,8 @@ RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( R
 RE_LATE_PAYMENT_CHARGE = capture( LBL_LATE_PAYMENT_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
 
-# Label suffixes
+
+# Column name suffixes
 _DLRS = '_$'
 _RATE = '_rate' + _DLRS
 _USED = '_used'
@@ -109,11 +111,13 @@ TOTAL_ENERGY = 'total_energy'
 METER_NUMBER = 'meter_number'
 RATE_CLASS = 'rate_class'
 VOLTAGE_LEVEL = 'voltage_level'
+SUPPLIER = 'supplier'
 LOADZONE = 'loadzone'
 KWH_USED = 'kwh' + _USED
 KW_USED = 'kw' + _USED
 CUSTOMER_CHG = 'customer_chg_$'
 LATE_PAYMENT_CHG = 'late_payment_chg_$'
+
 
 # Dataframe leading columns
 LEADING_COLUMNS = \
@@ -134,6 +138,7 @@ LEADING_COLUMNS = \
     METER_NUMBER: None,
     RATE_CLASS: None,
     VOLTAGE_LEVEL: None,
+    SUPPLIER: None,
     LOADZONE: None,
     KWH_USED: None,
     KW_USED: None,
@@ -289,6 +294,14 @@ def get_bill_values( filepath ):
             for m in matches:
                 dc_values[RATE_CLASS] = m[0]
                 dc_values[VOLTAGE_LEVEL] = m[1]
+
+            # Extract supplier
+            matches = re.findall( RE_SUPPLIER, text )
+            for m in matches:
+                # Kludge to remove random spaces from word 'Grid'
+                ls_parts = m.split()
+                m = ' '.join( [ls_parts[0], ''.join( ls_parts[1:] )] ).strip()
+                dc_values[SUPPLIER] = m
 
             # Extract loadzone
             matches = re.findall( RE_LOADZONE, text )
