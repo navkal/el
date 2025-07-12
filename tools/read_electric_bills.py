@@ -263,8 +263,13 @@ def charges_to_dc_values( matches, dc_values ):
             # Save rate
             dc_values[s_column_name + _RATE] = float( m[1] )
 
-            # Save usage applicable to current unit
-            dc_values[s_unit + _USED] = float( m[2] )
+            # Save usage applicable to current unit: select maximum value among line items
+            s_key = s_unit + _USED
+            f_value = float( m[2] )
+            if s_key in dc_values:
+                dc_values[s_key] = max( dc_values[s_key], f_value )
+            else:
+                dc_values[s_key] = f_value
 
         # Last match is dollar amount charged
         dc_values[s_column_name + _DLRS] = float( m[-1] )
