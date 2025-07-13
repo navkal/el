@@ -69,6 +69,7 @@ def debug_print( s ):
 LBL_ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 LBL_SERVICE_FOR = 'SERVICE FOR'
 LBL_BILLING_PERIOD = 'BILLING PERIOD'
+LBL_DATE_BILL_ISSUED = 'DATE BILL ISSUED'
 LBL_CUSTOMER_CHARGE = 'Customer Charge'
 LBL_LATE_PAYMENT_CHARGE = 'Late Payment Charges'
 
@@ -110,6 +111,7 @@ _USED = '_used'
 ACCOUNT_NUMBER = 'account_number'
 START_DATE = 'start_date'
 END_DATE = 'end_date'
+ISSUE_DATE = 'issue_date'
 DESCRIPTION = 'description'
 ADDRESS_LINE_ = 'address_line_'
 CITY_STATE_ZIP = 'city_state_zip'
@@ -131,6 +133,7 @@ LEADING_COLUMNS = \
     ACCOUNT_NUMBER: None,
     START_DATE: None,
     END_DATE: None,
+    ISSUE_DATE: None,
     DESCRIPTION: None,
     ADDRESS_LINE_ + '1': None,
     ADDRESS_LINE_ + '2': None,
@@ -230,6 +233,18 @@ def get_ng_billing_period( ls_lines ):
     s_end_date = datetime.strptime( ls_dates[1], '%b %d, %Y' ).strftime( '%Y-%m-%d' )
 
     return s_start_date, s_end_date
+
+
+# Extract date issued from National Grid bill content
+def get_ng_date_bill_issued( ls_lines ):
+
+    # Find first occurrence of label
+    n_line = ls_lines.index( LBL_DATE_BILL_ISSUED )
+
+    # Extract date from next line
+    s_issue_date = datetime.strptime( ls_lines[n_line + 1], '%b %d, %Y' ).strftime( '%Y-%m-%d' )
+
+    return s_issue_date
 
 
 # Generate column name from label string
@@ -362,7 +377,7 @@ def make_df_bills( ls_bills ):
     df = df.drop_duplicates()
 
     # Sort dataframe on account number and date
-    df = df.sort_values( by=[ACCOUNT_NUMBER, START_DATE, END_DATE] )
+    df = df.sort_values( by=[ACCOUNT_NUMBER, START_DATE, END_DATE, ISSUE_DATE] )
 
     # Number columns
     n_cols = len( df.columns )
@@ -423,6 +438,10 @@ if __name__ == '__main__':
             s_start_date, s_end_date = get_ng_billing_period( ls_lines )
             print( f'Billing Period: {s_start_date} to {s_end_date}' )
 
+            # Extract bill issue date
+            s_issue_date = get_ng_date_bill_issued( ls_lines )
+            print( f'Date Bill Issued: {s_issue_date}' )
+
             # Extract service address
             s_descr, ls_address_lines = get_ng_service_address( ls_lines )
             print( f'Description: <{s_descr}>, Address: {ls_address_lines}' )
@@ -432,6 +451,7 @@ if __name__ == '__main__':
             dc_bill[ACCOUNT_NUMBER] = s_account_number
             dc_bill[START_DATE] = s_start_date
             dc_bill[END_DATE] = s_end_date
+            dc_bill[ISSUE_DATE] = s_issue_date
             dc_bill[DESCRIPTION] = s_descr
             dc_bill[CITY_STATE_ZIP] = ls_address_lines[-1]
 
