@@ -68,8 +68,8 @@ def debug_print( s ):
 # Literal text that appears in bills
 LBL_ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 LBL_SERVICE_FOR = 'SERVICE FOR'
-LBL_BILLING_PERIOD = 'BILLING PERIOD'
 LBL_DATE_BILL_ISSUED = 'DATE BILL ISSUED'
+LBL_BILLING_PERIOD = 'BILLING PERIOD'
 LBL_CUSTOMER_CHARGE = 'Customer Charge'
 LBL_LATE_PAYMENT_CHARGE = 'Late Payment Charges'
 
@@ -109,9 +109,9 @@ _USED = '_used'
 
 # Dataframe column names
 ACCOUNT_NUMBER = 'account_number'
+ISSUE_DATE = 'issue_date'
 START_DATE = 'start_date'
 END_DATE = 'end_date'
-ISSUE_DATE = 'issue_date'
 DESCRIPTION = 'description'
 ADDRESS_LINE_ = 'address_line_'
 CITY_STATE_ZIP = 'city_state_zip'
@@ -131,9 +131,9 @@ LATE_PAYMENT_CHG = 'late_payment_chg_$'
 LEADING_COLUMNS = \
 {
     ACCOUNT_NUMBER: None,
+    ISSUE_DATE: None,
     START_DATE: None,
     END_DATE: None,
-    ISSUE_DATE: None,
     DESCRIPTION: None,
     ADDRESS_LINE_ + '1': None,
     ADDRESS_LINE_ + '2': None,
@@ -174,7 +174,7 @@ def get_lines( filepath ):
 
 
 # Extract National Grid account number from bill content
-def get_ng_account_number( ls_lines ):
+def get_account_number( ls_lines ):
 
     # Find first occurrence of label
     n_line = ls_lines.index( LBL_ACCOUNT_NUMBER )
@@ -194,7 +194,7 @@ def get_ng_account_number( ls_lines ):
 
 
 # Extract National Grid service address from bill content
-def get_ng_service_address( ls_lines ):
+def get_service_address( ls_lines ):
 
     # Initialize return value
     ls_address_lines = []
@@ -221,8 +221,20 @@ def get_ng_service_address( ls_lines ):
     return s_descr, ls_address_lines
 
 
-# Extract National Grid billing period from bill content
-def get_ng_billing_period( ls_lines ):
+# Extract date issued from National Grid bill content
+def get_issue_date( ls_lines ):
+
+    # Find first occurrence of label
+    n_line = ls_lines.index( LBL_DATE_BILL_ISSUED )
+
+    # Extract date from next line
+    s_issue_date = datetime.strptime( ls_lines[n_line + 1], '%b %d, %Y' ).strftime( '%Y-%m-%d' )
+
+    return s_issue_date
+
+
+# Extract billing period from bill content
+def get_billing_period( ls_lines ):
 
     # Find first occurrence of label
     n_line = ls_lines.index( LBL_BILLING_PERIOD )
@@ -233,18 +245,6 @@ def get_ng_billing_period( ls_lines ):
     s_end_date = datetime.strptime( ls_dates[1], '%b %d, %Y' ).strftime( '%Y-%m-%d' )
 
     return s_start_date, s_end_date
-
-
-# Extract date issued from National Grid bill content
-def get_ng_date_bill_issued( ls_lines ):
-
-    # Find first occurrence of label
-    n_line = ls_lines.index( LBL_DATE_BILL_ISSUED )
-
-    # Extract date from next line
-    s_issue_date = datetime.strptime( ls_lines[n_line + 1], '%b %d, %Y' ).strftime( '%Y-%m-%d' )
-
-    return s_issue_date
 
 
 # Generate column name from label string
@@ -377,7 +377,7 @@ def make_df_bills( ls_bills ):
     df = df.drop_duplicates()
 
     # Sort dataframe on account number and date
-    df = df.sort_values( by=[ACCOUNT_NUMBER, START_DATE, END_DATE, ISSUE_DATE] )
+    df = df.sort_values( by=[ACCOUNT_NUMBER, ISSUE_DATE, START_DATE, END_DATE] )
 
     # Number columns
     n_cols = len( df.columns )
@@ -431,19 +431,16 @@ if __name__ == '__main__':
             ls_lines = get_lines( filepath )
 
             # Extract National Grid account number
-            s_account_number = get_ng_account_number( ls_lines )
+            s_account_number = get_account_number( ls_lines )
             print( f'{n_file} - {filename}: {s_account_number}' )
 
-            # Extract National Grid billing period
-            s_start_date, s_end_date = get_ng_billing_period( ls_lines )
-            print( f'Billing Period: {s_start_date} to {s_end_date}' )
-
-            # Extract bill issue date
-            s_issue_date = get_ng_date_bill_issued( ls_lines )
-            print( f'Date Bill Issued: {s_issue_date}' )
+            # Extract bill dates
+            s_issue_date = get_issue_date( ls_lines )
+            s_start_date, s_end_date = get_billing_period( ls_lines )
+            print( f'Issued {s_issue_date} for period {s_start_date} to {s_end_date}' )
 
             # Extract service address
-            s_descr, ls_address_lines = get_ng_service_address( ls_lines )
+            s_descr, ls_address_lines = get_service_address( ls_lines )
             print( f'Description: <{s_descr}>, Address: {ls_address_lines}' )
 
             # Construct dictionary from bill attributes
