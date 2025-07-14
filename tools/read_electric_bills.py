@@ -33,6 +33,7 @@ import shutil
 
 import pdfminer.high_level as pdf_miner
 import pdfplumber
+import fitz  # PyMuPDF
 
 import re
 
@@ -165,122 +166,83 @@ LEADING_COLUMNS = \
 
 
 
+# Split concatenated bills to individual PDF files
+def split_concatenated_bills( input_dir, filename, output_dir, n_bills ):
 
+    # Format input PDF full path
+    input_pdf = os.path.join( input_dir, filename )
 
+    # Open the original PDF, containing 1 or more bills
+    original_doc = fitz.open( input_pdf )
 
+    # Identify start page of each bill by presence of label which uniquely appears on every first page
+    ls_start_pages = []
+    for n_page, page in enumerate( original_doc ):
+        if LBL_CUSTOMER_SERVICE in page.get_text():
+            ls_start_pages.append( n_page )
 
+    # Add one final index to artificially represent the end of the last bill
+    n_start_pages = len( ls_start_pages )
+    ls_start_pages.append( len( original_doc ) )
 
+    # Split bills and and save to output directory
+    for n_idx in range( n_start_pages ):
 
-
-
-
-
-
-
-
-
-
-
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-# --------------------------->
-
-
-import fitz  # PyMuPDF
-import os
-
-def split_bills_by_keyword( pdf_path, keyword, output_dir, n_bills ):
-    # Open the input PDF
-    doc = fitz.open(pdf_path)
-    page_indices = []
-
-    # Identify the first page of each bill
-    for i, page in enumerate(doc):
-        text = page.get_text()
-        if keyword in text:
-            page_indices.append(i)
-
-    # Add one final index to mark the end of the last bill
-    page_indices.append(len(doc))
-
-    # Create output directory if it doesn't exist
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Split and save bills
-    for i in range(len(page_indices) - 1):
-        start = page_indices[i]
-        end = page_indices[i + 1]
-        output_path = os.path.join(output_dir, f"bill_{(i + n_bills + 1):05d}.pdf")
-
-        # Create a new PDF for this bill
+        # Initialize empty PDF document for current bill
         bill_doc = fitz.open()
-        for j in range(start, end):
-            bill_doc.insert_pdf(doc, from_page=j, to_page=j)
 
-        bill_doc.save(output_path)
+        # Populate new PDF document with applicable pages
+        n_start = ls_start_pages[n_idx]
+        n_stop = ls_start_pages[n_idx + 1]
+        for n_page in range( n_start, n_stop ):
+            bill_doc.insert_pdf( original_doc, from_page=n_page, to_page=n_page )
+
+        # Save current bill to output file
+        output_filename = f'bill_{( n_idx + n_bills + 1 ):05d}.pdf'
+        output_path = os.path.join( output_dir, output_filename )
+        bill_doc.save( output_path )
         bill_doc.close()
-        print(f"Saved {output_path}")
 
-    doc.close()
+    original_doc.close()
 
-    n_bills += len(page_indices) - 1
+    # Report number of bills found in original PDF file
+    s_quote = "'" if ' ' in filename else ''
+    print( f' {n_start_pages} in {s_quote}{filename}{s_quote}' )
+
+    # Track total number of bills
+    n_bills += n_start_pages
 
     return n_bills
-
-
-
-# <---------------------------
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-####### REWRITE THIS ############
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Split concatenated bills and save individually to temp directory
 def split_bills_to_temp_dir( input_dir ):
 
-    temp_dir = os.path.join( input_dir, TEMP_DIR_NAME )
-
     # Create empty temp directory
+    temp_dir = os.path.join( input_dir, TEMP_DIR_NAME )
     if os.path.exists( temp_dir ):
         shutil.rmtree( temp_dir )
     os.makedirs( temp_dir )
 
+    # Track total number of bills saved in temp directory
+    n_bills = 0
+
+    print( 'Bills found:' )
 
     # Iterate over files in input directory
-    n_file = 0
-    n_bills = 0
     for filename in os.listdir( input_dir ):
 
         if filename.lower().endswith( '.pdf' ):
 
-            n_file += 1
+            n_bills = split_concatenated_bills( input_dir, filename, temp_dir, n_bills )
 
             # Debug mode: quit early
-            if B_DEBUG and ( n_file > N_DEBUG ):
+            if B_DEBUG and ( n_bills > N_DEBUG ):
                 break
 
-            # Find the file
-            filepath = os.path.join( input_dir, filename )
-
-            n_bills = split_bills_by_keyword( filepath, LBL_CUSTOMER_SERVICE, temp_dir, n_bills )
+    print( '' )
+    print( f'Total bills found: {n_bills}' )
+    print( '' )
 
     return temp_dir
 
@@ -569,16 +531,19 @@ if __name__ == '__main__':
 
             # Extract National Grid account number
             s_account_number = get_account_number( ls_lines )
-            print( f'{n_file} - {filename}: {s_account_number}' )
 
             # Extract bill dates
             s_issue_date = get_issue_date( ls_lines )
             s_start_date, s_end_date = get_billing_period( ls_lines )
-            print( f'Issued {s_issue_date} for period {s_start_date} to {s_end_date}' )
 
             # Extract service address
             s_descr, ls_address_lines = get_service_address( ls_lines )
-            print( f'Description: <{s_descr}>, Address: {ls_address_lines}' )
+
+            # Report bill details
+            print( f'Bill {n_file}' )
+            print( f' Account: {s_account_number}' )
+            print( f' Description: <{s_descr}>, Address: {ls_address_lines}' )
+            print( f' Issued {s_issue_date} for period {s_start_date} to {s_end_date}' )
 
             # Construct dictionary from bill attributes
             dc_bill = LEADING_COLUMNS.copy()
