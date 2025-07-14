@@ -29,6 +29,7 @@ if B_DEBUG:
 
 import argparse
 import os
+import shutil
 
 import pdfminer.high_level as pdf_miner
 import pdfplumber
@@ -54,6 +55,10 @@ def report_elapsed_time( prefix='\n', start_time=START_TIME ):
 # <-- Reporting of elapsed time <--
 
 
+# Temporary directory for caching split bills
+TEMP_DIR_NAME = 'DELETE_THESE_SPLIT_BILLS'
+
+
 # Format regular expression as a capture group
 def capture( s ):
     return '(' + s + ')'
@@ -66,6 +71,7 @@ def debug_print( s ):
 
 
 # Literal text that appears in bills
+LBL_CUSTOMER_SERVICE = 'CUSTOMER SERVICE'
 LBL_ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 LBL_SERVICE_FOR = 'SERVICE FOR'
 LBL_DATE_BILL_ISSUED = 'DATE BILL ISSUED'
@@ -156,6 +162,127 @@ LEADING_COLUMNS = \
     CUSTOMER_CHG: None,
     LATE_PAYMENT_CHG: None,
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+# --------------------------->
+
+
+import fitz  # PyMuPDF
+import os
+
+def split_bills_by_keyword( pdf_path, keyword, output_dir, n_bills ):
+    # Open the input PDF
+    doc = fitz.open(pdf_path)
+    page_indices = []
+
+    # Identify the first page of each bill
+    for i, page in enumerate(doc):
+        text = page.get_text()
+        if keyword in text:
+            page_indices.append(i)
+
+    # Add one final index to mark the end of the last bill
+    page_indices.append(len(doc))
+
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Split and save bills
+    for i in range(len(page_indices) - 1):
+        start = page_indices[i]
+        end = page_indices[i + 1]
+        output_path = os.path.join(output_dir, f"bill_{(i + n_bills + 1):05d}.pdf")
+
+        # Create a new PDF for this bill
+        bill_doc = fitz.open()
+        for j in range(start, end):
+            bill_doc.insert_pdf(doc, from_page=j, to_page=j)
+
+        bill_doc.save(output_path)
+        bill_doc.close()
+        print(f"Saved {output_path}")
+
+    doc.close()
+
+    n_bills += len(page_indices) - 1
+
+    return n_bills
+
+
+
+# <---------------------------
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+####### REWRITE THIS ############
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Split concatenated bills and save individually to temp directory
+def split_bills_to_temp_dir( input_dir ):
+
+    temp_dir = os.path.join( input_dir, TEMP_DIR_NAME )
+
+    # Create empty temp directory
+    if os.path.exists( temp_dir ):
+        shutil.rmtree( temp_dir )
+    os.makedirs( temp_dir )
+
+
+    # Iterate over files in input directory
+    n_file = 0
+    n_bills = 0
+    for filename in os.listdir( input_dir ):
+
+        if filename.lower().endswith( '.pdf' ):
+
+            n_file += 1
+
+            # Debug mode: quit early
+            if B_DEBUG and ( n_file > N_DEBUG ):
+                break
+
+            # Find the file
+            filepath = os.path.join( input_dir, filename )
+
+            n_bills = split_bills_by_keyword( filepath, LBL_CUSTOMER_SERVICE, temp_dir, n_bills )
+
+    return temp_dir
 
 
 # Get lines of text from electric bill PDF
@@ -393,6 +520,7 @@ def make_df_bills( ls_bills ):
 ###############################
 
 
+
 # Main program
 if __name__ == '__main__':
 
@@ -410,11 +538,20 @@ if __name__ == '__main__':
     print( 'Starting at', time.strftime( '%H:%M:%S', time.localtime( START_TIME ) ) )
     print( '' )
 
+
+    # Split concatenated bills and save individual bills in temporary directory
+    temp_dir = split_bills_to_temp_dir( args.input_directory )
+
+    #
+    # Extract information from individual bills
+    #
+
     ls_bills = []
 
     n_file = 0
 
-    for filename in os.listdir( args.input_directory ):
+    # Iterate over individual bills in temporary directory
+    for filename in os.listdir( temp_dir ):
 
         if filename.lower().endswith( '.pdf' ):
 
@@ -425,7 +562,7 @@ if __name__ == '__main__':
                 break
 
             # Find the file
-            filepath = os.path.join( args.input_directory, filename )
+            filepath = os.path.join( temp_dir, filename )
 
             # Extract lines of text
             ls_lines = get_lines( filepath )
@@ -472,6 +609,10 @@ if __name__ == '__main__':
 
     # Save to CSV
     df_bills.to_csv( args.output_filename, index=False )
+
+    # Clean up
+    if os.path.exists( temp_dir ):
+        shutil.rmtree( temp_dir )
 
     # Report elapsed time
     report_elapsed_time()
