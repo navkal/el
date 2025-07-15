@@ -65,6 +65,11 @@ def capture( s ):
     return '(' + s + ')'
 
 
+# Convert numeric string with commas to float
+def comma_float( s_num ):
+    return float( s_num.replace( ',', '' ) )
+
+
 # Print in debug mode
 def debug_print( s ):
     if B_DEBUG:
@@ -77,6 +82,7 @@ LBL_ACCOUNT_NUMBER = 'ACCOUNT NUMBER'
 LBL_SERVICE_FOR = 'SERVICE FOR'
 LBL_DATE_BILL_ISSUED = 'DATE BILL ISSUED'
 LBL_BILLING_PERIOD = 'BILLING PERIOD'
+LBL_CURRENT_CHARGES = 'Current Charges'
 LBL_CUSTOMER_CHARGE = 'Customer Charge'
 LBL_LATE_PAYMENT_CHARGE = 'Late Payment Charges'
 
@@ -98,11 +104,12 @@ RE_SUPPLIER = 'SUPPLIER (\w+(?: \w+)*)'
 RE_LOADZONE = 'Loadzone ([A-Z/]+)'
 
 RE_LABEL = '[A-Z][a-z]+(?: [A-Z][a-z]+)*'
-RE_NUMBER = '-?(?:\d+(?:\.\d+)?|\.\d+)'
+RE_NUMBER = '-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?'
 RE_UNIT = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
 RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
 
+RE_CURRENT_CHARGES = capture( LBL_CURRENT_CHARGES ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER )
 RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LATE_PAYMENT_CHARGE = capture( LBL_LATE_PAYMENT_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
@@ -130,6 +137,10 @@ SUPPLIER = 'supplier'
 LOADZONE = 'loadzone'
 KWH_USED = 'kwh' + _USED
 KW_USED = 'kw' + _USED
+CUR_CHG_NG_SERV = 'cur_chg_ng_serv_$'
+CUR_CHG_OTHER_SERV = 'cur_chg_other_serv_$'
+CUR_CHG_ADJUST = 'cur_chg_adjust_$'
+CUR_CHG_TOTAL = 'cur_chg_total_$'
 CUSTOMER_CHG = 'customer_chg_$'
 LATE_PAYMENT_CHG = 'late_payment_chg_$'
 
@@ -160,6 +171,10 @@ LEADING_COLUMNS = \
     LOADZONE: None,
     KWH_USED: None,
     KW_USED: None,
+    CUR_CHG_NG_SERV: None,
+    CUR_CHG_OTHER_SERV: None,
+    CUR_CHG_ADJUST: None,
+    CUR_CHG_TOTAL: None,
     CUSTOMER_CHG: None,
     LATE_PAYMENT_CHG: None,
 }
@@ -376,7 +391,7 @@ def charges_to_dc_values( matches, dc_values ):
                 dc_values[s_key] = f_value
 
         # Last match is dollar amount charged
-        dc_values[s_column_name + _DLRS] = float( m[-1] )
+        dc_values[s_column_name + _DLRS] = comma_float( m[-1] )
 
     return dc_values
 
@@ -394,6 +409,15 @@ def get_bill_values( filepath ):
         for page in pdf.pages:
 
             text = page.extract_text()
+
+            # Extract current charges
+            matches = re.findall( RE_CURRENT_CHARGES, text )
+            if matches:
+                m = matches[0]
+                dc_values[CUR_CHG_NG_SERV] = comma_float( m[1] )
+                dc_values[CUR_CHG_OTHER_SERV] = comma_float( m[2] )
+                dc_values[CUR_CHG_ADJUST] = comma_float( m[3] )
+                dc_values[CUR_CHG_TOTAL] = comma_float( m[4] )
 
             # Extract customer charge
             matches = re.findall( RE_CUSTOMER_CHARGE, text )
@@ -422,7 +446,8 @@ def get_bill_values( filepath ):
 
             # Extract rate and voltage level
             matches = re.findall( RE_RATE_VOLTAGE, text )
-            for m in matches:
+            if matches:
+                m = matches[0]
                 dc_values[RATE_CLASS] = m[0]
                 dc_values[VOLTAGE_LEVEL] = m[1]
 
