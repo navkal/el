@@ -7,12 +7,17 @@
 # Optional parameters:
 # -i <input directory> - defaults to current working directory
 #
-# Required parameters:
-# -o <output CSV file path>
+# Supply at least one output file path:
+# -c <output CSV file path>
+# -x <output Excel file path>
+# -s <output SQLite file path>
 #
-# Sample parameter sequences:
+# Applicable only with -s SQLite output file:
+# -t <output SQLite table name> - defaults to 'ElectricBills'
 #
-# -i ./in/electric_bills -o ./out/electric_bills.csv
+# Sample parameter sequence:
+#
+# -i ./in/electric_bills -c ./out/electric_bills.csv
 #
 ######################
 
@@ -43,6 +48,7 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import sqlite3
 
 
 # --> Reporting of elapsed time -->
@@ -507,6 +513,66 @@ def make_df_bills( ls_bills ):
     return df
 
 
+# Fix numeric columns in specified dataframe
+def fix_numeric_columns( df ):
+
+    for column_name in df.columns:
+
+        if df[column_name].dtype == object:
+            df[column_name] = pd.to_numeric( df[column_name], errors='ignore' )
+
+    return df
+
+
+# Map pandas datatype to SQLite datatype
+def pdtype_to_sqltype( df, col_name ):
+
+    if df is None:
+        sqltype = 'TEXT'
+    else:
+        pdtype = str( df[col_name].dtype )
+
+        if pdtype.startswith( 'float' ):
+            sqltype = 'FLOAT'
+        elif pdtype.startswith( 'int' ):
+            sqltype = 'INT'
+        else:
+            sqltype = 'TEXT'
+
+    return sqltype
+
+
+# Save dataframe to SQLite database
+def df_to_db( df, file_path, table_name ):
+
+    # Fix numeric columns
+    df = fix_numeric_columns( df )
+
+    # Open the database
+    conn = sqlite3.connect( file_path )
+    cur = conn.cursor()
+
+    # Drop table if it already exists
+    cur.execute( 'DROP TABLE IF EXISTS ' + table_name )
+
+    # Generate SQL command
+    create_sql = 'CREATE TABLE ' + table_name + ' ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
+    for col_name in df.columns:
+        sqltype = pdtype_to_sqltype( df, col_name )
+        create_sql += ', "{0}" {1}'.format( col_name, sqltype )
+    create_sql += ' )'
+
+    # Execute the SQL command
+    print( '' )
+    print( create_sql )
+    cur.execute( create_sql )
+
+    # Output dataframe to database
+    df.to_sql( table_name, conn, if_exists='append', index=False )
+
+    conn.commit()
+
+
 ###############################
 
 
@@ -516,12 +582,32 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Extract data from PDF-format electric bills' )
     parser.add_argument( '-i', dest='input_directory', default=os.getcwd(), help='Input directory containing electric bills' )
-    parser.add_argument( '-o', dest='output_filename', help='Full path to output CSV file', required=True )
+    parser.add_argument( '-c', dest='csv_output_filename', help='Full path to output CSV file' )
+    parser.add_argument( '-x', dest='xlsx_output_filename', help='Full path to output Excel file' )
+    parser.add_argument( '-s', dest='sqlite_output_filename', help='Full path to output SQLite file' )
+    parser.add_argument( '-t', dest='table_name', default='ElectricBills', help='Name of SQLite table' )
     args = parser.parse_args()
 
+    # Process output arguments
+    csv_filename = args.csv_output_filename if args.csv_output_filename is not None else ''
+    xlsx_filename = args.xlsx_output_filename if args.xlsx_output_filename is not None else ''
+    sqlite_filename = args.sqlite_output_filename if args.sqlite_output_filename is not None else ''
+
+    if csv_filename + xlsx_filename + sqlite_filename == '':
+        print( 'Please specify at least one of: -c, -x, -s' )
+        exit()
+
+    # Report input and outputs
     print( '' )
     print( f'Reading electric bills from: {args.input_directory}' )
-    print( f'Saving bill attributes to: {args.output_filename}' )
+    print( '' )
+    print( f'Saving bill attributes to:' )
+    if csv_filename:
+        print( f' {csv_filename}' )
+    if xlsx_filename:
+        print( f' {xlsx_filename}' )
+    if sqlite_filename:
+        print( f' {sqlite_filename}, table {args.table_name}' )
     print( '' )
 
     # Report start time
@@ -600,8 +686,23 @@ if __name__ == '__main__':
     # Construct dataframe from list of bills
     df_bills = make_df_bills( ls_bills )
 
-    # Save to CSV
-    df_bills.to_csv( args.output_filename, index=False )
+    print( '' )
+
+    # Save to CSV file
+    if args.csv_output_filename is not None:
+        print( f'Saving bills to {args.csv_output_filename}' )
+        df_bills.to_csv( args.csv_output_filename, index=False )
+
+    # Save to Excel file
+    if args.xlsx_output_filename is not None:
+        print( f'Saving bills to {args.xlsx_output_filename}' )
+        df_bills.to_excel( args.xlsx_output_filename, index=False )
+
+    # Save to SQLite database
+    if args.sqlite_output_filename is not None:
+        print( f'Saving bills to {args.sqlite_output_filename}' )
+        df_to_db( df_bills, args.sqlite_output_filename, args.table_name )
+
 
     # Clean up
     if os.path.exists( temp_dir ):
