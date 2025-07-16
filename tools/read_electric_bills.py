@@ -519,7 +519,10 @@ def fix_numeric_columns( df ):
     for column_name in df.columns:
 
         if df[column_name].dtype == object:
-            df[column_name] = pd.to_numeric( df[column_name], errors='ignore' )
+            try:
+                df[column_name] = pd.to_numeric( df[column_name], errors='ignore' )
+            except:
+                pass
 
     return df
 
