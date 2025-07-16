@@ -553,10 +553,10 @@ def df_to_db( df, file_path, table_name ):
     cur = conn.cursor()
 
     # Drop table if it already exists
-    cur.execute( 'DROP TABLE IF EXISTS ' + table_name )
+    cur.execute( 'DROP TABLE IF EXISTS "' + table_name + '"' )
 
     # Generate SQL command
-    create_sql = 'CREATE TABLE ' + table_name + ' ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
+    create_sql = 'CREATE TABLE "' + table_name + '" ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE'
     for col_name in df.columns:
         sqltype = pdtype_to_sqltype( df, col_name )
         create_sql += ', "{0}" {1}'.format( col_name, sqltype )
@@ -599,15 +599,15 @@ if __name__ == '__main__':
 
     # Report input and outputs
     print( '' )
-    print( f'Reading electric bills from: {args.input_directory}' )
+    print( f'Reading electric bills from: "{args.input_directory}"' )
     print( '' )
     print( f'Saving bill attributes to:' )
     if csv_filename:
-        print( f' {csv_filename}' )
+        print( f' "{csv_filename}"' )
     if xlsx_filename:
-        print( f' {xlsx_filename}' )
+        print( f' "{xlsx_filename}"' )
     if sqlite_filename:
-        print( f' {sqlite_filename}, table {args.table_name}' )
+        print( f' "{sqlite_filename}", table "{args.table_name}"' )
     print( '' )
 
     # Report start time
@@ -690,17 +690,17 @@ if __name__ == '__main__':
 
     # Save to CSV file
     if args.csv_output_filename is not None:
-        print( f'Saving bills to {args.csv_output_filename}' )
+        print( f'Saving bills to "{args.csv_output_filename}"' )
         df_bills.to_csv( args.csv_output_filename, index=False )
 
     # Save to Excel file
     if args.xlsx_output_filename is not None:
-        print( f'Saving bills to {args.xlsx_output_filename}' )
+        print( f'Saving bills to "{args.xlsx_output_filename}"' )
         df_bills.to_excel( args.xlsx_output_filename, index=False )
 
     # Save to SQLite database
     if args.sqlite_output_filename is not None:
-        print( f'Saving bills to {args.sqlite_output_filename}' )
+        print( f'Saving bills to "{args.sqlite_output_filename}", table "{args.table_name}"' )
         df_to_db( df_bills, args.sqlite_output_filename, args.table_name )
 
 
