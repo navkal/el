@@ -135,13 +135,12 @@ END_DATE = 'end_date'
 DESCRIPTION = 'description'
 ADDRESS_LINE_ = 'address_line_'
 CITY_STATE_ZIP = 'city_state_zip'
-TOTAL_ENERGY = 'total_energy'
 METER_NUMBER = 'meter_number'
+TOTAL_ENERGY = 'total_energy'
+KWH_USED = 'kwh' + _USED
 RATE_CLASS = 'rate_class'
 VOLTAGE_LEVEL = 'voltage_level'
-SUPPLIER = 'supplier'
 LOADZONE = 'loadzone'
-KWH_USED = 'kwh' + _USED
 KW_USED = 'kw' + _USED
 CUR_CHG_NG_SERV = 'cur_chg_ng_serv_$'
 CUR_CHG_OTHER_SERV = 'cur_chg_other_serv_$'
@@ -149,41 +148,74 @@ CUR_CHG_ADJUST = 'cur_chg_adjust_$'
 CUR_CHG_TOTAL = 'cur_chg_total_$'
 CUSTOMER_CHG = 'customer_chg_$'
 LATE_PAYMENT_CHG = 'late_payment_chg_$'
+SUPPLIER = 'supplier'
 
 
-# Dataframe leading columns
-LEADING_COLUMNS = \
-{
-    ACCOUNT_NUMBER: None,
-    ISSUE_DATE: None,
-    START_DATE: None,
-    END_DATE: None,
-    DESCRIPTION: None,
-    ADDRESS_LINE_ + '1': None,
-    ADDRESS_LINE_ + '2': None,
-    ADDRESS_LINE_ + '3': None,
-    ADDRESS_LINE_ + '4': None,
-    ADDRESS_LINE_ + '5': None,
-    ADDRESS_LINE_ + '6': None,
-    ADDRESS_LINE_ + '7': None,
-    ADDRESS_LINE_ + '8': None,
-    ADDRESS_LINE_ + '9': None,
-    CITY_STATE_ZIP: None,
-    TOTAL_ENERGY: None,
-    METER_NUMBER: None,
-    RATE_CLASS: None,
-    VOLTAGE_LEVEL: None,
-    SUPPLIER: None,
-    LOADZONE: None,
-    KWH_USED: None,
-    KW_USED: None,
-    CUR_CHG_NG_SERV: None,
-    CUR_CHG_OTHER_SERV: None,
-    CUR_CHG_ADJUST: None,
-    CUR_CHG_TOTAL: None,
-    CUSTOMER_CHG: None,
-    LATE_PAYMENT_CHG: None,
-}
+
+# Generate names of bill attributes found in an 'X' table row
+def make_line_item_names( s_name ):
+    return [ s_name + _DLRS, s_name + _RATE, s_name + _USED, ]
+
+LS_BILL_ATTRS = []
+LS_BILL_ATTRS.extend( \
+    [
+        ACCOUNT_NUMBER,
+        ISSUE_DATE,
+        START_DATE,
+        END_DATE,
+        DESCRIPTION,
+        ADDRESS_LINE_ + '1',
+        ADDRESS_LINE_ + '2',
+        ADDRESS_LINE_ + '3',
+        ADDRESS_LINE_ + '4',
+        ADDRESS_LINE_ + '5',
+        ADDRESS_LINE_ + '6',
+        ADDRESS_LINE_ + '7',
+        ADDRESS_LINE_ + '8',
+        ADDRESS_LINE_ + '9',
+        CITY_STATE_ZIP,
+        METER_NUMBER,
+        TOTAL_ENERGY,
+        KWH_USED,
+        RATE_CLASS,
+        VOLTAGE_LEVEL,
+        LOADZONE,
+        KW_USED,
+    ]
+)
+LS_BILL_ATTRS.extend( make_line_item_names( 'peak_kwh' ) )
+LS_BILL_ATTRS.extend( \
+    [
+        CUR_CHG_NG_SERV,
+        CUR_CHG_OTHER_SERV,
+        CUR_CHG_ADJUST,
+        CUR_CHG_TOTAL,
+        CUSTOMER_CHG,
+        LATE_PAYMENT_CHG,
+    ]
+)
+LS_BILL_ATTRS.extend( make_line_item_names( 'dist_chg_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'dist_chg_off_peak_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'dist_chg_on_peak_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'dist_demand_chg_kw' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'transition_chg_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'transmission_chg_kwh' ) )
+LS_BILL_ATTRS.extend( \
+    [
+        SUPPLIER,
+    ]
+)
+LS_BILL_ATTRS.extend( make_line_item_names( 'electricity_supply_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'energy_efficiency_chg_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'distributed_solar_chg_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'net_meter_recovery_chg_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'net_met_cr_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'renewable_energy_chg_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'electric_vehicle_chg_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'high_voltage_discount_kw' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'service_quality_credit_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'basic_service_fixed_kwh' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'basic_service_variable_kwh' ) )
 
 
 
@@ -482,16 +514,20 @@ def make_df_bills( ls_bills ):
 
     df = pd.DataFrame( ls_bills )
 
-    # Sort trailing columns alphabetically
-    n_leading = len( LEADING_COLUMNS )
+    # Sort trailing columns (if any) alphabetically
+    n_leading = len( LS_BILL_ATTRS )
     ls_cols = list( df.columns )
     n_cols = len( ls_cols )
     n_start = n_leading - n_cols
 
-    ls_trailing = ls_cols[n_start:]
-    ls_trailing_sorted = sorted( ls_trailing )
-    ls_leading = list( df.columns[:n_start] )
-    ls_reordered = ls_leading + ls_trailing_sorted
+    if n_start < 0:
+        ls_leading = list( df.columns[:n_start] )
+        ls_trailing = sorted( ls_cols[n_start:] )
+    else:
+        ls_leading = ls_cols
+        ls_trailing = []
+
+    ls_reordered = ls_leading + ls_trailing
 
     df = df.reindex( columns=ls_reordered )
 
@@ -663,7 +699,7 @@ if __name__ == '__main__':
             print( f' Issued {s_issue_date} for period {s_start_date} to {s_end_date}' )
 
             # Construct dictionary from bill attributes
-            dc_bill = LEADING_COLUMNS.copy()
+            dc_bill = dict.fromkeys( LS_BILL_ATTRS )
             dc_bill[ACCOUNT_NUMBER] = s_account_number
             dc_bill[START_DATE] = s_start_date
             dc_bill[END_DATE] = s_end_date
