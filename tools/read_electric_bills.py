@@ -91,6 +91,7 @@ LBL_BILLING_PERIOD = 'BILLING PERIOD'
 LBL_CURRENT_CHARGES = 'Current Charges'
 LBL_CUSTOMER_CHARGE = 'Customer Charge'
 LBL_LATE_PAYMENT_CHARGE = 'Late Payment Charges'
+LBL_TRANSFER_CREDIT = 'Transfer of Remote Net Meter Credit'
 
 # Mappings of words that appear in labels
 LABEL_WORDS = \
@@ -118,6 +119,7 @@ RE_WHITESPACE = '\s+'
 RE_CURRENT_CHARGES = capture( LBL_CURRENT_CHARGES ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER )
 RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LATE_PAYMENT_CHARGE = capture( LBL_LATE_PAYMENT_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
+RE_TRANSFER_CREDIT = capture( LBL_TRANSFER_CREDIT ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
 
 
@@ -467,6 +469,11 @@ def get_bill_values( filepath ):
 
             # Extract late charge
             matches = re.findall( RE_LATE_PAYMENT_CHARGE, text )
+            if matches:
+                charges_to_dc_values( matches, dc_values )
+
+            # Extract transfer of remote net meter credit
+            matches = re.findall( RE_TRANSFER_CREDIT, text )
             if matches:
                 charges_to_dc_values( matches, dc_values )
 
