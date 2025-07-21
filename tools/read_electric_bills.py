@@ -4,7 +4,7 @@
 #
 # Extract information from collection of PDF-format electric bills
 #
-# Optional parameters:
+# Optional input directory:
 # -i <input directory> - defaults to current working directory
 #
 # Supply at least one output file path:
@@ -14,6 +14,9 @@
 #
 # Applicable only with -s SQLite output file:
 # -t <output SQLite table name> - defaults to 'ElectricBills'
+#
+# Optional flag to number columns:
+# -n <number columns?> - defaults to False
 #
 # Sample parameter sequence:
 #
