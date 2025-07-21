@@ -517,7 +517,7 @@ def get_bill_values( filepath ):
 
 
 # Construct dataframe from list of bills
-def make_df_bills( ls_bills ):
+def make_df_bills( ls_bills, b_number_columns ):
 
     df = pd.DataFrame( ls_bills )
 
@@ -546,12 +546,13 @@ def make_df_bills( ls_bills ):
     df = df.sort_values( by=[ACCOUNT_NUMBER, ISSUE_DATE, START_DATE, END_DATE] )
 
     # Number columns
-    n_cols = len( df.columns )
-    n_digits = len( str( n_cols ) )
-    n_col = 0
-    for col in df.columns:
-        n_col += 1
-        df = df.rename( columns={ col: str( n_col ).zfill( n_digits ) + '-' + col } )
+    if b_number_columns:
+        n_cols = len( df.columns )
+        n_digits = len( str( n_cols ) )
+        n_col = 0
+        for col in df.columns:
+            n_col += 1
+            df = df.rename( columns={ col: str( n_col ).zfill( n_digits ) + '-' + col } )
 
     return df
 
@@ -632,6 +633,7 @@ if __name__ == '__main__':
     parser.add_argument( '-x', dest='xlsx_output_filename', help='Full path to output Excel file' )
     parser.add_argument( '-s', dest='sqlite_output_filename', help='Full path to output SQLite file' )
     parser.add_argument( '-t', dest='table_name', default='ElectricBills', help='Name of SQLite table' )
+    parser.add_argument( '-n', dest='number_columns', action='store_true', help='Number columns?' )
     args = parser.parse_args()
 
     # Process output arguments
@@ -730,7 +732,7 @@ if __name__ == '__main__':
 
 
     # Construct dataframe from list of bills
-    df_bills = make_df_bills( ls_bills )
+    df_bills = make_df_bills( ls_bills, args.number_columns )
 
     print( '' )
 
