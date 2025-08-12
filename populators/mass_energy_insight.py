@@ -47,15 +47,15 @@ if __name__ == '__main__':
     print( '\n=======> Mass Energy Insight input - Andover' )
     csv_filename = '../xl/mass_energy_insight/mass_energy_insight_a.csv'
     table_name = 'RawMassEnergyInsight_A'
-    drop_columns = 'unit,mmbtu'
-    os.system( 'python xl_to_db.py -i {} -t {} -v -p {} -o {} -c'.format( csv_filename, table_name, drop_columns, args.master_filename ) )
+    keep_columns = ','.join( list( util.CONSISTENT_COLUMN_NAMES[table_name].keys() ) )
+    os.system( 'python xl_to_db.py -i {} -t {} -v -k {} -o {} -c'.format( csv_filename, table_name, keep_columns, args.master_filename ) )
 
     # Read Mass Energy Insight data - Lawrence
     print( '\n=======> Mass Energy Insight input - Lawrence' )
     csv_filename = '../xl/mass_energy_insight/mass_energy_insight_l.csv'
     table_name = 'RawMassEnergyInsight_L'
-    drop_columns = 'unit,mmbtu'
-    os.system( 'python xl_to_db.py -i {} -t {} -v -p {} -o {}'.format( csv_filename, table_name, drop_columns, args.master_filename ) )
+    keep_columns = ','.join( list( util.CONSISTENT_COLUMN_NAMES[table_name].keys() ) )
+    os.system( 'python xl_to_db.py -i {} -t {} -v -k {} -o {}'.format( csv_filename, table_name, keep_columns, args.master_filename ) )
 
     # Preprocess Mass Energy Insight data - Andover
     print( '\n=======> Mass Energy Insight preprocess - Andover' )
