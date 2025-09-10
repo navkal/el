@@ -118,7 +118,7 @@ RE_NUMBER = '-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?'
 RE_UNIT = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
 RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
-RE_OPTIONAL_SPACE = ' *'
+RE_OPTIONAL_SPACE = ' ?'
 
 RE_CURRENT_CHARGES = capture( LBL_CURRENT_CHARGES ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER )
 RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
