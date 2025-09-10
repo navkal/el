@@ -1,4 +1,4 @@
-# Copyright 2025 Energize Andover.  All rights reserved.
+# Copyright 2025 Energize Lawrence.  All rights reserved.
 
 ######################
 #
@@ -118,12 +118,13 @@ RE_NUMBER = '-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?'
 RE_UNIT = '[a-zA-Z]+(?:/[a-zA-Z]+)?'
 RE_SPACES = ' +'
 RE_WHITESPACE = '\s+'
+RE_OPTIONAL_SPACE = ' *'
 
 RE_CURRENT_CHARGES = capture( LBL_CURRENT_CHARGES ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE + capture( RE_NUMBER )
 RE_CUSTOMER_CHARGE = capture( LBL_CUSTOMER_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_LATE_PAYMENT_CHARGE = capture( LBL_LATE_PAYMENT_CHARGE ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
 RE_TRANSFER_CREDIT = capture( LBL_TRANSFER_CREDIT ) + RE_WHITESPACE + capture( RE_NUMBER ) + RE_WHITESPACE
-RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
+RE_LINE_ITEM = capture( RE_LABEL ) + RE_SPACES + capture( RE_NUMBER ) + RE_SPACES + 'x' + RE_SPACES + capture( RE_NUMBER ) + RE_OPTIONAL_SPACE + capture( RE_UNIT ) + RE_SPACES + capture( RE_NUMBER )
 
 
 # Column name suffixes
@@ -147,6 +148,7 @@ RATE_CLASS = 'rate_class'
 VOLTAGE_LEVEL = 'voltage_level'
 LOADZONE = 'loadzone'
 KW_USED = 'kw' + _USED
+KW_KVA_USED = 'kw_kva' + _USED
 CUR_CHG_NG_SERV = 'cur_chg_ng_serv_$'
 CUR_CHG_OTHER_SERV = 'cur_chg_other_serv_$'
 CUR_CHG_ADJUST = 'cur_chg_adjust_$'
@@ -186,6 +188,7 @@ LS_BILL_ATTRS.extend( \
         VOLTAGE_LEVEL,
         LOADZONE,
         KW_USED,
+        KW_KVA_USED,
     ]
 )
 LS_BILL_ATTRS.extend( make_line_item_names( 'peak_kwh' ) )
@@ -203,6 +206,7 @@ LS_BILL_ATTRS.extend( make_line_item_names( 'dist_chg_kwh' ) )
 LS_BILL_ATTRS.extend( make_line_item_names( 'dist_chg_off_peak_kwh' ) )
 LS_BILL_ATTRS.extend( make_line_item_names( 'dist_chg_on_peak_kwh' ) )
 LS_BILL_ATTRS.extend( make_line_item_names( 'dist_demand_chg_kw' ) )
+LS_BILL_ATTRS.extend( make_line_item_names( 'dist_demand_chg_kw_kva' ) )
 LS_BILL_ATTRS.extend( make_line_item_names( 'transition_chg_kwh' ) )
 LS_BILL_ATTRS.extend( make_line_item_names( 'transmission_chg_kwh' ) )
 LS_BILL_ATTRS.extend( \
@@ -419,7 +423,7 @@ def charges_to_dc_values( matches, dc_values ):
         if len( m ) >= 5:
 
             # Incorporate unit into column name
-            s_unit = m[3].lower()
+            s_unit = m[3].lower().replace( '/', '_' )
             s_column_name += '_' + s_unit
 
             # Save rate
