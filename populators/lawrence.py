@@ -209,7 +209,7 @@ if __name__ == '__main__':
     print( '\n=======> Ongoing weatherization building permits input' )
     os.system( 'python xl_to_db.py -d ../xl/lawrence/building_permits/wx/ongoing -p "Project Description,Use of Property" -t RawBuildingPermits_Wx_Ongoing -o {0}'.format( args.master_filename ) )
 
-    # Generate weatherization Building Permits table
+    # Generate Weatherization Building Permits table
     print( '\n=======> Weatherization Building Permits table' )
     os.system( 'python lawrence_building_permits_wx.py -m {0}'.format( args.master_filename ) )
 
@@ -240,6 +240,10 @@ if __name__ == '__main__':
     # Correlate parcels with voting districts, building permits, GLCAC jobs, and National Grid accounts
     print( '\n=======> Parcel history' )
     os.system( 'python lawrence_parcel_history.py -m {0}'.format( args.master_filename ) )
+
+    # Generate Extended Weatherization Building Permits table
+    print( '\n=======> Extended Weatherization Building Permits table' )
+    os.system( 'python lawrence_building_permits_wx_extend.py -m {0}'.format( args.master_filename ) )
 
     # Read city ward data
     print( '\n=======> Wards input' )

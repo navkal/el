@@ -534,6 +534,7 @@ SOLAR_PERMIT = SOLAR + _PERMIT
 WX_PERMIT = WX + _PERMIT
 _COUNT = '_count'
 
+
 APPLIANCE = 'appliance'
 
 ENTIRE_ROOF = 'entire_roof'
@@ -661,6 +662,17 @@ BARCODE = 'barcode'
 RATEPAYER_ID = 'ratepayer_id'
 BAD_SPELLING = 'bad_spelling'
 GOOD_SPELLING = 'good_spelling'
+
+WX_EXTENDED = \
+[
+    HEATING_FUEL_DESC,
+    HEATING_TYPE_DESC,
+    HEAT_AC,
+    LAND_USE_CODE,
+    LAND_USE_CODE_DESC,
+    OCCUPANCY_HOUSEHOLDS,
+    LEAN_ELIGIBILITY,
+]
 
 LABEL = 'label'
 DIAMETER = 'diameter'
@@ -2275,7 +2287,7 @@ COLUMN_ORDER = \
         CLOSED_DATE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
     ],
-    'BuildingPermits_L_Wx':
+    'BuildingPermits_L_Wx_Extended':
     [
         * COLUMN_GROUP['PERMIT_IDS'],
         NORMALIZED_STREET_NAME,
@@ -2778,9 +2790,10 @@ COLUMN_ORDER_TRAILING = \
     [
         * COLUMN_GROUP['PERMIT_DATES'],
     ],
-    'BuildingPermits_L_Wx':
+    'BuildingPermits_L_Wx_Extended':
     [
         * COLUMN_GROUP['PERMIT_DATES_1'],
+        * WX_EXTENDED,
     ],
 }
 
