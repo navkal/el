@@ -2287,7 +2287,7 @@ COLUMN_ORDER = \
         CLOSED_DATE,
         * COLUMN_GROUP['NORMALIZED_ADDRESS_PARTS'],
     ],
-    'BuildingPermits_L_Wx_Extended':
+    'BuildingPermits_L_Wx':
     [
         * COLUMN_GROUP['PERMIT_IDS'],
         NORMALIZED_STREET_NAME,
@@ -2754,6 +2754,7 @@ COLUMN_ORDER = \
     ],
 }
 
+COLUMN_ORDER['BuildingPermits_L_Wx_Extended'] = COLUMN_ORDER['BuildingPermits_L_Wx']
 COLUMN_ORDER['Partisans_' + D] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Partisans_' + R] = COLUMN_ORDER['Partisans']
 COLUMN_ORDER['Assessment_L_Residential'] = COLUMN_ORDER['Assessment_L_Commercial']
@@ -2789,6 +2790,10 @@ COLUMN_ORDER_TRAILING = \
     'BuildingPermits_L_Solar':
     [
         * COLUMN_GROUP['PERMIT_DATES'],
+    ],
+    'BuildingPermits_L_Wx':
+    [
+        * COLUMN_GROUP['PERMIT_DATES_1'],
     ],
     'BuildingPermits_L_Wx_Extended':
     [
