@@ -286,6 +286,10 @@ if __name__ == '__main__':
     print( '\n=======> KML' )
     os.system( 'python lawrence_kml.py -o ../db/kml -m {0} -c'.format( args.master_filename ) )
 
+    # Generate reports
+    print( '\n=======> Reports' )
+    os.system( 'python lawrence_reports.py -o ../db/reports -m {0} -c'.format( args.master_filename ) )
+
 
     # ----------------------------------------------------
     # --> Lawrence research database build starts here -->
