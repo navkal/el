@@ -36,6 +36,20 @@ TPC = 'tot_' + util.PROJECT_COST
 APC = 'avg_' + util.PROJECT_COST
 
 
+# Ensure that integer values are represented as such
+def fix_wx_int_types( df_summary ):
+
+    df_summary[WX_COUNT] = df_summary[WX_COUNT].astype( int )
+    df_summary[WX_COUNT_LEAN] = df_summary[WX_COUNT_LEAN].astype( int )
+
+    for s_fuel in FUELS:
+        s = s_fuel.lower()
+        s_lean = s + _LEAN
+        df_summary[s] = df_summary[s].astype( int )
+        df_summary[s_lean] = df_summary[s_lean].astype( int )
+
+    return df_summary
+
 
 # Add rows to the weatherization summary
 def add_wx_summary_rows( df_permits, df_summary, s_period_column, s_business_name = None ):
@@ -108,12 +122,8 @@ def make_wx_summary_by_period( conn, cur, engine, output_directory ):
     # Add rows per quarter
     df_summary = add_wx_summary_rows( df_permits, df_summary, YQ )
 
-    # Fix numeric types
-    for s_fuel in FUELS:
-        s = s_fuel.lower()
-        s_lean = s + _LEAN
-        df_summary[s] = df_summary[s].astype( int )
-        df_summary[s_lean] = df_summary[s_lean].astype( int )
+    # Ensure integer-type columns are represented correctly
+    df_summary = fix_wx_int_types( df_summary )
 
     # Sort on period column
     df_summary = df_summary.sort_values( by=[PERIOD] )
@@ -168,12 +178,8 @@ def make_wx_summary_by_contractor( conn, cur, engine, output_directory ):
         # Append current contractor summary to overall summary
         df_summary = df_summary.append( df_contractor, ignore_index=True )
 
-    # Fix numeric types
-    for s_fuel in FUELS:
-        s = s_fuel.lower()
-        s_lean = s + _LEAN
-        df_summary[s] = df_summary[s].astype( int )
-        df_summary[s_lean] = df_summary[s_lean].astype( int )
+    # Ensure integer-type columns are represented correctly
+    df_summary = fix_wx_int_types( df_summary )
 
     # Sort
     df_summary = df_summary.sort_values( by=[BN, PERIOD] )
