@@ -15,6 +15,7 @@ import sys
 sys.path.append( '../util' )
 import util
 
+REF_DATE = 'ref_date'
 DT = 'date_time'
 Y = 'year'
 Q = 'quarter'
@@ -88,22 +89,32 @@ def add_wx_summary_rows( df_permits, df_summary, s_period_column, s_business_nam
     return df_summary
 
 
-# Summarize weatherization permit counts by period
-def make_wx_summary_by_period( conn, cur, engine, output_directory ):
+# Read and prepare weatherization summary input data
+def get_wx_summary_input( conn, cur, engine ):
 
     # Read extended table of weatherization permits from database
     df_permits = pd.read_sql_table( 'BuildingPermits_L_Wx_Extended', engine, index_col=util.ID, parse_dates=True )
 
+    # Create a reference date column from issue and approval dates
+    df_permits[REF_DATE] = df_permits[util.DATE_ISSUED].fillna( df_permits[util.APPROVAL_DATE] )
+
     # Isolate and sort usable rows
-    df_permits = df_permits.dropna( subset=[util.DATE_ISSUED] )
+    df_permits = df_permits.dropna( subset=[REF_DATE] )
     df_permits = df_permits[df_permits[util.HEATING_FUEL_DESC].isin( FUELS )]
-    df_permits = df_permits.sort_values( by=[util.DATE_ISSUED] )
+    df_permits = df_permits[df_permits[util.PERMIT_STATUS] != 'Withdrawn']
+    df_permits = df_permits.sort_values( by=[REF_DATE] )
 
     # Add period column indicating year and quarter
-    df_permits[Y] = df_permits[util.DATE_ISSUED].str.split( '-', expand=True )[0]
-    df_permits[DT] = pd.to_datetime( df_permits[util.DATE_ISSUED] )
+    df_permits[Y] = df_permits[REF_DATE].str.split( '-', expand=True )[0]
+    df_permits[DT] = pd.to_datetime( df_permits[REF_DATE] )
     df_permits[Q] = df_permits[DT].dt.quarter.astype(str)
     df_permits[YQ] = df_permits[Y] + ' Q' + df_permits[Q]
+
+    return df_permits
+
+
+# Summarize weatherization permit counts by period
+def make_wx_summary_by_period( df_permits, output_directory ):
 
     # Initialize summary column order
     summary_columns = [PERIOD, WX_COUNT]
@@ -135,21 +146,7 @@ def make_wx_summary_by_period( conn, cur, engine, output_directory ):
 
 
 # Summarize weatherization permit counts by contractor
-def make_wx_summary_by_contractor( conn, cur, engine, output_directory ):
-
-    # Read extended table of weatherization permits from database
-    df_permits = pd.read_sql_table( 'BuildingPermits_L_Wx_Extended', engine, index_col=util.ID, parse_dates=True )
-
-    # Isolate and sort usable rows
-    df_permits = df_permits.dropna( subset=[util.DATE_ISSUED] )
-    df_permits = df_permits[df_permits[util.HEATING_FUEL_DESC].isin( FUELS )]
-    df_permits = df_permits.sort_values( by=[util.DATE_ISSUED] )
-
-    # Add period column indicating year and quarter
-    df_permits[Y] = df_permits[util.DATE_ISSUED].str.split( '-', expand=True )[0]
-    df_permits[DT] = pd.to_datetime( df_permits[util.DATE_ISSUED] )
-    df_permits[Q] = df_permits[DT].dt.quarter.astype(str)
-    df_permits[YQ] = df_permits[Y] + ' Q' + df_permits[Q]
+def make_wx_summary_by_contractor( df_permits, output_directory ):
 
     # Include most recent 8 quarters in summary
     sr_yq = df_permits[YQ].sort_values().unique()
@@ -218,7 +215,8 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Summarize weatherization permit data
-    make_wx_summary_by_period( conn, cur, engine, args.output_directory )
-    make_wx_summary_by_contractor( conn, cur, engine, args.output_directory )
+    df_permits = get_wx_summary_input( conn, cur, engine )
+    make_wx_summary_by_period( df_permits, args.output_directory )
+    make_wx_summary_by_contractor( df_permits, args.output_directory )
 
     util.report_elapsed_time()
