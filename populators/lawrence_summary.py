@@ -31,19 +31,21 @@ FUELS = \
 ]
 _LEAN = '_lean'
 
-
-
+BN = util.BUSINESS_NAME
+TPC = 'tot_' + util.PROJECT_COST
+APC = 'avg_' + util.PROJECT_COST
 
 
 
 # Add rows to the weatherization summary
-def add_wx_summary_rows( df_permits, df_summary, attr_name, attr ):
+def add_wx_summary_rows( df_permits, df_summary, s_period_column, s_business_name = None ):
 
-    for idx, df_group in df_permits.groupby( by=[attr] ):
+    # Group by specified column representing a period of time
+    for idx, df_group in df_permits.groupby( by=[s_period_column] ):
 
         # Initialize row with attribute name and total weatherization count
         summary_row = {}
-        summary_row[attr_name] = idx
+        summary_row[PERIOD] = idx
         summary_row[WX_COUNT] = len( df_group )
 
         # Calculate weatherization subtotals per fuel type
@@ -60,7 +62,15 @@ def add_wx_summary_rows( df_permits, df_summary, attr_name, attr ):
             s_lean = s + _LEAN
             summary_row[s_lean] = len( df_group[df_group[util.HEATING_FUEL_DESC] == s_fuel] )
 
+        # Optionally save business name in row and calculate project cost statistics
+        if s_business_name:
+            summary_row[BN] = s_business_name
+            summary_row[TPC] = df_group[util.PROJECT_COST].sum()
+            summary_row[APC] = round( summary_row[TPC] / summary_row[WX_COUNT], 2 )
+
+        # Append completed row to summary dataframe
         df_summary = df_summary.append( summary_row, ignore_index=True )
+
     return df_summary
 
 
@@ -93,10 +103,10 @@ def make_wx_summary_by_period( conn, cur, engine, output_directory ):
     df_summary = pd.DataFrame( columns=summary_columns )
 
     # Add rows per year
-    df_summary = add_wx_summary_rows( df_permits, df_summary, PERIOD, Y )
+    df_summary = add_wx_summary_rows( df_permits, df_summary, Y )
 
     # Add rows per quarter
-    df_summary = add_wx_summary_rows( df_permits, df_summary, PERIOD, YQ )
+    df_summary = add_wx_summary_rows( df_permits, df_summary, YQ )
 
     # Fix numeric types
     for s_fuel in FUELS:
@@ -108,14 +118,10 @@ def make_wx_summary_by_period( conn, cur, engine, output_directory ):
     # Sort on period column
     df_summary = df_summary.sort_values( by=[PERIOD] )
 
-    # Save summary to database
-    util.create_table( 'WxSummaryByPeriod', conn, cur, df=df_summary )
-
-    # Save summary to excel file
-    filename = 'WxSummaryByPeriod.xlsx'
-    filepath = os.path.join( output_directory, filename )
-
-    df_summary.to_excel( filepath, index=False )
+    # Save to database and excel file
+    s_table_name = 'WxSummaryByPeriod'
+    util.create_table( s_table_name, conn, cur, df=df_summary )
+    df_summary.to_excel( os.path.join( output_directory, s_table_name + '.xlsx' ), index=False )
 
 
 # Summarize weatherization permit counts by contractor
@@ -129,8 +135,19 @@ def make_wx_summary_by_contractor( conn, cur, engine, output_directory ):
     df_permits = df_permits[df_permits[util.HEATING_FUEL_DESC].isin( FUELS )]
     df_permits = df_permits.sort_values( by=[util.DATE_ISSUED] )
 
+    # Add period column indicating year and quarter
+    df_permits[Y] = df_permits[util.DATE_ISSUED].str.split( '-', expand=True )[0]
+    df_permits[DT] = pd.to_datetime( df_permits[util.DATE_ISSUED] )
+    df_permits[Q] = df_permits[DT].dt.quarter.astype(str)
+    df_permits[YQ] = df_permits[Y] + ' Q' + df_permits[Q]
+
+    # Include most recent 8 quarters in summary
+    sr_yq = df_permits[YQ].sort_values().unique()
+    sr_yq = list( sr_yq )[-8:]
+    df_permits = df_permits[ df_permits[YQ].isin( sr_yq ) ]
+
     # Initialize summary column order
-    summary_columns = [util.BUSINESS_NAME, WX_COUNT]
+    summary_columns = [PERIOD, BN, TPC, APC, WX_COUNT]
     for s_fuel in FUELS:
         summary_columns.append( s_fuel.lower() )
     summary_columns.append( WX_COUNT_LEAN )
@@ -140,8 +157,16 @@ def make_wx_summary_by_contractor( conn, cur, engine, output_directory ):
     # Initialize empty summary dataframe
     df_summary = pd.DataFrame( columns=summary_columns )
 
-    # Add rows per contractor
-    df_summary = add_wx_summary_rows( df_permits, df_summary, util.BUSINESS_NAME, util.BUSINESS_NAME )
+    # Iterate over contractor business names
+    for idx, df_group in df_permits.groupby( by=[BN] ):
+
+        # Build summary dataframe pertaining to current contractor
+        df_contractor = pd.DataFrame( columns=summary_columns )
+        df_contractor = add_wx_summary_rows( df_group, df_contractor, Y, idx )
+        df_contractor = add_wx_summary_rows( df_group, df_contractor, YQ, idx )
+
+        # Append current contractor summary to overall summary
+        df_summary = df_summary.append( df_contractor, ignore_index=True )
 
     # Fix numeric types
     for s_fuel in FUELS:
@@ -150,17 +175,13 @@ def make_wx_summary_by_contractor( conn, cur, engine, output_directory ):
         df_summary[s] = df_summary[s].astype( int )
         df_summary[s_lean] = df_summary[s_lean].astype( int )
 
-    # Sort on contractor column
-    df_summary = df_summary.sort_values( by=[util.BUSINESS_NAME] )
+    # Sort
+    df_summary = df_summary.sort_values( by=[BN, PERIOD] )
 
-    # Save summary to database
-    util.create_table( 'WxSummaryByContractor', conn, cur, df=df_summary )
-
-    # Save summary to excel file
-    filename = 'WxSummaryByContractor.xlsx'
-    filepath = os.path.join( output_directory, filename )
-
-    df_summary.to_excel( filepath, index=False )
+    # Save to database and excel file
+    s_table_name = 'WxSummaryByContractor'
+    util.create_table( s_table_name, conn, cur, df=df_summary )
+    df_summary.to_excel( os.path.join( output_directory, s_table_name + '.xlsx' ), index=False )
 
 
 ######################
