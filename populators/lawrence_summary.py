@@ -36,16 +36,34 @@ BN = util.BUSINESS_NAME
 TPC = 'tot_' + util.PROJECT_COST
 APC = 'avg_' + util.PROJECT_COST
 
+CONTRACTOR_COLUMNS = \
+[
+    BN,
+    TPC,
+    APC,
+]
+
+HH_ = 'hh_'
 
 # Ensure that integer values are represented as such
 def fix_wx_int_types( df_summary ):
 
     df_summary[WX_COUNT] = df_summary[WX_COUNT].astype( int )
+    df_summary[HH_ + WX_COUNT] = df_summary[HH_ + WX_COUNT].astype( int )
     df_summary[WX_COUNT_LEAN] = df_summary[WX_COUNT_LEAN].astype( int )
+    df_summary[HH_ + WX_COUNT_LEAN] = df_summary[HH_ + WX_COUNT_LEAN].astype( int )
 
     for s_fuel in FUELS:
+
+        # Permit counts
         s = s_fuel.lower()
         s_lean = s + _LEAN
+        df_summary[s] = df_summary[s].astype( int )
+        df_summary[s_lean] = df_summary[s_lean].astype( int )
+
+        # Household counts
+        s = HH_ + s
+        s_lean = HH_ + s_lean
         df_summary[s] = df_summary[s].astype( int )
         df_summary[s_lean] = df_summary[s_lean].astype( int )
 
@@ -58,24 +76,34 @@ def add_wx_summary_rows( df_permits, df_summary, s_period_column, s_business_nam
     # Group by specified column representing a period of time
     for idx, df_group in df_permits.groupby( by=[s_period_column] ):
 
+        # Create separate dataframe, corrected for household counts
+        df_hh = df_group.drop_duplicates( subset=[util.ACCOUNT_NUMBER] )
+
         # Initialize row with attribute name and total weatherization count
         summary_row = {}
         summary_row[PERIOD] = idx
         summary_row[WX_COUNT] = len( df_group )
+        summary_row[HH_ + WX_COUNT] = df_hh[util.TOTAL_OCCUPANCY].sum()
 
         # Calculate weatherization subtotals per fuel type
         for s_fuel in FUELS:
-            summary_row[s_fuel.lower()] = len( df_group[df_group[util.HEATING_FUEL_DESC] == s_fuel] )
+            s = s_fuel.lower()
+            summary_row[s] = len( df_group[df_group[util.HEATING_FUEL_DESC] == s_fuel] )
+            summary_row[HH_ + s] = df_hh[df_hh[util.HEATING_FUEL_DESC] == s_fuel][util.TOTAL_OCCUPANCY].sum()
 
-        # Isolate and count permits at LEAN-eligible parcels
+        # Isolate permits at LEAN-eligible parcels
         df_group = df_group[df_group[util.LEAN_ELIGIBILITY] == util.LEAN]
+        df_hh = df_group.drop_duplicates( subset=[util.ACCOUNT_NUMBER] )
+
+        # Count permits and households
         summary_row[WX_COUNT_LEAN] = len( df_group )
+        summary_row[HH_ + WX_COUNT_LEAN] = df_hh[util.TOTAL_OCCUPANCY].sum()
 
         # Calculate LEAN weatherization subtotals per fuel type
         for s_fuel in FUELS:
-            s = s_fuel.lower()
-            s_lean = s + _LEAN
+            s_lean = s_fuel.lower() + _LEAN
             summary_row[s_lean] = len( df_group[df_group[util.HEATING_FUEL_DESC] == s_fuel] )
+            summary_row[HH_ + s_lean] = df_hh[df_hh[util.HEATING_FUEL_DESC] == s_fuel][util.TOTAL_OCCUPANCY].sum()
 
         # Optionally save business name in row and calculate project cost statistics
         if s_business_name:
@@ -113,19 +141,40 @@ def get_wx_summary_input( conn, cur, engine ):
     return df_permits
 
 
+# Initialize empty summary dataframe
+def init_wx_summary( b_contractor = False ):
+
+    # Leading columns
+    ls_columns = [PERIOD]
+    ls_columns += [c for c in CONTRACTOR_COLUMNS if b_contractor]
+
+    # Permit counts
+    ls_columns.append( WX_COUNT )
+    for s_fuel in FUELS:
+        ls_columns.append( s_fuel.lower() )
+    ls_columns.append( WX_COUNT_LEAN )
+    for s_fuel in FUELS:
+        ls_columns.append( s_fuel.lower() + _LEAN )
+
+    # Household counts
+    ls_columns.append( HH_ + WX_COUNT )
+    for s_fuel in FUELS:
+        ls_columns.append( HH_ + s_fuel.lower() )
+    ls_columns.append( HH_ + WX_COUNT_LEAN )
+    for s_fuel in FUELS:
+        ls_columns.append( HH_ + s_fuel.lower() + _LEAN )
+
+    # Create the empty dataframe
+    df_summary = pd.DataFrame( columns=ls_columns )
+
+    return df_summary
+
+
 # Summarize weatherization permit counts by period
 def make_wx_summary_by_period( df_permits, output_directory ):
 
-    # Initialize summary column order
-    summary_columns = [PERIOD, WX_COUNT]
-    for s_fuel in FUELS:
-        summary_columns.append( s_fuel.lower() )
-    summary_columns.append( WX_COUNT_LEAN )
-    for s_fuel in FUELS:
-        summary_columns.append( s_fuel.lower() + _LEAN )
-
     # Initialize empty summary dataframe
-    df_summary = pd.DataFrame( columns=summary_columns )
+    df_summary = init_wx_summary()
 
     # Add rows per year
     df_summary = add_wx_summary_rows( df_permits, df_summary, Y )
@@ -153,22 +202,14 @@ def make_wx_summary_by_contractor( df_permits, output_directory ):
     sr_yq = list( sr_yq )[-8:]
     df_permits = df_permits[ df_permits[YQ].isin( sr_yq ) ]
 
-    # Initialize summary column order
-    summary_columns = [PERIOD, BN, TPC, APC, WX_COUNT]
-    for s_fuel in FUELS:
-        summary_columns.append( s_fuel.lower() )
-    summary_columns.append( WX_COUNT_LEAN )
-    for s_fuel in FUELS:
-        summary_columns.append( s_fuel.lower() + _LEAN )
-
     # Initialize empty summary dataframe
-    df_summary = pd.DataFrame( columns=summary_columns )
+    df_summary = init_wx_summary( True )
 
     # Iterate over contractor business names
     for idx, df_group in df_permits.groupby( by=[BN] ):
 
         # Build summary dataframe pertaining to current contractor
-        df_contractor = pd.DataFrame( columns=summary_columns )
+        df_contractor = pd.DataFrame( columns=df_summary.columns )
         df_contractor = add_wx_summary_rows( df_group, df_contractor, Y, idx )
         df_contractor = add_wx_summary_rows( df_group, df_contractor, YQ, idx )
 
