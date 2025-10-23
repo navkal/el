@@ -123,6 +123,19 @@ if __name__ == '__main__':
         df_row = pd.DataFrame( [dc_row] )
         df_report = pd.concat( [df_report, df_row] )
 
+    # Fix integer column datatypes
+    ls_int_cols = \
+    [
+        LMI_WX_COUNT,
+        LMI_HP_COUNT,
+        NON_WX_COUNT,
+        NON_HP_COUNT,
+        EQUITY_ZIP_HOUSEHOLDS,
+        EQUITY_ZIP_POPULATION,
+    ]
+    for s_col in ls_int_cols:
+        df_report[s_col] = df_report[s_col].astype(int)
+
     # Finish LMI calculations
     df_report[LMI_PROJECT_COUNT] = df_report[LMI_WX_COUNT] + df_report[LMI_HP_COUNT]
     df_report[LMI_HP_INCENTIVES] = df_report[LMI_HP_INCENTIVES].round( 2 )
