@@ -87,7 +87,7 @@ if __name__ == '__main__':
     # Semiannual Reports
     #
     print( '\n=======> Equity Zip Codes' )
-    os.system( 'python xl_to_db.py -i ../xl/mass_save/equity_zip_codes.xlsx -z -t EquityZipCodes -o {0} -c'.format( args.output_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/mass_save/equity_zip_codes.xlsx -z -t EquityZipCodes -o {0}'.format( args.output_filename ) )
 
     print( '\n=======> Raw Semiannual Reports' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/semiannual_report -a "Wxn & HPs by Zip" -r 6 -m -l year,quarter -t RawSemiannualReport -o {0}'.format( args.output_filename ) )
