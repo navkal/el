@@ -85,8 +85,9 @@ if __name__ == '__main__':
         dc_row = { util.TOWN_NAME: s_town, util.YEAR: s_year, util.QUARTER: s_quarter.upper() }
 
         # Count households and population of the town's equity zip codes
-        dc_row[EQUITY_ZIP_HOUSEHOLDS] = df_town[util.HOUSEHOLDS].sum()
-        dc_row[EQUITY_ZIP_POPULATION] = df_town[util.POPULATION].sum()
+        df_zips = df_town.drop_duplicates( subset=[util.ZIP] )
+        dc_row[EQUITY_ZIP_HOUSEHOLDS] = df_zips[util.HOUSEHOLDS].sum()
+        dc_row[EQUITY_ZIP_POPULATION] = df_zips[util.POPULATION].sum()
 
         # Isolate LMI rows
         df_lmi = df_town[df_town[util.INCOME_CATEGORY].isin( [INCOME_LOW, INCOME_MOD] )]
