@@ -83,6 +83,19 @@ if __name__ == '__main__':
     print( '\n=======> Cost per Saved MWh' )
     os.system( 'python mass_save_cost_per_saved_mwh.py -t CostPerSavedMwh -d {0}'.format( args.output_filename ) )
 
+    #
+    # Semiannual Reports
+    #
+    print( '\n=======> Equity Zip Codes' )
+    os.system( 'python xl_to_db.py -i ../xl/mass_save/equity_zip_codes.xlsx -z -t EquityZipCodes -o {0} -c'.format( args.output_filename ) )
+
+    print( '\n=======> Raw Semiannual Reports' )
+    os.system( 'python xl_to_db.py -d ../xl/mass_save/semiannual_report -a "Wxn & HPs by Zip" -r 6 -m -l year,quarter -t RawSemiannualReport -o {0}'.format( args.output_filename ) )
+
+    print( '\n=======> Analyze Semiannual Reports' )
+    os.system( 'python mass_save_semiannual_report.py -d {0}'.format( args.output_filename ) )
+
+
     # Generate copyright notice
     print( '\n=======> Copyright' )
     util.create_about_table( 'MassSave', util.make_df_about_energize_lawrence(), args.output_filename )

@@ -18,7 +18,9 @@ PUBLISH_INFO = \
         [
             'RawElectricUsage',
             'RawGasUsage',
+            'RawSemiannualReport',
             'ElectricUsage',
+            'EquityZipCodes',
             'GasUsage',
         ],
         'encipher_column_names':

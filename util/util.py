@@ -192,6 +192,13 @@ TOWN_CODE = 'town_code'
 TOWN_NAME = 'town_name'
 TOWN_INDICATOR = 'town_indicator'
 
+IS_EQUITY = 'is_equity'
+INCOME_CATEGORY = 'income_category'
+MEASURE_TYPE = 'measure_type'
+HOMES = 'homes'
+INCENTIVES = 'incentives_$'
+HOUSEHOLDS = 'households'
+
 WARD_NUMBER = 'ward_number'
 COUNCILOR_NAME = 'councilor_name'
 
@@ -292,8 +299,11 @@ ZIP = 'zip_code'
 ZIP_2 = ZIP + '_2'
 ZIP_CODES = 'zip_codes'
 YEAR = 'year'
+
 COUNTY = 'county'
 SECTOR = 'sector'
+QUARTER = 'quarter'
+ZIP_LABEL = ZIP + '_label'
 
 SECTOR_RES_AND_LOW = 'Residential & Low-Income'
 SECTOR_COM_AND_IND = 'Commercial & Industrial'
@@ -534,6 +544,10 @@ SOLAR_PERMIT = SOLAR + _PERMIT
 WX_PERMIT = WX + _PERMIT
 _COUNT = '_count'
 
+WX_COUNT = WX + _COUNT
+HP = 'hp'
+HP_COUNT = HP + _COUNT
+PROJECT_COUNT = 'project' + _COUNT
 
 APPLIANCE = 'appliance'
 
@@ -974,6 +988,21 @@ CONSISTENT_COLUMN_NAMES = \
         'Precinct': 'precinct',
         'Building': 'building',
         'Address': 'address',
+    },
+    'RawSemiannualReport': \
+    {
+        'Legal Town': TOWN_NAME,
+        'County': COUNTY,
+        'ZIP Code Label': ZIP_LABEL,
+        'ZIP Code': ZIP,
+        'CFP Cohort Flag': 'cfp_cohort_flag',
+        'Designated Equity Community Flag': IS_EQUITY,
+        'Income Category': INCOME_CATEGORY,
+        'Measure Type': MEASURE_TYPE,
+        'Homes': HOMES,
+        'Incentives': INCENTIVES,
+        'year': YEAR,
+        'quarter': QUARTER,
     },
     'RawBuildingPermits': \
     {
@@ -3385,7 +3414,7 @@ def clear_directory( dir ):
 
 
 # Read series of input files in specified directory
-def read_excel_files( input_directory, column_labels, skiprows, csv, csv_sep ):
+def read_excel_files( input_directory, column_labels, skiprows, csv, csv_sep, sheet_name ):
 
     # Initialize empty dataframe
     df_xl = pd.DataFrame()
@@ -3409,7 +3438,7 @@ def read_excel_files( input_directory, column_labels, skiprows, csv, csv_sep ):
         else:
             # Filter warning caused, apparently, by unorthodox sheet name
             warnings.filterwarnings( 'ignore', category=UserWarning, module='openpyxl' )
-            df = pd.read_excel( input_path, dtype=object, skiprows=skiprows )
+            df = pd.read_excel( input_path, dtype=object, skiprows=skiprows, sheet_name=sheet_name )
             warnings.resetwarnings()
 
         # Optionally add extra columns and populate with filename fragments delimited by underscore - e.g., given input file moo_1234.xlsx, column value will be 'moo'

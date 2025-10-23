@@ -49,6 +49,7 @@ if __name__ == '__main__':
         exec( args.do_this_before_starting )
 
     skiprows = range( args.skip_rows ) if ( args.skip_rows != None ) else None
+    sheet_name = args.sheet_name if ( args.sheet_name != None ) else 0
 
     # Determine field separator for CSV format.  Default is comma.
     csv_sep = bytes( args.field_separator, 'utf-8' ).decode( 'unicode_escape' ) if args.field_separator != None else ','
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     if args.input_directory != None:
 
         # Read multiple input files
-        df_xl = util.read_excel_files( args.input_directory, args.column_labels, skiprows, args.csv, csv_sep )
+        df_xl = util.read_excel_files( args.input_directory, args.column_labels, skiprows, args.csv, csv_sep, sheet_name )
 
     elif args.input_filename != None:
 
@@ -78,7 +79,6 @@ if __name__ == '__main__':
             df_xl = util.read_excel_with_hyperlinks( args.input_filename, skiprows )
         else:
             # Get dataframe without hyperlinks
-            sheet_name = args.sheet_name if ( args.sheet_name != None ) else 0
             warnings.filterwarnings( 'ignore', category=UserWarning, module='openpyxl' )
             df_xl = pd.read_excel( args.input_filename, dtype=object, sheet_name=sheet_name, skiprows=skiprows )
 
