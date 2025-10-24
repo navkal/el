@@ -41,13 +41,15 @@ if __name__ == '__main__':
         prefix = str( last_year - int( year ) + 1 ) + '_yr_'
         column_name_map[year + '$'] = prefix + 'ees_minus_incentives_$'
         column_name_map[year + '%'] = prefix + 'incentives_as_%_of_ees'
-        column_name_map[year + 'mt'] = prefix + 'mwh_used_tot'
-        column_name_map[year + 'mu'] = prefix + 'mwh_used_avg'
-        column_name_map[year + 'ms'] = prefix + 'mwh_saved_avg'
+        column_name_map[year + 'mut'] = prefix + 'mwh_used_tot'
+        column_name_map[year + 'mua'] = prefix + 'mwh_used_avg'
+        column_name_map[year + 'mst'] = prefix + 'mwh_saved_tot'
+        column_name_map[year + 'msa'] = prefix + 'mwh_saved_avg'
         column_name_map[year + 'm%'] = prefix + util.MWH_SAVED_AS_PCT_OF_USED
-        column_name_map[year + 'tt'] = prefix + 'therms_used_tot'
-        column_name_map[year + 'tu'] = prefix + 'therms_used_avg'
-        column_name_map[year + 'ts'] = prefix + 'therms_saved_avg'
+        column_name_map[year + 'tut'] = prefix + 'therms_used_tot'
+        column_name_map[year + 'tua'] = prefix + 'therms_used_avg'
+        column_name_map[year + 'tst'] = prefix + 'therms_saved_tot'
+        column_name_map[year + 'tsa'] = prefix + 'therms_saved_avg'
         column_name_map[year + 't%'] = prefix + util.THERMS_SAVED_AS_PCT_OF_USED
 
     # Create empty summary dataframe
@@ -78,26 +80,30 @@ if __name__ == '__main__':
             dol = int( df_range[util.COMBINED_EES_MINUS_INCENTIVES].sum() )
             ees = df_range[util.COMBINED_EES_IN].sum()
             pct = int( 100 * df_range[util.COMBINED_INCENTIVES_OUT].sum() / ees ) if ees else 0
-            mwht = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_USAGE ).sum() )
-            mwhu = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_USAGE ).mean() )
-            mwhs = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_SAVINGS ).mean() )
-            mwhp = round( 100 * mwhs / mwhu, 4 ) if mwhu else 0
-            thmt = int( util.nonzero( df_range, util.ANNUAL_GAS_USAGE ).sum() )
-            thmu = int( util.nonzero( df_range, util.ANNUAL_GAS_USAGE ).mean() )
-            thms = int( util.nonzero( df_range, util.ANNUAL_GAS_SAVINGS ).mean() )
-            thmp = round( 100 * thms / thmu, 4 ) if thmu else 0
+            mwhut = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_USAGE ).sum() )
+            mwhua = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_USAGE ).mean() )
+            mwhst = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_SAVINGS ).sum() )
+            mwhsa = int( util.nonzero( df_range, util.ANNUAL_ELECTRIC_SAVINGS ).mean() )
+            mwhp = round( 100 * mwhsa / mwhua, 4 ) if mwhua else 0
+            thmut = int( util.nonzero( df_range, util.ANNUAL_GAS_USAGE ).sum() )
+            thmua = int( util.nonzero( df_range, util.ANNUAL_GAS_USAGE ).mean() )
+            thmst = int( util.nonzero( df_range, util.ANNUAL_GAS_SAVINGS ).sum() )
+            thmsa = int( util.nonzero( df_range, util.ANNUAL_GAS_SAVINGS ).mean() )
+            thmp = round( 100 * thmsa / thmua, 4 ) if thmua else 0
 
             # Save statistics in summary row
             range_start = df_range.at[0, util.YEAR]
             summary_row[range_start + '$'] = dol
             summary_row[range_start + '%'] = pct
-            summary_row[range_start + 'mt'] = mwht
-            summary_row[range_start + 'mu'] = mwhu
-            summary_row[range_start + 'ms'] = mwhs
+            summary_row[range_start + 'mut'] = mwhut
+            summary_row[range_start + 'mua'] = mwhua
+            summary_row[range_start + 'mst'] = mwhst
+            summary_row[range_start + 'msa'] = mwhsa
             summary_row[range_start + 'm%'] = mwhp
-            summary_row[range_start + 'tt'] = thmt
-            summary_row[range_start + 'tu'] = thmu
-            summary_row[range_start + 'ts'] = thms
+            summary_row[range_start + 'tut'] = thmut
+            summary_row[range_start + 'tua'] = thmua
+            summary_row[range_start + 'tst'] = thmst
+            summary_row[range_start + 'tsa'] = thmsa
             summary_row[range_start + 't%'] = thmp
 
         # Save summary row in dataframe
