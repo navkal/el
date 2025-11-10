@@ -61,7 +61,7 @@ REPORT_COLUMNS = \
 if __name__ == '__main__':
 
     # Retrieve and validate arguments
-    parser = argparse.ArgumentParser( description='Create table of MA towns' )
+    parser = argparse.ArgumentParser( description='Process Mass Save Semiannual Report' )
     parser.add_argument( '-d', dest='db_filename',  help='Database filename' )
     args = parser.parse_args()
 

@@ -119,15 +119,13 @@ for ward in [A,B,C,D,E,F]:
             LEAN_ELIG: [LEAN, LMF],
         }
 
-# For each existing filter, add a duplicate that selects unweatherized parcels
-FILTERS_COPY = copy.deepcopy( FILTERS )
-NWX_FILTERS = {}
-for s_filter, dc_filter in FILTERS_COPY.items():
-    s_nwx = f'{s_filter}_nwx'
-    dc_filter[WX_PERMIT] = [None]
-    NWX_FILTERS[s_nwx] = dc_filter
-
-FILTERS.update( NWX_FILTERS )
+# Secondary filtering based on weatherization status
+WX_FILTERS = \
+[
+    '',     # No filter
+    'wx',   # Weatherized
+    'nwx',  # Not weatherized
+]
 
 #
 # <== Dictionary of filters <==
@@ -214,53 +212,64 @@ def make_kml_files( master_filename, output_directory ):
     df_parcels = pd.read_sql_table( TABLE, engine )
 
     print( '' )
-    print( f'Generating {len( FILTERS )} KML files' )
+    print( f'Generating {len( FILTERS ) * len( WX_FILTERS )} KML files' )
     print( '' )
 
     n_files = 0
 
-    # Generate a KML for each filter in the FILTERS table
+    # Generate three KMLs for each filter in the FILTERS table
     for s_filter in FILTERS:
 
-        # Start with a copy of the full parcels table
-        df = df_parcels.copy()
+        # Generate three KMLs for current filter
+        for s_wx in WX_FILTERS:
 
-        # Select rows based on current filter
-        dc_filters = FILTERS[s_filter]
-        for col in dc_filters:
-            df = df[ df[col].isin( dc_filters[col] ) ]
+            # Start with a copy of the full parcels table
+            df = df_parcels.copy()
 
-        # Count parcels and housing units that will be represented by this KML
-        n_parcels = len( df )
-        n_units = df[OCC].sum()
+            # Initialize the label for current KML
+            s_label = s_filter
 
-        # Edit Vision hyperlinks encoded for Excel
-        pattern = r'=HYPERLINK\("(http.*pid=\d+)".*'
-        df = df.replace( to_replace=pattern, value=r'\1', regex=True )
+            # Select rows based on current filter
+            dc_filters = FILTERS[s_label]
+            for col in dc_filters:
+                df = df[ df[col].isin( dc_filters[col] ) ]
 
-        # Add columns to be replaced with mapped values
-        df[COLOR] = df[WARD]
-        df[ICON] = df[FUEL]
+            # Select further, based on weatherization status
+            if s_wx:
+                s_label += '_' + s_wx
+                df = df[ df[WX_PERMIT].isnull() ] if s_wx == 'nwx' else df[ ~df[WX_PERMIT].isnull() ]
 
-        # Reorder columns and rows
-        ls_columns = [WARD, STREET_NAME, ADDR, ICON, LAT, LONG, COLOR, LINK]
-        df = df[ls_columns]
-        df = df.sort_values( by=ls_columns )
-        df = df.reset_index( drop=True )
+            # Count parcels and housing units that will be represented by this KML
+            n_parcels = len( df )
+            n_units = df[OCC].sum()
 
-        # Replace column values with visualization attributes
-        for col in dc_map:
-            if col in df.columns:
-                df[col] = df[col].replace( dc_map[col] )
+            # Edit Vision hyperlinks encoded for Excel
+            pattern = r'=HYPERLINK\("(http.*pid=\d+)".*'
+            df = df.replace( to_replace=pattern, value=r'\1', regex=True )
 
-        # Convert dataframe to KML
-        filename = f'{s_filter}_{n_parcels}_{n_units}.kml'
-        filepath = os.path.join( output_directory, filename )
-        make_kml_file( df, filepath )
+            # Add columns to be replaced with mapped values
+            df[COLOR] = df[WARD]
+            df[ICON] = df[FUEL]
 
-        # Report progress
-        n_files += 1
-        print( '{: >3d}: {}'.format( n_files, filename ) )
+            # Reorder columns and rows
+            ls_columns = [WARD, STREET_NAME, ADDR, ICON, LAT, LONG, COLOR, LINK]
+            df = df[ls_columns]
+            df = df.sort_values( by=ls_columns )
+            df = df.reset_index( drop=True )
+
+            # Replace column values with visualization attributes
+            for col in dc_map:
+                if col in df.columns:
+                    df[col] = df[col].replace( dc_map[col] )
+
+            # Convert dataframe to KML
+            filename = f'{s_label}_{n_parcels}_{n_units}.kml'
+            filepath = os.path.join( output_directory, filename )
+            make_kml_file( df, filepath )
+
+            # Report progress
+            n_files += 1
+            print( '{: >3d}: {}'.format( n_files, filename ) )
 
     return
 
