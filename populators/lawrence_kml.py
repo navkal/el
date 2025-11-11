@@ -177,7 +177,7 @@ def make_kml_file( df, kml_filepath ):
         point.style.iconstyle.scale = shape_scale[1]
 
         # Set link
-        point.description = f'<a href={row[LINK]}>{row[ADDR]}</a>'
+        point.description = f'<a href={row[LINK]}>{row[ADDR]}</a><br/>{row[FUEL]} heat'
 
         # Create a highlight style for mouseover
         highlight_style = simplekml.Style()
@@ -252,7 +252,7 @@ def make_kml_files( master_filename, output_directory ):
             df[ICON] = df[FUEL]
 
             # Reorder columns and rows
-            ls_columns = [WARD, STREET_NAME, ADDR, ICON, LAT, LONG, COLOR, LINK]
+            ls_columns = [WARD, STREET_NAME, ADDR, FUEL, ICON, LAT, LONG, COLOR, LINK]
             df = df[ls_columns]
             df = df.sort_values( by=ls_columns )
             df = df.reset_index( drop=True )
