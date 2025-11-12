@@ -9,6 +9,7 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import geopandas as gpd
 import simplekml
 
 import sqlite3
@@ -155,9 +156,24 @@ dc_map = \
 
 ######################
 
-def make_kml_file( df, kml_filepath ):
 
+# Generate a KML file
+def make_kml_file( city_shape, df, kml_filepath ):
+
+    # Create empty KML
     kml = simplekml.Kml()
+
+    # Set color of boundary and shading
+    boundary_color = simplekml.Color.blanchedalmond
+
+    # Generate the boundary and shading
+    for geom in city_shape.geometry:
+        for subgeom in geom.geoms:
+            kml_poly = kml.newpolygon( name='City of Lawrence' )
+            kml_poly.outerboundaryis = list( subgeom.exterior.coords )
+            kml_poly.style.linestyle.color = boundary_color
+            kml_poly.style.linestyle.width = 3
+            kml_poly.style.polystyle.color = simplekml.Color.changealphaint( 50, boundary_color )
 
     for index, row in df.iterrows():
         point = kml.newpoint( name=f'{row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
@@ -215,6 +231,10 @@ def make_kml_files( master_filename, output_directory ):
     print( f'Generating {len( FILTERS ) * len( WX_FILTERS )} KML files' )
     print( '' )
 
+    # Extract Lawrence shape from geodatabase (https://www.mass.gov/info-details/massgis-data-municipalities)
+    gdf = gpd.read_file( '../xl/lawrence/geography/city_geometry/townssurvey_gdb/townssurvey.gdb', layer='TOWNSSURVEY_POLYM' )
+    city_shape = gdf[gdf['TOWN'].str.strip().str.upper() == 'LAWRENCE'].to_crs( epsg=4326 )
+
     n_files = 0
 
     # Generate three KMLs for each filter in the FILTERS table
@@ -265,7 +285,7 @@ def make_kml_files( master_filename, output_directory ):
             # Convert dataframe to KML
             filename = f'{s_label}_{n_parcels}_{n_units}.kml'
             filepath = os.path.join( output_directory, filename )
-            make_kml_file( df, filepath )
+            make_kml_file( city_shape, df, filepath )
 
             # Report progress
             n_files += 1
