@@ -169,7 +169,7 @@ def make_kml_file( city_shape, df, kml_filepath ):
     colors = [blue, white, blue]
     widths = [11, 7, 3]
 
-    # Generate the boundary
+    # Generate the boundary with transparent fill
     for geom in city_shape.geometry:
         for subgeom in geom.geoms:
             coords = list( subgeom.exterior.coords )
@@ -178,7 +178,8 @@ def make_kml_file( city_shape, df, kml_filepath ):
                 kml_poly.outerboundaryis = coords
                 kml_poly.style.linestyle.color = c
                 kml_poly.style.linestyle.width = w
-                kml_poly.style.polystyle.fill = 0
+                kml_poly.style.polystyle.fill = 1
+                kml_poly.style.polystyle.color = '00ffffff'
 
     for index, row in df.iterrows():
         point = kml.newpoint( name=f'{row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
