@@ -279,10 +279,10 @@ def make_kml_files( master_filename, output_directory ):
 
 
 # Generate KML files that represent geographical features of the city
-def make_geography_files( output_directory ):
+def make_geography_files( town_filename, output_directory ):
 
     # Extract Lawrence shape from geodatabase (https://www.mass.gov/info-details/massgis-data-municipalities)
-    gdf = gpd.read_file( '../xl/lawrence/geography/city_geometry/townssurvey_gdb/townssurvey.gdb', layer='TOWNSSURVEY_POLYM' )
+    gdf = gpd.read_file( town_filename, layer='TOWNSSURVEY_POLYM' )
     city_shape = gdf[gdf['TOWN'].str.strip().str.upper() == 'LAWRENCE'].to_crs( epsg=4326 )
 
     # Create empty KML
@@ -310,6 +310,7 @@ if __name__ == '__main__':
     # Read arguments
     parser = argparse.ArgumentParser( description='Generate KML files showing Lawrence parcels partitioned in various ways' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
+    parser.add_argument( '-t', dest='town_filename', help='Town survey filename', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
     parser.add_argument( '-c', dest='clear_directory', action='store_true', help='Clear target directory first?' )
 
@@ -323,6 +324,6 @@ if __name__ == '__main__':
     make_kml_files( args.master_filename, args.output_directory )
 
     # Make geography KML files
-    make_geography_files( args.output_directory )
+    make_geography_files( args.town_filename, args.output_directory )
 
     util.report_elapsed_time()
