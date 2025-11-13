@@ -163,23 +163,15 @@ def make_kml_file( city_shape, df, kml_filepath ):
     # Create empty KML
     kml = simplekml.Kml()
 
-    # Set up border using colors of the Lawrence flag
-    blue = 'ffd27c4e'
-    white = 'ffffffff'
-    colors = [blue, white, blue]
-    widths = [11, 7, 3]
-
     # Generate the boundary with transparent fill
     for geom in city_shape.geometry:
         for subgeom in geom.geoms:
-            coords = list( subgeom.exterior.coords )
-            for c, w in zip( colors, widths ):
-                kml_poly = kml.newpolygon( name = 'City of Lawrence' )
-                kml_poly.outerboundaryis = coords
-                kml_poly.style.linestyle.color = c
-                kml_poly.style.linestyle.width = w
-                kml_poly.style.polystyle.fill = 1
-                kml_poly.style.polystyle.color = '00ffffff'
+            poly = kml.newpolygon( name='City of Lawrence' )
+            poly.outerboundaryis = list( subgeom.exterior.coords )
+            poly.style.linestyle.color = simplekml.Color.hex( 'faf4ed' )
+            poly.style.linestyle.width = 8
+            poly.style.polystyle.fill = 1
+            poly.style.polystyle.color = '00ffffff'
 
     for index, row in df.iterrows():
         point = kml.newpoint( name=f'{row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
