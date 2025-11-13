@@ -158,20 +158,10 @@ dc_map = \
 
 
 # Generate a KML file
-def make_kml_file( city_shape, df, kml_filepath ):
+def make_kml_file( df, kml_filepath ):
 
     # Create empty KML
     kml = simplekml.Kml()
-
-    # Generate the boundary with transparent fill
-    for geom in city_shape.geometry:
-        for subgeom in geom.geoms:
-            poly = kml.newpolygon( name='City of Lawrence' )
-            poly.outerboundaryis = list( subgeom.exterior.coords )
-            poly.style.linestyle.color = simplekml.Color.hex( 'faf4ed' )
-            poly.style.linestyle.width = 8
-            poly.style.polystyle.fill = 1
-            poly.style.polystyle.color = '00ffffff'
 
     for index, row in df.iterrows():
         point = kml.newpoint( name=f'{row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
@@ -229,10 +219,6 @@ def make_kml_files( master_filename, output_directory ):
     print( f'Generating {len( FILTERS ) * len( WX_FILTERS )} KML files' )
     print( '' )
 
-    # Extract Lawrence shape from geodatabase (https://www.mass.gov/info-details/massgis-data-municipalities)
-    gdf = gpd.read_file( '../xl/lawrence/geography/city_geometry/townssurvey_gdb/townssurvey.gdb', layer='TOWNSSURVEY_POLYM' )
-    city_shape = gdf[gdf['TOWN'].str.strip().str.upper() == 'LAWRENCE'].to_crs( epsg=4326 )
-
     n_files = 0
 
     # Generate three KMLs for each filter in the FILTERS table
@@ -283,7 +269,7 @@ def make_kml_files( master_filename, output_directory ):
             # Convert dataframe to KML
             filename = f'{s_label}_{n_parcels}_{n_units}.kml'
             filepath = os.path.join( output_directory, filename )
-            make_kml_file( city_shape, df, filepath )
+            make_kml_file( df, filepath )
 
             # Report progress
             n_files += 1
@@ -292,6 +278,28 @@ def make_kml_files( master_filename, output_directory ):
     return
 
 
+# Generate KML files that represent geographical features of the city
+def make_geography_files( output_directory ):
+
+    # Extract Lawrence shape from geodatabase (https://www.mass.gov/info-details/massgis-data-municipalities)
+    gdf = gpd.read_file( '../xl/lawrence/geography/city_geometry/townssurvey_gdb/townssurvey.gdb', layer='TOWNSSURVEY_POLYM' )
+    city_shape = gdf[gdf['TOWN'].str.strip().str.upper() == 'LAWRENCE'].to_crs( epsg=4326 )
+
+    # Create empty KML
+    kml = simplekml.Kml()
+
+    # Generate the boundary with transparent fill
+    for geom in city_shape.geometry:
+        for subgeom in geom.geoms:
+            poly = kml.newpolygon( name='City of Lawrence' )
+            poly.outerboundaryis = list( subgeom.exterior.coords )
+            poly.style.linestyle.color = simplekml.Color.hex( 'faf4ed' )
+            poly.style.linestyle.width = 8
+            poly.style.polystyle.fill = 1
+            poly.style.polystyle.color = '00ffffff'
+
+    filepath = os.path.join( output_directory, '_geography_city.kml' )
+    kml.save( filepath )
 
 
 ######################
@@ -313,5 +321,8 @@ if __name__ == '__main__':
 
     # Make KML files
     make_kml_files( args.master_filename, args.output_directory )
+
+    # Make geography KML files
+    make_geography_files( args.output_directory )
 
     util.report_elapsed_time()
