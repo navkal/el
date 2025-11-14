@@ -279,57 +279,52 @@ def make_kml_files( master_filename, output_directory ):
 
 
 # Generate KML file that represents geographical features of the city
-def make_geography_file( town_filename, ward_filename, output_directory ):
-
-    # Extract Lawrence shape from town geodatabase (https://www.mass.gov/info-details/massgis-data-municipalities)
-    df_towns = gpd.read_file( town_filename, layer='TOWNSSURVEY_POLYM' )
-    city_shape = df_towns[df_towns['TOWN'].str.strip().str.upper() == 'LAWRENCE'].to_crs( epsg=4326 )
+def make_geography_file( wards_filename, output_directory ):
 
     # Create empty KML
     kml = simplekml.Kml()
+    root_folder = kml.newfolder( name='Geography' )
+    ward_folder = root_folder.newfolder( name='Wards' )
 
-    # Generate city boundary with transparent fill
-    for geom in city_shape.geometry:
-        for subgeom in geom.geoms:
-            poly = kml.newpolygon( name='City of Lawrence' )
-            poly.outerboundaryis = list( subgeom.exterior.coords )
-            poly.style.linestyle.color = simplekml.Color.hex( 'faf4ed' )
-            poly.style.linestyle.width = 8
-            poly.style.polystyle.fill = 1
-            poly.style.polystyle.color = '00ffffff'
-
-    # Extract ward shapes from ward shapefile
-    df_districts = gpd.read_file( ward_filename )
+    # Extract districts shapes from shapefile
+    df_districts = gpd.read_file( wards_filename )
     df_districts = df_districts[ df_districts['TOWN'] == 'LAWRENCE' ]
     df_districts = df_districts[['WARD','geometry']]
+
+    # Generate city boundary with transparent fill
+    df_city = df_districts.dissolve( as_index=False )
+    df_city['geometry'] = df_city.buffer(0)
+    df_city = df_city.to_crs( epsg=4326 )
+
+    poly = root_folder.newpolygon( name='City of Lawrence' )
+    poly.outerboundaryis = list( df_city.iloc[0]['geometry'].exterior.coords )
+    poly.style.linestyle.color = simplekml.Color.hex( 'faf4ed' )
+    poly.style.linestyle.width = 8
+    poly.style.polystyle.fill = 1
+    poly.style.polystyle.color = '00ffffff'
+
+    # Generate color-coded polygon for each ward
     df_wards = df_districts.dissolve( by='WARD', as_index=False )
     df_wards['geometry'] = df_wards.buffer(0)
     df_wards = df_wards.to_crs( epsg=4326 )
 
-    # Generate color-coded polygon for each ward
     for idx, row in df_wards.iterrows():
 
         s_ward = row['WARD']
         s_name = f'Ward {s_ward}'
         s_color = dc_map[COLOR][s_ward]
 
-        geom = row.geometry
-        poly = kml.newpolygon( name=s_name )
-        poly.outerboundaryis = list( geom.exterior.coords )
-        poly.innerboundaryis = [list( ring.coords ) for ring in geom.interiors]
+        poly = ward_folder.newpolygon( name=s_name )
+        poly.outerboundaryis = list( row['geometry'].exterior.coords )
         poly.style.linestyle.color = s_color
-        poly.style.linestyle.width = 2
+        poly.style.linestyle.width = 3
         poly.style.polystyle.fill = 1
-        poly.style.polystyle.color = simplekml.Color.changealphaint( 20, s_color )
-
+        poly.style.polystyle.color = simplekml.Color.changealphaint( 25, s_color )
 
     s_filename = '_geography.kml'
-    filepath = os.path.join( output_directory, s_filename )
-
     print( '' )
     print( f'Saving geography file "{s_filename}"' )
-
-    kml.save( filepath )
+    kml.save( os.path.join( output_directory, s_filename ) )
 
 
 
@@ -341,8 +336,7 @@ if __name__ == '__main__':
     # Read arguments
     parser = argparse.ArgumentParser( description='Generate KML files showing Lawrence parcels partitioned in various ways' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
-    parser.add_argument( '-t', dest='town_filename', help='Town survey filename', required=True )
-    parser.add_argument( '-w', dest='ward_filename', help='Ward shape filename', required=True )
+    parser.add_argument( '-w', dest='wards_filename',  help='Input filename - Name of shapefile containing Lawrence ward geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
     parser.add_argument( '-c', dest='clear_directory', action='store_true', help='Clear target directory first?' )
 
@@ -352,10 +346,10 @@ if __name__ == '__main__':
     if args.clear_directory:
         util.clear_directory( args.output_directory )
 
+    # Make geography KML file
+    make_geography_file( args.wards_filename, args.output_directory )
+
     # Make KML files
     make_kml_files( args.master_filename, args.output_directory )
-
-    # Make geography KML file
-    make_geography_file( args.town_filename, args.ward_filename, args.output_directory )
 
     util.report_elapsed_time()
