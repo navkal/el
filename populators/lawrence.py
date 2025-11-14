@@ -284,7 +284,7 @@ if __name__ == '__main__':
 
     # Generate KML files showing Lawrence parcels partitioned in various ways
     print( '\n=======> KML' )
-    os.system( 'python lawrence_kml.py -t ../xl/lawrence/geography/city_geometry/townssurvey_gdb/townssurvey.gdb -o ../db/kml -m {0} -c'.format( args.master_filename ) )
+    os.system( 'python lawrence_kml.py -t ../xl/lawrence/geography/city_geometry/townssurvey_gdb/townssurvey.gdb -w ../xl/lawrence/geography/ward_precinct_geometry/WARDSPRECINCTS2022_POLY.shp -o ../db/kml -m {0} -c'.format( args.master_filename ) )
 
     # Generate summaries
     print( '\n=======> Summary' )
