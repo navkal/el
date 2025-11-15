@@ -304,7 +304,7 @@ def make_geography_file( wards_filename, output_directory ):
         # Configure style for current ward
         ward_style = simplekml.Style()
         ward_style.linestyle.color = s_color
-        ward_style.linestyle.width = 3
+        ward_style.linestyle.width = 4
         ward_style.polystyle.fill = 1
         ward_style.polystyle.color = simplekml.Color.changealphaint( 25, s_color )
 
@@ -331,8 +331,10 @@ def make_geography_file( wards_filename, output_directory ):
 
     poly = root_folder.newpolygon( name='City of Lawrence' )
     poly.outerboundaryis = list( df_city.iloc[0]['geometry'].exterior.coords )
-    poly.style.linestyle.color = simplekml.Color.hex( 'faf4ed' )
-    poly.style.linestyle.width = 8
+    s_color = simplekml.Color.cornsilk
+    poly.style.linestyle.color = s_color
+    poly.style.linestyle.color = simplekml.Color.changealphaint( 140, s_color )
+    poly.style.linestyle.width = 14
     poly.style.polystyle.fill = 1
     poly.style.polystyle.color = '00ffffff'
 
