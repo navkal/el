@@ -203,12 +203,6 @@ def make_kml_file( df, kml_filepath ):
 # Generate KML files
 def make_kml_files( master_filename, output_directory ):
 
-    # Report arguments
-    print( '' )
-    print( 'Arguments' )
-    print( ' Input database:', master_filename )
-    print( ' Output directory:', output_directory )
-
     # Read the parcels table
     conn, cur, engine = util.open_database( master_filename, False )
     print( '' )
@@ -281,15 +275,54 @@ def make_kml_files( master_filename, output_directory ):
 # Generate KML file that represents geographical features of the city
 def make_geography_file( wards_filename, output_directory ):
 
-    # Create empty KML
-    kml = simplekml.Kml()
-    root_folder = kml.newfolder( name='Geography' )
-    ward_folder = root_folder.newfolder( name='Wards' )
-
-    # Extract districts shapes from shapefile
+    # Extract district shapes from shapefile
     df_districts = gpd.read_file( wards_filename )
     df_districts = df_districts[ df_districts['TOWN'] == 'LAWRENCE' ]
     df_districts = df_districts[['WARD','geometry']]
+
+    # Combine districts into wards
+    df_wards = df_districts.dissolve( by='WARD', as_index=False )
+    df_wards['geometry'] = df_wards.buffer(0)
+    df_wards = df_wards.to_crs( epsg=4326 )
+
+    # Create empty KML
+    kml = simplekml.Kml()
+
+    # Initialize dictionary of ward styles
+    dc_styles = {}
+
+    # Initialize document of ward styles
+    doc = kml.newdocument( name="Lawrence" )
+
+    # Generate style for each ward
+    for idx, row in df_wards.iterrows():
+
+        # Map to color for current ward
+        s_ward = row['WARD']
+        s_color = dc_map[COLOR][s_ward]
+
+        # Configure style for current ward
+        ward_style = simplekml.Style()
+        ward_style.linestyle.color = s_color
+        ward_style.linestyle.width = 3
+        ward_style.polystyle.fill = 1
+        ward_style.polystyle.color = simplekml.Color.changealphaint( 25, s_color )
+
+        # Save style in document and dictionary
+        doc.styles.append( ward_style )
+        dc_styles[s_ward] = ward_style
+
+    # Create folders
+    root_folder = kml.newfolder( name='Geography' )
+    ward_folder = root_folder.newfolder( name='Wards' )
+
+    # Generate color-coded polygon for each ward
+    for idx, row in df_wards.iterrows():
+        s_ward = row['WARD']
+        s_name = f'Ward {s_ward}'
+        poly = ward_folder.newpolygon( name=s_name )
+        poly.outerboundaryis = list( row['geometry'].exterior.coords )
+        poly.style = dc_styles[s_ward]
 
     # Generate city boundary with transparent fill
     df_city = df_districts.dissolve( as_index=False )
@@ -302,24 +335,6 @@ def make_geography_file( wards_filename, output_directory ):
     poly.style.linestyle.width = 8
     poly.style.polystyle.fill = 1
     poly.style.polystyle.color = '00ffffff'
-
-    # Generate color-coded polygon for each ward
-    df_wards = df_districts.dissolve( by='WARD', as_index=False )
-    df_wards['geometry'] = df_wards.buffer(0)
-    df_wards = df_wards.to_crs( epsg=4326 )
-
-    for idx, row in df_wards.iterrows():
-
-        s_ward = row['WARD']
-        s_name = f'Ward {s_ward}'
-        s_color = dc_map[COLOR][s_ward]
-
-        poly = ward_folder.newpolygon( name=s_name )
-        poly.outerboundaryis = list( row['geometry'].exterior.coords )
-        poly.style.linestyle.color = s_color
-        poly.style.linestyle.width = 3
-        poly.style.polystyle.fill = 1
-        poly.style.polystyle.color = simplekml.Color.changealphaint( 25, s_color )
 
     s_filename = '_geography.kml'
     print( '' )
@@ -342,8 +357,16 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Report arguments
+    print( '' )
+    print( 'Arguments' )
+    print( ' Input database:', args.master_filename )
+    print( ' Wards filename:', args.wards_filename )
+    print( ' Output directory:', args.output_directory )
+
     # Optionally clear target directory
     if args.clear_directory:
+        print( ' Clearing output directory' )
         util.clear_directory( args.output_directory )
 
     # Make geography KML file
