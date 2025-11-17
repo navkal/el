@@ -45,6 +45,7 @@ COLOR = util.COLOR
 ICON = util.ICON
 OCC = util.TOTAL_OCCUPANCY
 WX_PERMIT = util.WX_PERMIT
+IS_RENTAL = 'is_rental'
 
 
 # Wards
@@ -96,17 +97,35 @@ FILTERS = \
     'res_electric':
     {
         IS_RES: [YES],
-        FUEL: [ELEC]
+        FUEL: [ELEC],
     },
     'res_gas':
     {
         IS_RES: [YES],
-        FUEL: [GAS]
+        FUEL: [GAS],
     },
     'res_oil':
     {
         IS_RES: [YES],
-        FUEL: [OIL]
+        FUEL: [OIL],
+    },
+    'rent_electric':
+    {
+        IS_RES: [YES],
+        FUEL: [ELEC],
+        IS_RENTAL: [True],
+    },
+    'rent_gas':
+    {
+        IS_RES: [YES],
+        FUEL: [GAS],
+        IS_RENTAL: [True],
+    },
+    'rent_oil':
+    {
+        IS_RES: [YES],
+        FUEL: [OIL],
+        IS_RENTAL: [True],
     },
 }
 
@@ -212,6 +231,9 @@ def make_kml_files( master_filename, output_directory ):
     print( '' )
     print( f'Generating {len( FILTERS ) * len( WX_FILTERS )} KML files' )
     print( '' )
+
+    # Add rental flag column
+    df_parcels[IS_RENTAL] = df_parcels[OCC] > 1
 
     n_files = 0
 
