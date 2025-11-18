@@ -183,8 +183,8 @@ dc_map = \
 ######################
 
 
-# Generate a KML file
-def make_kml_file( df, kml_filepath ):
+# Generate a KML file containing POIs
+def make_poi_kml_file( df, kml_filepath ):
 
     # Create empty KML
     kml = simplekml.Kml()
@@ -227,7 +227,7 @@ def make_kml_file( df, kml_filepath ):
 
 
 # Generate KML files
-def make_kml_files( master_filename, output_directory ):
+def make_poi_kml_files( master_filename, output_directory ):
 
     # Read the parcels table
     conn, cur, engine = util.open_database( master_filename, False )
@@ -292,7 +292,7 @@ def make_kml_files( master_filename, output_directory ):
             # Convert dataframe to KML
             filename = f'{s_label}_{n_parcels}_{n_units}.kml'
             filepath = os.path.join( output_directory, filename )
-            make_kml_file( df, filepath )
+            make_poi_kml_file( df, filepath )
 
             # Report progress
             n_files += 1
@@ -301,25 +301,39 @@ def make_kml_files( master_filename, output_directory ):
     return
 
 
-# Generate KML file that represents geographical features of the city
-def make_geography_file( block_groups_filename, wards_filename, output_directory ):
+# Extract geometries from shapefile
+def get_kml_geometry( wards_filename, block_groups_filename ):
 
-    # Extract district shapes from shapefile
+    # Extract geometries from shapefile
     df_districts = gpd.read_file( wards_filename )
     df_districts = df_districts[ df_districts['TOWN'] == 'LAWRENCE' ]
     df_districts = df_districts[['WARD',GEOMETRY]]
+
+    # Combine districts into city
+    df_city = df_districts.dissolve( as_index=False )
+    df_city[GEOMETRY] = df_city.buffer(0)
+    df_city = df_city.to_crs( epsg=4326 )
 
     # Combine districts into wards
     df_wards = df_districts.dissolve( by='WARD', as_index=False )
     df_wards[GEOMETRY] = df_wards.buffer(0)
     df_wards = df_wards.to_crs( epsg=4326 )
 
-    # Create empty KML
-    kml = simplekml.Kml()
+    # Get census block group data
+    df_block_groups = gpd.read_file( block_groups_filename )
+    df_block_groups[TRACTCE] = df_block_groups[TRACTCE].astype( int )
+    df_block_groups = df_block_groups[ ( df_block_groups[TRACTCE] >= LAWRENCE_MIN ) & ( df_block_groups[TRACTCE] <= LAWRENCE_MAX ) ]
+    df_block_groups[BLOCK_GROUP] = ( df_block_groups[TRACTCE] / 100 ).astype(int).astype( str ) + '-' + df_block_groups[BLKGRPCE]
+    df_block_groups = df_block_groups[[GEOID, BLOCK_GROUP, GEOMETRY]]
+    df_block_groups = df_block_groups.sort_values( by=[GEOID] )
 
-    ###################
-    # Configure styles
-    ###################
+    return df_city, df_wards, df_block_groups
+
+
+# Configure styles
+def make_kml_styles( kml, df_wards ):
+
+    doc = kml.newdocument( name="Lawrence" )
 
     # Configure style for city boundary
     city_style = simplekml.Style()
@@ -327,10 +341,10 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
     city_style.linestyle.width = 15
     city_style.polystyle.fill = 1
     city_style.polystyle.color = '00ffffff'
+    doc.styles.append( city_style )
 
     # Generate per-ward styles
     dc_ward_styles = {}
-    doc = kml.newdocument( name="Lawrence" )
     for idx, row in df_wards.iterrows():
 
         # Map to color for current ward
@@ -356,15 +370,22 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
     block_group_style.polystyle.color = '00ffffff'
     doc.styles.append( block_group_style )
 
-    ####################
-    # Generate features
-    ####################
+    return city_style, dc_ward_styles, block_group_style
+
+
+# Generate KML file that represents geographical features of the city
+def make_geography_kml_file( wards_filename, block_groups_filename, output_directory ):
+
+    # Extract geometries from shapefile
+    df_city, df_wards, df_block_groups = get_kml_geometry( wards_filename, block_groups_filename )
+
+    # Create empty KML
+    kml = simplekml.Kml()
+
+    # Configure styles
+    city_style, dc_ward_styles, block_group_style = make_kml_styles( kml, df_wards )
 
     # Generate city boundary with transparent fill
-    df_city = df_districts.dissolve( as_index=False )
-    df_city[GEOMETRY] = df_city.buffer(0)
-    df_city = df_city.to_crs( epsg=4326 )
-
     root_folder = kml.newfolder( name='Geography' )
     poly = root_folder.newpolygon( name='City of Lawrence' )
     poly.outerboundaryis = list( df_city.iloc[0][GEOMETRY].exterior.coords )
@@ -379,14 +400,6 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
         poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
         poly.style = dc_ward_styles[s_ward]
 
-    # Get census block group data
-    df_block_groups = gpd.read_file( block_groups_filename )
-    df_block_groups[TRACTCE] = df_block_groups[TRACTCE].astype( int )
-    df_block_groups = df_block_groups[ ( df_block_groups[TRACTCE] >= LAWRENCE_MIN ) & ( df_block_groups[TRACTCE] <= LAWRENCE_MAX ) ]
-    df_block_groups[BLOCK_GROUP] = ( df_block_groups[TRACTCE] / 100 ).astype(int).astype( str ) + '-' + df_block_groups[BLKGRPCE]
-    df_block_groups = df_block_groups[[GEOID, BLOCK_GROUP, GEOMETRY]]
-    df_block_groups = df_block_groups.sort_values( by=[GEOID] )
-
     # Generate polygon for each census block group
     block_group_folder = root_folder.newfolder( name='Census Block Groups' )
     block_group_folder.visibility = 0
@@ -395,7 +408,6 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
         poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
         poly.description = f'Geographic ID: {row[GEOID]}'
         poly.style = block_group_style
-
 
     # Save the KML file
     s_filename = '_geography.kml'
@@ -413,8 +425,8 @@ if __name__ == '__main__':
     # Read arguments
     parser = argparse.ArgumentParser( description='Generate KML files showing Lawrence parcels partitioned in various ways' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
-    parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-w', dest='wards_filename',  help='Input filename - Name of shapefile containing Lawrence ward geometry', required=True )
+    parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
     parser.add_argument( '-c', dest='clear_directory', action='store_true', help='Clear target directory first?' )
 
@@ -425,6 +437,7 @@ if __name__ == '__main__':
     print( 'Arguments' )
     print( ' Input database:', args.master_filename )
     print( ' Wards filename:', args.wards_filename )
+    print( ' Block Groups filename:', args.block_groups_filename )
     print( ' Output directory:', args.output_directory )
 
     # Optionally clear target directory
@@ -433,9 +446,9 @@ if __name__ == '__main__':
         util.clear_directory( args.output_directory )
 
     # Make geography KML file
-    make_geography_file( args.block_groups_filename, args.wards_filename, args.output_directory )
+    make_geography_kml_file( args.wards_filename, args.block_groups_filename, args.output_directory )
 
     # Make KML files
-    make_kml_files( args.master_filename, args.output_directory )
+    make_poi_kml_files( args.master_filename, args.output_directory )
 
     util.report_elapsed_time()
