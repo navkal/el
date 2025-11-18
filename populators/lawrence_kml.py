@@ -323,9 +323,7 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
 
     # Configure style for city boundary
     city_style = simplekml.Style()
-    s_color = simplekml.Color.cornsilk
-    city_style.linestyle.color = s_color
-    city_style.linestyle.color = simplekml.Color.changealphaint( 150, s_color )
+    city_style.linestyle.color = simplekml.Color.changealphaint( 150, simplekml.Color.cornsilk )
     city_style.linestyle.width = 15
     city_style.polystyle.fill = 1
     city_style.polystyle.color = '00ffffff'
@@ -352,11 +350,10 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
 
     # Configure style for census block groups
     block_group_style = simplekml.Style()
-    s_color = simplekml.Color.whitesmoke
-    block_group_style.linestyle.color = s_color
+    block_group_style.linestyle.color = simplekml.Color.whitesmoke
     block_group_style.linestyle.width = 3
     block_group_style.polystyle.fill = 1
-    block_group_style.polystyle.color = simplekml.Color.changealphaint( 20, s_color )
+    block_group_style.polystyle.color = '00ffffff'
     doc.styles.append( block_group_style )
 
     ####################
