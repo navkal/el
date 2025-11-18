@@ -342,7 +342,7 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
         # Configure style for current ward
         ward_style = simplekml.Style()
         ward_style.linestyle.color = s_color
-        ward_style.linestyle.width = 4
+        ward_style.linestyle.width = 5
         ward_style.polystyle.fill = 1
         ward_style.polystyle.color = simplekml.Color.changealphaint( 30, s_color )
 
@@ -354,9 +354,9 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
     block_group_style = simplekml.Style()
     s_color = simplekml.Color.whitesmoke
     block_group_style.linestyle.color = s_color
-    block_group_style.linestyle.width = 1
+    block_group_style.linestyle.width = 3
     block_group_style.polystyle.fill = 1
-    block_group_style.polystyle.color = simplekml.Color.changealphaint( 30, s_color )
+    block_group_style.polystyle.color = simplekml.Color.changealphaint( 20, s_color )
     doc.styles.append( block_group_style )
 
     ####################
