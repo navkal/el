@@ -317,6 +317,19 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
     # Create empty KML
     kml = simplekml.Kml()
 
+    ###################
+    # Configure styles
+    ###################
+
+    # Configure style for city boundary
+    city_style = simplekml.Style()
+    s_color = simplekml.Color.cornsilk
+    city_style.linestyle.color = s_color
+    city_style.linestyle.color = simplekml.Color.changealphaint( 150, s_color )
+    city_style.linestyle.width = 15
+    city_style.polystyle.fill = 1
+    city_style.polystyle.color = '00ffffff'
+
     # Generate per-ward styles
     dc_ward_styles = {}
     doc = kml.newdocument( name="Lawrence" )
@@ -337,6 +350,19 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
         doc.styles.append( ward_style )
         dc_ward_styles[s_ward] = ward_style
 
+    # Configure style for census block groups
+    block_group_style = simplekml.Style()
+    s_color = simplekml.Color.whitesmoke
+    block_group_style.linestyle.color = s_color
+    block_group_style.linestyle.width = 1
+    block_group_style.polystyle.fill = 1
+    block_group_style.polystyle.color = simplekml.Color.changealphaint( 30, s_color )
+    doc.styles.append( block_group_style )
+
+    ####################
+    # Generate features
+    ####################
+
     # Generate city boundary with transparent fill
     df_city = df_districts.dissolve( as_index=False )
     df_city[GEOMETRY] = df_city.buffer(0)
@@ -345,12 +371,7 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
     root_folder = kml.newfolder( name='Geography' )
     poly = root_folder.newpolygon( name='City of Lawrence' )
     poly.outerboundaryis = list( df_city.iloc[0][GEOMETRY].exterior.coords )
-    s_color = simplekml.Color.cornsilk
-    poly.style.linestyle.color = s_color
-    poly.style.linestyle.color = simplekml.Color.changealphaint( 150, s_color )
-    poly.style.linestyle.width = 15
-    poly.style.polystyle.fill = 1
-    poly.style.polystyle.color = '00ffffff'
+    poly.style = city_style
 
     # Generate color-coded polygon for each ward
     ward_folder = root_folder.newfolder( name='Wards' )
@@ -376,11 +397,8 @@ def make_geography_file( block_groups_filename, wards_filename, output_directory
         poly = block_group_folder.newpolygon( name=f'Block Group {row[BLOCK_GROUP]}' )
         poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
         poly.description = f'Geographic ID: {row[GEOID]}'
-        s_color = simplekml.Color.whitesmoke
-        poly.style.linestyle.color = s_color
-        poly.style.linestyle.width = 1
-        poly.style.polystyle.fill = 1
-        poly.style.polystyle.color = simplekml.Color.changealphaint( 30, s_color )
+        poly.style = block_group_style
+
 
     # Save the KML file
     s_filename = '_geography.kml'
