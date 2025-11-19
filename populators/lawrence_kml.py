@@ -20,9 +20,6 @@ sys.path.append( '../util' )
 import util
 
 
-# Name of parcels table
-TABLE = 'Assessment_L_Parcels'
-
 # Nicknames
 LAWRENCE_MIN = util.LAWRENCE_MIN_BLOCK_GROUP
 LAWRENCE_MAX = util.LAWRENCE_MAX_BLOCK_GROUP
@@ -32,6 +29,7 @@ BLKGRPCE = util.BLKGRPCE
 GEOMETRY = util.GEOMETRY
 TRACT = util.CENSUS_TRACT
 BLOCK_GROUP = util.CENSUS_BLOCK_GROUP
+TRACT_DASH_GROUP = 'tract_dash_group'
 ADDR = util.NORMALIZED_ADDRESS
 STREET_NAME = util.NORMALIZED_STREET_NAME
 IS_RES = util.IS_RESIDENTIAL
@@ -53,6 +51,8 @@ ICON = util.ICON
 OCC = util.TOTAL_OCCUPANCY
 WX_PERMIT = util.WX_PERMIT
 IS_RENTAL = 'is_rental'
+WX_RATE = 'wx_rate'
+WX_SATURATION = 'wx_saturation'
 
 
 # Wards
@@ -227,13 +227,7 @@ def make_poi_kml_file( df, kml_filepath ):
 
 
 # Generate KML files
-def make_poi_kml_files( master_filename, output_directory ):
-
-    # Read the parcels table
-    conn, cur, engine = util.open_database( master_filename, False )
-    print( '' )
-    print( f'Reading {TABLE}' )
-    df_parcels = pd.read_sql_table( TABLE, engine )
+def make_poi_kml_files( df_parcels, output_directory ):
 
     print( '' )
     print( f'Generating {len( FILTERS ) * len( WX_FILTERS )} KML files' )
@@ -323,15 +317,15 @@ def get_kml_geometry( wards_filename, block_groups_filename ):
     df_block_groups = gpd.read_file( block_groups_filename )
     df_block_groups[TRACTCE] = df_block_groups[TRACTCE].astype( int )
     df_block_groups = df_block_groups[ ( df_block_groups[TRACTCE] >= LAWRENCE_MIN ) & ( df_block_groups[TRACTCE] <= LAWRENCE_MAX ) ]
-    df_block_groups[BLOCK_GROUP] = ( df_block_groups[TRACTCE] / 100 ).astype(int).astype( str ) + '-' + df_block_groups[BLKGRPCE]
-    df_block_groups = df_block_groups[[GEOID, BLOCK_GROUP, GEOMETRY]]
+    df_block_groups[TRACT_DASH_GROUP] = ( df_block_groups[TRACTCE] / 100 ).astype(int).astype( str ) + '-' + df_block_groups[BLKGRPCE]
+    df_block_groups = df_block_groups[[GEOID, TRACT_DASH_GROUP, GEOMETRY]]
     df_block_groups = df_block_groups.sort_values( by=[GEOID] )
 
     return df_city, df_wards, df_block_groups
 
 
-# Configure styles
-def make_kml_styles( kml, df_wards ):
+# Configure geography styles
+def make_geography_styles( kml, df_wards, df_parcels, df_block_groups ):
 
     doc = kml.newdocument( name="Lawrence" )
 
@@ -343,8 +337,12 @@ def make_kml_styles( kml, df_wards ):
     city_style.polystyle.color = '00ffffff'
     doc.styles.append( city_style )
 
+    #
     # Generate per-ward styles
+    #
+
     dc_ward_styles = {}
+
     for idx, row in df_wards.iterrows():
 
         # Map to color for current ward
@@ -362,19 +360,57 @@ def make_kml_styles( kml, df_wards ):
         doc.styles.append( ward_style )
         dc_ward_styles[s_ward] = ward_style
 
-    # Configure style for census block groups
-    block_group_style = simplekml.Style()
-    block_group_style.linestyle.color = simplekml.Color.whitesmoke
-    block_group_style.linestyle.width = 3
-    block_group_style.polystyle.fill = 1
-    block_group_style.polystyle.color = '00ffffff'
-    doc.styles.append( block_group_style )
+    #
+    # Generate per-block-group styles
+    #
 
-    return city_style, dc_ward_styles, block_group_style
+    # Prepare dataframe of residential parcels
+    df_res = df_parcels.copy()
+    df_res = df_res[df_res[IS_RES] == YES]
+    df_res[TRACT_DASH_GROUP] = df_res[TRACT].astype(str) + '-' + df_res[BLOCK_GROUP].astype(str)
+
+    # Add weatherization rate column to block groups dataframe
+    for idx, row in df_block_groups.copy().iterrows():
+
+        # Find residential parcels in current block group
+        df_cbg_res = df_res[df_res[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+
+        # Find which residential parcels are weatherized
+        df_cbg_wx = df_cbg_res[ ~df_cbg_res[WX_PERMIT].isnull() ]
+
+        # Calculate weatherization rate for current block group
+        df_block_groups.at[idx, WX_RATE] = len( df_cbg_wx ) / len( df_cbg_res )
+
+    # Add saturation column to block groups dataframe
+    n_max_saturation = 255
+    f_min_rate = df_block_groups[WX_RATE].min()
+    f_max_rate = df_block_groups[WX_RATE].max()
+    f_normalized_rate = f_max_rate - f_min_rate
+
+    for idx, row in df_block_groups.copy().iterrows():
+        n_sat = n_max_saturation * ( row[WX_RATE] - f_min_rate ) / f_normalized_rate
+        df_block_groups.at[idx, WX_SATURATION] = n_sat
+    df_block_groups[WX_SATURATION] = df_block_groups[WX_SATURATION].astype( int )
+
+    # Populate dictionary of block group styles
+    s_color = simplekml.Color.rgb( 78, 124, 210 )
+    dc_block_group_styles = {}
+    for idx, row in df_block_groups.iterrows():
+        cbg_style = simplekml.Style()
+        cbg_style.linestyle.color = simplekml.Color.white
+        cbg_style.linestyle.width = 3
+        cbg_style.polystyle.fill = 1
+        cbg_style.polystyle.color = simplekml.Color.changealphaint( row[WX_SATURATION], s_color )
+
+        # Save style in document and dictionary
+        doc.styles.append( cbg_style )
+        dc_block_group_styles[row[TRACT_DASH_GROUP]] = cbg_style
+
+    return city_style, dc_ward_styles, dc_block_group_styles
 
 
 # Generate KML file that represents geographical features of the city
-def make_geography_kml_file( wards_filename, block_groups_filename, output_directory ):
+def make_geography_kml_file( df_parcels, wards_filename, block_groups_filename, output_directory ):
 
     # Extract geometries from shapefile
     df_city, df_wards, df_block_groups = get_kml_geometry( wards_filename, block_groups_filename )
@@ -383,7 +419,7 @@ def make_geography_kml_file( wards_filename, block_groups_filename, output_direc
     kml = simplekml.Kml()
 
     # Configure styles
-    city_style, dc_ward_styles, block_group_style = make_kml_styles( kml, df_wards )
+    city_style, dc_ward_styles, dc_block_group_styles = make_geography_styles( kml, df_wards, df_parcels, df_block_groups )
 
     # Generate city boundary with transparent fill
     root_folder = kml.newfolder( name='Geography' )
@@ -401,13 +437,16 @@ def make_geography_kml_file( wards_filename, block_groups_filename, output_direc
         poly.style = dc_ward_styles[s_ward]
 
     # Generate polygon for each census block group
+    df_parcels[TRACT_DASH_GROUP] = df_parcels[TRACT].astype(str) + '-' + df_parcels[BLOCK_GROUP].astype(str)
     block_group_folder = root_folder.newfolder( name='Census Block Groups' )
     block_group_folder.visibility = 0
     for idx, row in df_block_groups.iterrows():
-        poly = block_group_folder.newpolygon( name=f'Block Group {row[BLOCK_GROUP]}' )
+        s_block_group = row[TRACT_DASH_GROUP]
+        n_pct = int( 100 * row[WX_RATE] )
+        poly = block_group_folder.newpolygon( name=f'{s_block_group}: Res Wx {n_pct}%' )
         poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
-        poly.description = f'Geographic ID: {row[GEOID]}'
-        poly.style = block_group_style
+        poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>Residential Weatherization: {n_pct}%</p>'
+        poly.style = dc_block_group_styles[s_block_group]
 
     # Save the KML file
     s_filename = '_geography.kml'
@@ -445,10 +484,17 @@ if __name__ == '__main__':
         print( ' Clearing output directory' )
         util.clear_directory( args.output_directory )
 
+    # Read the parcels table
+    conn, cur, engine = util.open_database( args.master_filename, False )
+    print( '' )
+    s_table = 'Assessment_L_Parcels'
+    print( f'Reading {s_table}' )
+    df_parcels = pd.read_sql_table( s_table, engine )
+
     # Make geography KML file
-    make_geography_kml_file( args.wards_filename, args.block_groups_filename, args.output_directory )
+    make_geography_kml_file( df_parcels, args.wards_filename, args.block_groups_filename, args.output_directory )
 
     # Make KML files
-    make_poi_kml_files( args.master_filename, args.output_directory )
+    make_poi_kml_files( df_parcels, args.output_directory )
 
     util.report_elapsed_time()
