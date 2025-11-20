@@ -324,22 +324,19 @@ def get_kml_geometry( wards_filename, block_groups_filename ):
     return df_city, df_wards, df_block_groups
 
 
-# Configure geography styles
-def make_geography_styles( kml, df_wards, df_parcels, df_block_groups ):
-
-    doc = kml.newdocument( name="Lawrence" )
-
-    # Configure style for city boundary
+# Configure style for city boundary
+def make_city_style( doc ):
     city_style = simplekml.Style()
     city_style.linestyle.color = simplekml.Color.changealphaint( 150, simplekml.Color.cornsilk )
     city_style.linestyle.width = 15
     city_style.polystyle.fill = 1
     city_style.polystyle.color = '00ffffff'
     doc.styles.append( city_style )
+    return city_style
 
-    #
-    # Generate per-ward styles
-    #
+
+# Generate per-ward styles
+def make_ward_styles( df_wards, doc ):
 
     dc_ward_styles = {}
 
@@ -360,9 +357,11 @@ def make_geography_styles( kml, df_wards, df_parcels, df_block_groups ):
         doc.styles.append( ward_style )
         dc_ward_styles[s_ward] = ward_style
 
-    #
-    # Generate per-block-group styles
-    #
+    return dc_ward_styles
+
+
+# Generate weatherization rate styles
+def make_wx_rate_styles( df_parcels, df_block_groups, doc ):
 
     # Prepare dataframe of residential parcels
     df_res = df_parcels.copy()
@@ -394,7 +393,7 @@ def make_geography_styles( kml, df_wards, df_parcels, df_block_groups ):
 
     # Populate dictionary of block group styles
     s_color = simplekml.Color.rgb( 78, 124, 210 )
-    dc_block_group_styles = {}
+    dc_wx_rate_styles = {}
     for idx, row in df_block_groups.iterrows():
         cbg_style = simplekml.Style()
         cbg_style.linestyle.color = simplekml.Color.white
@@ -404,9 +403,28 @@ def make_geography_styles( kml, df_wards, df_parcels, df_block_groups ):
 
         # Save style in document and dictionary
         doc.styles.append( cbg_style )
-        dc_block_group_styles[row[TRACT_DASH_GROUP]] = cbg_style
+        dc_wx_rate_styles[row[TRACT_DASH_GROUP]] = cbg_style
 
-    return city_style, dc_ward_styles, dc_block_group_styles
+    return dc_wx_rate_styles
+
+
+# Configure geography styles
+def make_geography_styles( kml, df_wards, df_parcels, df_block_groups ):
+
+    doc = kml.newdocument( name="Lawrence" )
+
+    city_style = make_city_style( doc )
+
+    # Configure style for city boundary
+    city_style = make_city_style( doc )
+
+    # Generate per-ward styles
+    dc_ward_styles = make_ward_styles( df_wards, doc )
+
+    # Generate per-block-group styles
+    dc_wx_rate_styles = make_wx_rate_styles( df_parcels, df_block_groups, doc )
+
+    return city_style, dc_ward_styles, dc_wx_rate_styles
 
 
 # Generate KML file that represents geographical features of the city
@@ -419,7 +437,7 @@ def make_geography_kml_file( df_parcels, wards_filename, block_groups_filename, 
     kml = simplekml.Kml()
 
     # Configure styles
-    city_style, dc_ward_styles, dc_block_group_styles = make_geography_styles( kml, df_wards, df_parcels, df_block_groups )
+    city_style, dc_ward_styles, dc_wx_rate_styles = make_geography_styles( kml, df_wards, df_parcels, df_block_groups )
 
     # Generate city boundary with transparent fill
     root_folder = kml.newfolder( name='Geography' )
@@ -438,15 +456,15 @@ def make_geography_kml_file( df_parcels, wards_filename, block_groups_filename, 
 
     # Generate polygon for each census block group
     df_parcels[TRACT_DASH_GROUP] = df_parcels[TRACT].astype(str) + '-' + df_parcels[BLOCK_GROUP].astype(str)
-    block_group_folder = root_folder.newfolder( name='Census Block Groups' )
-    block_group_folder.visibility = 0
+    wx_rate_folder = root_folder.newfolder( name='Residential Weatherization' )
+    wx_rate_folder.visibility = 0
     for idx, row in df_block_groups.iterrows():
         s_block_group = row[TRACT_DASH_GROUP]
         n_pct = int( 100 * row[WX_RATE] )
-        poly = block_group_folder.newpolygon( name=f'{s_block_group}: Res Wx {n_pct}%' )
+        poly = wx_rate_folder.newpolygon( name=f'{s_block_group}: Res Wx {n_pct}%' )
         poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
         poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>Residential Weatherization: {n_pct}%</p>'
-        poly.style = dc_block_group_styles[s_block_group]
+        poly.style = dc_wx_rate_styles[s_block_group]
 
     # Save the KML file
     s_filename = '_geography.kml'
