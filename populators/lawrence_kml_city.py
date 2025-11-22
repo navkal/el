@@ -10,12 +10,8 @@ import sys
 sys.path.append( '../util' )
 import util
 
-
 # Nicknames
 GEOMETRY = util.GEOMETRY
-
-
-
 
 
 ######################

@@ -3,16 +3,11 @@
 import argparse
 import os
 
-import copy
-
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
 import simplekml
-
-import sqlite3
-import sqlalchemy
 
 import sys
 sys.path.append( '../util' )

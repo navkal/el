@@ -8,6 +8,7 @@ import sqlalchemy
 import pandas as pd
 import openpyxl
 import chardet
+import geopandas as gpd
 import simplekml
 import re
 import string
@@ -149,6 +150,7 @@ GEOMETRY = 'geometry'
 
 LAWRENCE_MIN_BLOCK_GROUP = 250100
 LAWRENCE_MAX_BLOCK_GROUP = 251899
+TRACT_DASH_GROUP = 'tract_dash_group'
 
 LAWRENCE_MIN_GEO_ID = 250092501000
 LAWRENCE_MAX_GEO_ID = 250092518999
@@ -3450,6 +3452,20 @@ def clear_directory( dir ):
     for f in files:
         os.remove(f)
     return
+
+
+# Extract block group geometries from shapefile
+def get_block_groups_geometry( block_groups_filename ):
+
+    # Get census block group data
+    df_block_groups = gpd.read_file( block_groups_filename )
+    df_block_groups[TRACTCE] = df_block_groups[TRACTCE].astype( int )
+    df_block_groups = df_block_groups[ ( df_block_groups[TRACTCE] >= LAWRENCE_MIN_BLOCK_GROUP ) & ( df_block_groups[TRACTCE] <= LAWRENCE_MAX_BLOCK_GROUP ) ]
+    df_block_groups[TRACT_DASH_GROUP] = ( df_block_groups[TRACTCE] / 100 ).astype(int).astype( str ) + '-' + df_block_groups[BLKGRPCE]
+    df_block_groups = df_block_groups[[GEOID, TRACT_DASH_GROUP, GEOMETRY]]
+    df_block_groups = df_block_groups.sort_values( by=[GEOID] )
+
+    return df_block_groups
 
 
 # Read series of input files in specified directory
