@@ -8,6 +8,7 @@ import sqlalchemy
 import pandas as pd
 import openpyxl
 import chardet
+import simplekml
 import re
 import string
 import datetime
@@ -151,6 +152,41 @@ LAWRENCE_MAX_BLOCK_GROUP = 251899
 
 LAWRENCE_MIN_GEO_ID = 250092501000
 LAWRENCE_MAX_GEO_ID = 250092518999
+COLOR = 'color'
+ICON = 'icon'
+
+ELECTRIC = 'Electric'
+GAS = 'Gas'
+OIL = 'Oil'
+
+# Lawrence wards
+A = 'A'
+B = 'B'
+C = 'C'
+D = 'D'
+E = 'E'
+F = 'F'
+
+# Map from column values to pin attributes
+KML_MAP = \
+{
+    COLOR:
+    {
+        A: f'{simplekml.Color.red}',
+        B: f'{simplekml.Color.orange}',
+        C: f'{simplekml.Color.yellow}',
+        D: f'{simplekml.Color.chartreuse}',
+        E: f'{simplekml.Color.cyan}|{simplekml.Color.green}',
+        F: f'{simplekml.Color.hotpink}|{simplekml.Color.purple}',
+    },
+    ICON:
+    {
+        ELECTRIC: 'square|0.7',
+        OIL: 'placemark_circle|1.1',
+        GAS: 'triangle|0.8',
+    },
+}
+
 
 LEFT_ADDR_FULL = 'left_addr_full'
 LEFT_ADDR_TRUNC = 'left_addr_trunc'
@@ -272,9 +308,6 @@ USE = 'Use'
 POSITION = 'position'
 
 NATIONAL_GRID = 'National Grid'
-ELECTRIC = 'Electric'
-GAS = 'Gas'
-OIL = 'Oil'
 
 GENDER = 'gender'
 
@@ -643,7 +676,6 @@ MODEL_ID = 'model_id'
 TRIM = 'trim'
 DEPARTMENT = 'department'
 PLATE_TYPE = 'plate_type'
-COLOR = 'color'
 REG_EXPIRATION_DATE = 'reg_expiration_date'
 TAX_YEAR = 'tax_year'
 BILL_NUMBER = 'bill_number'
