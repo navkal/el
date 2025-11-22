@@ -288,7 +288,7 @@ if __name__ == '__main__':
 
     # Generate KML files showing Lawrence geography
     print( '\n=======> KML geography' )
-    os.system( 'python lawrence_kml_geography.py -w ../xl/lawrence/geography/ward_precinct_geometry/WARDSPRECINCTS2022_POLY.shp -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/geography -c'.format( args.master_filename ) )
+    os.system( 'python lawrence_kml_geography.py -w ../xl/lawrence/geography/ward_precinct_geometry/WARDSPRECINCTS2022_POLY.shp -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/geography'.format( args.master_filename ) )
 
     # Generate summaries
     print( '\n=======> Summary' )

@@ -245,7 +245,6 @@ if __name__ == '__main__':
     parser.add_argument( '-w', dest='wards_filename',  help='Input filename - Name of shapefile containing Lawrence ward geometry', required=True )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
-    parser.add_argument( '-c', dest='clear_directory', action='store_true', help='Clear target directory first?' )
 
     args = parser.parse_args()
 
@@ -257,10 +256,6 @@ if __name__ == '__main__':
     print( ' Block Groups filename:', args.block_groups_filename )
     print( ' Output directory:', args.output_directory )
 
-    # Optionally clear target directory
-    if args.clear_directory:
-        print( ' Clearing output directory' )
-        util.clear_directory( args.output_directory )
 
     # Read the parcels table
     conn, cur, engine = util.open_database( args.master_filename, False )
