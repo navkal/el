@@ -281,9 +281,22 @@ if __name__ == '__main__':
     # <-- Lawrence master database build ends here <--
     # ----------------------------------------------------
 
+
+    # --------------------------------------------------
+    # --> Lawrence KML build starts here -->
+    # --------------------------------------------------
+
+    #-----------
+    # Geography
+    #-----------
+
     # Generate KML file showing Lawrence city boundary
     print( '\n=======> KML city' )
     os.system( 'python lawrence_kml_city.py -w ../xl/lawrence/geography/ward_precinct_geometry/WARDSPRECINCTS2022_POLY.shp -o ../db/kml/geography' )
+
+    # Generate KML file showing Lawrence ZIP code boundaries
+    print( '\n=======> KML ZIP codes' )
+    os.system( 'python lawrence_kml_zip_codes.py -z ../xl/lawrence/geography/zip_code_geometry/ZIP_Codes_(5-Digit)_from_HERE_(Navteq).shp -o ../db/kml/geography' )
 
     # Generate KML file showing wards boundaries
     print( '\n=======> KML wards' )
@@ -293,6 +306,10 @@ if __name__ == '__main__':
     print( '\n=======> KML block groups' )
     os.system( 'python lawrence_kml_block_groups.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -o ../db/kml/geography' )
 
+    #-----------
+    # Heat maps
+    #-----------
+
     # Generate KML file showing weatherization of households
     print( '\n=======> KML weatherization of households' )
     os.system( 'python lawrence_kml_wx_households.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/heat_maps'.format( args.master_filename ) )
@@ -301,14 +318,30 @@ if __name__ == '__main__':
     print( '\n=======> KML weatherization of residential parcels' )
     os.system( 'python lawrence_kml_wx_res_parcels.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/heat_maps'.format( args.master_filename ) )
 
+    #-----------
+    # Parcels
+    #-----------
+
     # Generate KML files showing Lawrence parcels partitioned in various ways
     print( '\n=======> KML parcels' )
     os.system( 'python lawrence_kml_parcels.py -m ../db/lawrence_master.sqlite -o ../db/kml/parcels -c'.format( args.master_filename ) )
 
+    # ----------------------------------------------------
+    # <-- Lawrence KML build ends here <--
+    # ----------------------------------------------------
+
+
+    # --------------------------------------------------
+    # --> Lawrence summary build starts here -->
+    # --------------------------------------------------
 
     # Generate summaries
     print( '\n=======> Summary' )
     os.system( 'python lawrence_summary.py -o ../db/summary -m {0} -c'.format( args.master_filename ) )
+
+    # ----------------------------------------------------
+    # <-- Lawrence summary build ends here <--
+    # ----------------------------------------------------
 
 
     # ----------------------------------------------------
