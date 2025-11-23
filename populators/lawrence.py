@@ -293,9 +293,9 @@ if __name__ == '__main__':
     print( '\n=======> KML block groups' )
     os.system( 'python lawrence_kml_block_groups.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -o ../db/kml/geography' )
 
-    # Generate KML file showing residential weatherization rates
-    print( '\n=======> KML residential weatherization rates' )
-    os.system( 'python lawrence_kml_wx_rates.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/heat_maps'.format( args.master_filename ) )
+    # Generate KML file showing weatherization of residential parcels
+    print( '\n=======> KML weatherization of residential parcels' )
+    os.system( 'python lawrence_kml_wx_res_parcels.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/heat_maps'.format( args.master_filename ) )
 
     # Generate KML files showing Lawrence parcels partitioned in various ways
     print( '\n=======> KML parcels' )

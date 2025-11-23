@@ -50,7 +50,7 @@ def get_wards_geometry( wards_filename ):
 # Configure per-ward styles
 def make_ward_styles( kml, df_wards ):
 
-    doc = kml.newdocument( name="Wards" )
+    doc = kml.newdocument( name='Wards' )
     dc_ward_styles = {}
 
     for idx, row in df_wards.iterrows():

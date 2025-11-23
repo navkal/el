@@ -26,14 +26,15 @@ WX_PERMIT = util.WX_PERMIT
 WX_RATE = 'wx_rate'
 WX_SATURATION = 'wx_saturation'
 
-
+# UI labels
+WX_OF_RES_PARCELS = 'Wx of Res Parcels'
 ######################
 
 
 # Generate weatherization rate styles
 def make_wx_rate_styles( kml, df_parcels, df_block_groups ):
 
-    doc = kml.newdocument( name="Res Wx Rates" )
+    doc = kml.newdocument( name=WX_OF_RES_PARCELS )
 
     # Prepare dataframe of residential parcels
     df_res = df_parcels.copy()
@@ -87,9 +88,9 @@ def make_wx_rate_kml_file( kml, doc, df_block_groups, dc_wx_rate_styles, output_
     for idx, row in df_block_groups.iterrows():
         s_block_group = row[TRACT_DASH_GROUP]
         n_pct = int( 100 * row[WX_RATE] )
-        poly = doc.newpolygon( name=f'{s_block_group}: Res Wx {n_pct}%' )
+        poly = doc.newpolygon( name=f'{s_block_group}: {n_pct}%' )
         poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
-        poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>Residential Weatherization: {n_pct}%</p>'
+        poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>{WX_OF_RES_PARCELS}: {n_pct}%</p>'
         poly.style = dc_wx_rate_styles[s_block_group]
 
     # Save the KML file
@@ -106,7 +107,7 @@ def make_wx_rate_kml_file( kml, doc, df_block_groups, dc_wx_rate_styles, output_
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML files showing residential weatherization rates in Lawrence' )
+    parser = argparse.ArgumentParser( description='Generate KML files showing weatherization of residential parcels in Lawrence' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
