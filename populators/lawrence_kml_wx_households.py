@@ -15,9 +15,9 @@ import util
 
 # Nicknames
 TRACT_DASH_GROUP = util.TRACT_DASH_GROUP
-WX_PERMIT = util.WX_PERMIT
 HEAT_MAP_VALUE = util.HEAT_MAP_VALUE
 OCC = util.TOTAL_OCCUPANCY
+WX_PERMIT = util.WX_PERMIT
 
 # UI labels
 HEAT_MAP_NAME = 'Wx of Households'
@@ -27,7 +27,7 @@ HEAT_MAP_NAME = 'Wx of Households'
 # Compute heat map values
 def compute_heat_map_values( df_heat_map, df_block_groups ):
 
-    # Add weatherization rate column to block groups dataframe
+    # Add column of heat map values to block groups dataframe
     for idx, row in df_block_groups.copy().iterrows():
 
         # Find residential parcels in current block group
@@ -51,7 +51,7 @@ def compute_heat_map_values( df_heat_map, df_block_groups ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML file showing weatherization of households in Lawrence' )
+    parser = argparse.ArgumentParser( description='Generate KML heat map showing weatherization of households in Lawrence' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
@@ -81,6 +81,6 @@ if __name__ == '__main__':
     doc, dc_heat_map_styles = util.make_heat_map_styles( df_block_groups, kml, HEAT_MAP_NAME )
 
     # Generate weatherization rate KML file
-    util.make_heat_map_kml_file( kml, doc, df_block_groups, HEAT_MAP_NAME, dc_heat_map_styles, args.output_directory, 'wx_households.kml' )
+    util.make_heat_map_kml_file( kml, doc, df_block_groups, HEAT_MAP_NAME, dc_heat_map_styles, args.output_directory, 'wx_households.kml', s_unit='%' )
 
     util.report_elapsed_time()

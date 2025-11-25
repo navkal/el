@@ -16,10 +16,13 @@ import util
 # Nicknames
 TRACT_DASH_GROUP = util.TRACT_DASH_GROUP
 HEAT_MAP_VALUE = util.HEAT_MAP_VALUE
-WX_PERMIT = util.WX_PERMIT
+OCC = util.TOTAL_OCCUPANCY
+FUEL = util.HEATING_FUEL_DESC
+ELEC = util.ELECTRIC
+OIL = util.OIL
 
 # UI labels
-HEAT_MAP_NAME = 'Wx of Res Parcels'
+HEAT_MAP_NAME = 'Electric and Oil Households'
 ######################
 
 
@@ -32,13 +35,12 @@ def compute_heat_map_values( df_heat_map, df_block_groups ):
         # Find residential parcels in current block group
         df_cbg_res = df_heat_map[df_heat_map[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
 
-        # Find which residential parcels are weatherized
-        df_cbg_wx = df_cbg_res[ ~df_cbg_res[WX_PERMIT].isnull() ]
+        # Isolate residential parcels with either electric or oil heat
+        df_cbg_elec_oil = df_cbg_res[ df_cbg_res[FUEL].isin( [ELEC, OIL] ) ]
 
-        # Calculate weatherization rate for current block group
-        n_wx = len( df_cbg_wx )
-        n_res = len( df_cbg_res )
-        df_block_groups.at[idx, HEAT_MAP_VALUE] = ( 100 * n_wx / n_res ) if n_res != 0 else 0
+        # Count households in current block group with electric or oil heat
+        n_households = df_cbg_elec_oil[OCC].sum()
+        df_block_groups.at[idx, HEAT_MAP_VALUE] = n_households
 
     return df_block_groups
 
@@ -50,7 +52,7 @@ def compute_heat_map_values( df_heat_map, df_block_groups ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML heat map showing weatherization of residential parcels in Lawrence' )
+    parser = argparse.ArgumentParser( description='Generate KML heat map showing electric- and oil-heated households in Lawrence' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
@@ -80,6 +82,6 @@ if __name__ == '__main__':
     doc, dc_heat_map_styles = util.make_heat_map_styles( df_block_groups, kml, HEAT_MAP_NAME )
 
     # Generate weatherization rate KML file
-    util.make_heat_map_kml_file( kml, doc, df_block_groups, HEAT_MAP_NAME, dc_heat_map_styles, args.output_directory, 'wx_res_parcels.kml', s_unit='%' )
+    util.make_heat_map_kml_file( kml, doc, df_block_groups, HEAT_MAP_NAME, dc_heat_map_styles, args.output_directory, 'elec_oil_households.kml' )
 
     util.report_elapsed_time()

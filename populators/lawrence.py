@@ -310,6 +310,10 @@ if __name__ == '__main__':
     # Heat maps
     #-----------
 
+    # Generate KML file showing electric- and oil-heated households
+    print( '\n=======> KML oil and electric households' )
+    os.system( 'python lawrence_kml_elec_oil_households.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/heat_maps'.format( args.master_filename ) )
+
     # Generate KML file showing weatherization of households
     print( '\n=======> KML weatherization of households' )
     os.system( 'python lawrence_kml_wx_households.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/heat_maps'.format( args.master_filename ) )

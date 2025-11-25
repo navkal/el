@@ -2047,15 +2047,15 @@ def make_heat_map_styles( df_block_groups, kml, s_heat_map_name ):
 
 
 # Generate KML heat map of data partitioned by census block groups
-def make_heat_map_kml_file( kml, doc, df_block_groups, s_label, dc_heat_map_styles, output_directory, s_filename ):
+def make_heat_map_kml_file( kml, doc, df_block_groups, s_label, dc_heat_map_styles, output_directory, s_filename, s_unit='' ):
 
     # Generate polygon for each census block group
     for idx, row in df_block_groups.iterrows():
         s_block_group = row[TRACT_DASH_GROUP]
         n_value = int( row[HEAT_MAP_VALUE] )
-        poly = doc.newpolygon( name=f'{s_block_group}: {n_value}%' )
+        poly = doc.newpolygon( name=f'{s_block_group}: {n_value}{s_unit}' )
         poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
-        poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>{s_label}: {n_value}%</p>'
+        poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>{s_label}: {n_value}{s_unit}</p>'
         poly.style = dc_heat_map_styles[s_block_group]
 
     # Save the KML file
