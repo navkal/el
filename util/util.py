@@ -1994,6 +1994,26 @@ CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L_OldFormat'] = CONSISTENT_COLUMN_
 CONSISTENT_COLUMN_NAMES['RawElectricMeters_L'] = CONSISTENT_COLUMN_NAMES['RawElectricMeters_A']
 
 
+# Prepare dataframe of residential parcels for use in heat map generation
+def get_res_heat_map_data( master_filename ):
+
+    # Read the parcels table
+    conn, cur, engine = open_database( master_filename, False )
+    print( '' )
+    s_table = 'Assessment_L_Parcels'
+    print( f'Reading {s_table}' )
+    df_parcels = pd.read_sql_table( s_table, engine )
+
+    # Prepare dataframe of residential parcels
+    df_res_heat_map = df_parcels.copy()
+    df_res_heat_map = df_res_heat_map[df_res_heat_map[IS_RESIDENTIAL] == YES]
+
+    # Add census block group labeling
+    df_res_heat_map[TRACT_DASH_GROUP] = df_res_heat_map[CENSUS_TRACT].astype(str) + '-' + df_res_heat_map[CENSUS_BLOCK_GROUP].astype(str)
+
+    return df_res_heat_map
+
+
 # Generate heat map styles
 def make_heat_map_styles( df_block_groups, kml, s_heat_map_name ):
 

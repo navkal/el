@@ -1,7 +1,6 @@
 # Copyright 2025 Energize Andover.  All rights reserved.
 
 import argparse
-import os
 
 import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
@@ -15,17 +14,10 @@ import util
 
 
 # Nicknames
-GEOID = util.GEOID
-GEOMETRY = util.GEOMETRY
-TRACT = util.CENSUS_TRACT
-BLOCK_GROUP = util.CENSUS_BLOCK_GROUP
 TRACT_DASH_GROUP = util.TRACT_DASH_GROUP
-IS_RES = util.IS_RESIDENTIAL
-OCC = util.TOTAL_OCCUPANCY
-YES = util.YES
 WX_PERMIT = util.WX_PERMIT
 HEAT_MAP_VALUE = util.HEAT_MAP_VALUE
-HEAT_MAP_OPACITY = util.HEAT_MAP_OPACITY
+OCC = util.TOTAL_OCCUPANCY
 
 # UI labels
 HEAT_MAP_NAME = 'Wx of Households'
@@ -33,18 +25,13 @@ HEAT_MAP_NAME = 'Wx of Households'
 
 
 # Compute heat map values
-def compute_heat_map_values( df_parcels, df_block_groups ):
-
-    # Prepare dataframe of residential parcels
-    df_res = df_parcels.copy()
-    df_res = df_res[df_res[IS_RES] == YES]
-    df_res[TRACT_DASH_GROUP] = df_res[TRACT].astype(str) + '-' + df_res[BLOCK_GROUP].astype(str)
+def compute_heat_map_values( df_heat_map, df_block_groups ):
 
     # Add weatherization rate column to block groups dataframe
     for idx, row in df_block_groups.copy().iterrows():
 
         # Find residential parcels in current block group
-        df_cbg_res = df_res[df_res[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+        df_cbg_res = df_heat_map[df_heat_map[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
 
         # Find which residential parcels are weatherized
         df_cbg_wx = df_cbg_res[ ~df_cbg_res[WX_PERMIT].isnull() ]
@@ -78,21 +65,17 @@ if __name__ == '__main__':
     print( ' Block Groups filename:', args.block_groups_filename )
     print( ' Output directory:', args.output_directory )
 
-    # Create empty KML
-    kml = simplekml.Kml()
-
-    # Read the parcels table
-    conn, cur, engine = util.open_database( args.master_filename, False )
-    print( '' )
-    s_table = 'Assessment_L_Parcels'
-    print( f'Reading {s_table}' )
-    df_parcels = pd.read_sql_table( s_table, engine )
+    # Get dataframe of residential parcels for generating the heat map
+    df_res_heat_map = util.get_res_heat_map_data( args.master_filename)
 
     # Extract block group geometries from shapefile
     df_block_groups = util.get_block_groups_geometry( args.block_groups_filename )
 
     # Compute heat map values
-    df_block_groups = compute_heat_map_values( df_parcels, df_block_groups )
+    df_block_groups = compute_heat_map_values( df_res_heat_map, df_block_groups )
+
+    # Create empty KML
+    kml = simplekml.Kml()
 
     # Generate heat map styles
     doc, dc_heat_map_styles = util.make_heat_map_styles( df_block_groups, kml, HEAT_MAP_NAME )
