@@ -23,18 +23,16 @@ TRACT_DASH_GROUP = util.TRACT_DASH_GROUP
 IS_RES = util.IS_RESIDENTIAL
 YES = util.YES
 WX_PERMIT = util.WX_PERMIT
-WX_RATE = 'wx_rate'
-WX_SATURATION = 'wx_saturation'
+HEAT_MAP_VALUE = util.HEAT_MAP_VALUE
+HEAT_MAP_OPACITY = util.HEAT_MAP_OPACITY
 
 # UI labels
-WX_OF_RES_PARCELS = 'Wx of Res Parcels'
+HEAT_MAP_NAME = 'Wx of Res Parcels'
 ######################
 
 
-# Generate weatherization rate styles
-def make_wx_rate_styles( kml, df_parcels, df_block_groups ):
-
-    doc = kml.newdocument( name=WX_OF_RES_PARCELS )
+# Compute heat map values
+def compute_heat_map_values( df_parcels, df_block_groups ):
 
     # Prepare dataframe of residential parcels
     df_res = df_parcels.copy()
@@ -52,54 +50,10 @@ def make_wx_rate_styles( kml, df_parcels, df_block_groups ):
 
         # Calculate weatherization rate for current block group
         n_wx = len( df_cbg_wx )
-        n_parcels = len( df_cbg_res )
-        df_block_groups.at[idx, WX_RATE] = ( n_wx / n_parcels ) if n_parcels != 0 else 0
+        n_res = len( df_cbg_res )
+        df_block_groups.at[idx, HEAT_MAP_VALUE] = ( 100 * n_wx / n_res ) if n_res != 0 else 0
 
-    # Add saturation column to block groups dataframe
-    n_max_saturation = 255
-    f_min_rate = df_block_groups[WX_RATE].min()
-    f_max_rate = df_block_groups[WX_RATE].max()
-    f_normalized_rate = f_max_rate - f_min_rate
-
-    for idx, row in df_block_groups.copy().iterrows():
-        n_sat = n_max_saturation * ( row[WX_RATE] - f_min_rate ) / f_normalized_rate
-        df_block_groups.at[idx, WX_SATURATION] = n_sat
-    df_block_groups[WX_SATURATION] = df_block_groups[WX_SATURATION].astype( int )
-
-    # Populate dictionary of block group styles
-    s_color = simplekml.Color.rgb( 78, 124, 210 )
-    dc_wx_rate_styles = {}
-    for idx, row in df_block_groups.iterrows():
-        cbg_style = simplekml.Style()
-        cbg_style.linestyle.color = simplekml.Color.white
-        cbg_style.linestyle.width = 3
-        cbg_style.polystyle.fill = 1
-        cbg_style.polystyle.color = simplekml.Color.changealphaint( row[WX_SATURATION], s_color )
-
-        # Save style in document and dictionary
-        doc.styles.append( cbg_style )
-        dc_wx_rate_styles[row[TRACT_DASH_GROUP]] = cbg_style
-
-    return doc, dc_wx_rate_styles
-
-
-# Generate weatherization rate KML file
-def make_wx_rate_kml_file( kml, doc, df_block_groups, dc_wx_rate_styles, output_directory ):
-
-    # Generate polygon for each census block group
-    for idx, row in df_block_groups.iterrows():
-        s_block_group = row[TRACT_DASH_GROUP]
-        n_pct = int( 100 * row[WX_RATE] )
-        poly = doc.newpolygon( name=f'{s_block_group}: {n_pct}%' )
-        poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
-        poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>{WX_OF_RES_PARCELS}: {n_pct}%</p>'
-        poly.style = dc_wx_rate_styles[s_block_group]
-
-    # Save the KML file
-    s_filename = 'wx_res_parcels.kml'
-    print( '' )
-    print( f'Saving weatherization rates KML file "{s_filename}"' )
-    kml.save( os.path.join( output_directory, s_filename ) )
+    return df_block_groups
 
 
 
@@ -136,10 +90,13 @@ if __name__ == '__main__':
     # Extract block group geometries from shapefile
     df_block_groups = util.get_block_groups_geometry( args.block_groups_filename )
 
-    # Generate weatherization rate styles
-    doc, dc_wx_rate_styles = make_wx_rate_styles( kml, df_parcels, df_block_groups )
+    # Compute heat map values
+    df_block_groups = compute_heat_map_values( df_parcels, df_block_groups )
+
+    # Generate heat map styles
+    doc, dc_heat_map_styles = util.make_heat_map_styles( df_block_groups, kml, HEAT_MAP_NAME )
 
     # Generate weatherization rate KML file
-    make_wx_rate_kml_file( kml, doc, df_block_groups, dc_wx_rate_styles, args.output_directory )
+    util.make_heat_map_kml_file( kml, doc, df_block_groups, HEAT_MAP_NAME, dc_heat_map_styles, args.output_directory, 'wx_res_parcels.kml' )
 
     util.report_elapsed_time()
