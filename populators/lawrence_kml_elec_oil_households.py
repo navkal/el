@@ -82,6 +82,6 @@ if __name__ == '__main__':
     doc, dc_heat_map_styles = util.make_heat_map_styles( df_block_groups, kml, HEAT_MAP_NAME )
 
     # Generate weatherization rate KML file
-    util.make_heat_map_kml_file( kml, doc, df_block_groups, HEAT_MAP_NAME, dc_heat_map_styles, args.output_directory, 'elec_oil_households.kml' )
+    util.make_heat_map_kml_file( kml, doc, df_block_groups, HEAT_MAP_NAME, dc_heat_map_styles, args.output_directory, 'elec_oil_households' )
 
     util.report_elapsed_time()
