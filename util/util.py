@@ -150,10 +150,12 @@ GEOMETRY = 'geometry'
 
 LAWRENCE_MIN_BLOCK_GROUP = 250100
 LAWRENCE_MAX_BLOCK_GROUP = 251899
-TRACT_DASH_GROUP = 'tract_dash_group'
 
-LAWRENCE_ZIPS = ['01840','01841','01842','01843']
+TRACT_DASH_GROUP = 'tract_dash_group'
+HEAT_MAP_NAME = 'heat_map_name'
+HEAT_MAP_LABEL = 'heat_map_label'
 HEAT_MAP_VALUE = 'heat_map_value'
+HEAT_MAP_UNIT = 'heat_map_unit'
 HEAT_MAP_OPACITY = 'heat_map_opacity'
 
 LAWRENCE_MIN_GEO_ID = 250092501000
@@ -164,6 +166,9 @@ ICON = 'icon'
 ELECTRIC = 'Electric'
 GAS = 'Gas'
 OIL = 'Oil'
+
+LAWRENCE_ZIPS = ['01840','01841','01842','01843']
+
 
 # Lawrence wards
 A = 'A'
@@ -1995,27 +2000,20 @@ CONSISTENT_COLUMN_NAMES['RawElectricMeters_L'] = CONSISTENT_COLUMN_NAMES['RawEle
 
 
 # Prepare dataframe of residential parcels for use in heat map generation
-def get_res_heat_map_data( master_filename ):
-
-    # Read the parcels table
-    conn, cur, engine = open_database( master_filename, False )
-    print( '' )
-    s_table = 'Assessment_L_Parcels'
-    print( f'Reading {s_table}' )
-    df_parcels = pd.read_sql_table( s_table, engine )
+def get_res_heat_map_data( df_parcels ):
 
     # Prepare dataframe of residential parcels
-    df_res_heat_map = df_parcels.copy()
-    df_res_heat_map = df_res_heat_map[df_res_heat_map[IS_RESIDENTIAL] == YES]
+    df_res_parcels = df_parcels.copy()
+    df_res_parcels = df_res_parcels[df_res_parcels[IS_RESIDENTIAL] == YES]
 
     # Add census block group labeling
-    df_res_heat_map[TRACT_DASH_GROUP] = df_res_heat_map[CENSUS_TRACT].astype(str) + '-' + df_res_heat_map[CENSUS_BLOCK_GROUP].astype(str)
+    df_res_parcels[TRACT_DASH_GROUP] = df_res_parcels[CENSUS_TRACT].astype(str) + '-' + df_res_parcels[CENSUS_BLOCK_GROUP].astype(str)
 
-    return df_res_heat_map
+    return df_res_parcels
 
 
 # Generate heat map styles
-def make_heat_map_styles( df_block_groups, kml, s_heat_map_name ):
+def make_heat_map_styles( df_block_groups, kml, s_label ):
 
     # Add saturation column to block groups dataframe
     n_max_saturation = 255
@@ -2031,7 +2029,7 @@ def make_heat_map_styles( df_block_groups, kml, s_heat_map_name ):
     # Populate dictionary of block group styles
     s_color = LAWRENCE_BLUE
     dc_heat_map_styles = {}
-    doc = kml.newdocument( name=s_heat_map_name )
+    doc = kml.newdocument( name=s_label )
     for idx, row in df_block_groups.iterrows():
         cbg_style = simplekml.Style()
         cbg_style.linestyle.color = simplekml.Color.white
@@ -2047,9 +2045,7 @@ def make_heat_map_styles( df_block_groups, kml, s_heat_map_name ):
 
 
 # Generate KML heat map of data partitioned by census block groups
-def make_heat_map_kml_file( kml, doc, df_block_groups, s_label, dc_heat_map_styles, output_directory, s_filename, s_unit='' ):
-
-    df_block_groups[HEAT_MAP_VALUE] = df_block_groups[HEAT_MAP_VALUE].astype( int )
+def make_heat_map_kml_file( kml, doc, df_block_groups, s_unit, s_label, dc_heat_map_styles, output_directory, s_name ):
 
     # Generate polygon for each census block group
     for idx, row in df_block_groups.iterrows():
@@ -2062,22 +2058,9 @@ def make_heat_map_kml_file( kml, doc, df_block_groups, s_label, dc_heat_map_styl
 
     # Save the KML file
     print( '' )
-    s_saving_to = f'{s_filename}.kml'
+    s_saving_to = f'{s_name}.kml'
     print( f'Saving "{s_label}" KML file "{s_saving_to}"' )
     kml.save( os.path.join( output_directory, s_saving_to ) )
-
-    # Prepare dataframe for CSV output
-    df_block_groups = df_block_groups[[GEOID, TRACT_DASH_GROUP, HEAT_MAP_VALUE]]
-    if s_unit and ( not s_unit.startswith( ' ' ) ):
-        s_unit = ' ' + s_unit
-    s_col_rename = "_".join( ( s_label + s_unit ).replace( '.', '_' ).replace( ':', '' ).replace( '%', 'pct' ).lower().split() )
-    df_block_groups = df_block_groups.rename( columns={ TRACT_DASH_GROUP: CENSUS_BLOCK_GROUP, HEAT_MAP_VALUE: s_col_rename } )
-
-    # Save the CSV file
-    print( '' )
-    s_saving_to = f'{s_filename}.csv'
-    print( f'Saving "{s_label}" CSV file "{s_saving_to}"' )
-    df_block_groups.to_csv( os.path.join( output_directory, s_saving_to ), index=False )
 
 
 # Format with-units suffix for Lawrence ward data
