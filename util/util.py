@@ -150,16 +150,10 @@ GEOMETRY = 'geometry'
 
 LAWRENCE_MIN_BLOCK_GROUP = 250100
 LAWRENCE_MAX_BLOCK_GROUP = 251899
-
-TRACT_DASH_GROUP = 'tract_dash_group'
-HEAT_MAP_NAME = 'heat_map_name'
-HEAT_MAP_LABEL = 'heat_map_label'
-HEAT_MAP_VALUE = 'heat_map_value'
-HEAT_MAP_UNIT = 'heat_map_unit'
-HEAT_MAP_OPACITY = 'heat_map_opacity'
-
 LAWRENCE_MIN_GEO_ID = 250092501000
 LAWRENCE_MAX_GEO_ID = 250092518999
+TRACT_DASH_GROUP = 'tract_dash_group'
+
 COLOR = 'color'
 ICON = 'icon'
 
@@ -198,7 +192,6 @@ KML_MAP = \
     },
 }
 
-LAWRENCE_BLUE = simplekml.Color.rgb( 78, 124, 210 )
 
 
 LEFT_ADDR_FULL = 'left_addr_full'
@@ -1997,70 +1990,6 @@ CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Gas'] = CONSISTENT_COLUMN_NAMES['Raw
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L_OldFormat'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A_OldFormat']
 CONSISTENT_COLUMN_NAMES['RawElectricMeters_L'] = CONSISTENT_COLUMN_NAMES['RawElectricMeters_A']
-
-
-# Prepare dataframe of residential parcels for use in heat map generation
-def get_res_heat_map_data( df_parcels ):
-
-    # Prepare dataframe of residential parcels
-    df_res_parcels = df_parcels.copy()
-    df_res_parcels = df_res_parcels[df_res_parcels[IS_RESIDENTIAL] == YES]
-
-    # Add census block group labeling
-    df_res_parcels[TRACT_DASH_GROUP] = df_res_parcels[CENSUS_TRACT].astype(str) + '-' + df_res_parcels[CENSUS_BLOCK_GROUP].astype(str)
-
-    return df_res_parcels
-
-
-# Generate heat map styles
-def make_heat_map_styles( df_block_groups, kml, s_label ):
-
-    # Add saturation column to block groups dataframe
-    n_max_saturation = 255
-    f_min_rate = df_block_groups[HEAT_MAP_VALUE].min()
-    f_max_rate = df_block_groups[HEAT_MAP_VALUE].max()
-    f_normalized_rate = f_max_rate - f_min_rate
-
-    for idx, row in df_block_groups.copy().iterrows():
-        n_sat = n_max_saturation * ( row[HEAT_MAP_VALUE] - f_min_rate ) / f_normalized_rate
-        df_block_groups.at[idx, HEAT_MAP_OPACITY] = n_sat
-    df_block_groups[HEAT_MAP_OPACITY] = df_block_groups[HEAT_MAP_OPACITY].astype( int )
-
-    # Populate dictionary of block group styles
-    s_color = LAWRENCE_BLUE
-    dc_heat_map_styles = {}
-    doc = kml.newdocument( name=s_label )
-    for idx, row in df_block_groups.iterrows():
-        cbg_style = simplekml.Style()
-        cbg_style.linestyle.color = simplekml.Color.white
-        cbg_style.linestyle.width = 3
-        cbg_style.polystyle.fill = 1
-        cbg_style.polystyle.color = simplekml.Color.changealphaint( row[HEAT_MAP_OPACITY], s_color )
-
-        # Save style in document and dictionary
-        doc.styles.append( cbg_style )
-        dc_heat_map_styles[row[TRACT_DASH_GROUP]] = cbg_style
-
-    return doc, dc_heat_map_styles
-
-
-# Generate KML heat map of data partitioned by census block groups
-def make_heat_map_kml_file( kml, doc, df_block_groups, s_unit, s_label, dc_heat_map_styles, output_directory, s_name ):
-
-    # Generate polygon for each census block group
-    for idx, row in df_block_groups.iterrows():
-        s_block_group = row[TRACT_DASH_GROUP]
-        n_value = row[HEAT_MAP_VALUE]
-        poly = doc.newpolygon( name=f'{s_block_group}: {n_value}{s_unit}' )
-        poly.outerboundaryis = list( row[GEOMETRY].exterior.coords )
-        poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>{s_label}: {n_value}{s_unit}</p>'
-        poly.style = dc_heat_map_styles[s_block_group]
-
-    # Save the KML file
-    print( '' )
-    s_saving_to = f'{s_name}.kml'
-    print( f'Saving "{s_label}" KML file "{s_saving_to}"' )
-    kml.save( os.path.join( output_directory, s_saving_to ) )
 
 
 # Format with-units suffix for Lawrence ward data

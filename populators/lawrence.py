@@ -312,7 +312,7 @@ if __name__ == '__main__':
 
     # Generate KML files showing Census Block Group heat maps
     print( '\n=======> KML heat maps' )
-    os.system( 'python lawrence_kml_heat_maps.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -m ../db/lawrence_master.sqlite -o ../db/kml/heat_maps'.format( args.master_filename ) )
+    os.system( 'python lawrence_kml_heat_maps.py -b ../xl/lawrence/geography/census_block_group_geometry/tl_2020_25_bg.shp -c ../xl/lawrence/census/heat_map_values.csv -m {} -o ../db/kml/heat_maps'.format( args.master_filename ) )
 
     #-----------
     # Parcels
@@ -320,7 +320,7 @@ if __name__ == '__main__':
 
     # Generate KML files showing Lawrence parcels partitioned in various ways
     print( '\n=======> KML parcels' )
-    os.system( 'python lawrence_kml_parcels.py -m ../db/lawrence_master.sqlite -o ../db/kml/parcels -c'.format( args.master_filename ) )
+    os.system( 'python lawrence_kml_parcels.py -m {} -o ../db/kml/parcels -c'.format( args.master_filename ) )
 
     # ----------------------------------------------------
     # <-- Lawrence KML build ends here <--
