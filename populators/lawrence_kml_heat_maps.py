@@ -286,6 +286,15 @@ def make_heat_map_styles( df_block_groups, kml, s_label ):
 # Generate KML heat map of data partitioned by census block groups
 def make_heat_map_kml_file( kml, doc, df_block_groups, s_prefix, s_unit, s_label, dc_heat_map_styles, output_directory, s_name ):
 
+    # Enhance document name
+    n_min = df_block_groups[HEAT_MAP_VALUE].min()
+    n_max = df_block_groups[HEAT_MAP_VALUE].max()
+    s_min = f'{s_prefix}{n_min:,}{s_unit}'
+    s_max = f'{s_prefix}{n_max:,}{s_unit}'
+    s_to = ' - ' if ( s_prefix or s_unit ) else '-'
+    s_range = f': {s_min}{s_to}{s_max}'
+    doc.name += s_range
+
     # Generate polygon for each census block group
     for idx, row in df_block_groups.iterrows():
         s_block_group = row[TRACT_DASH_GROUP]
