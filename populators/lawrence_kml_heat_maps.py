@@ -7,6 +7,7 @@ pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
 import simplekml
+import numpy as np
 
 import os
 
@@ -16,8 +17,6 @@ import util
 
 
 # Nicknames
-LAWRENCE_BLUE = simplekml.Color.rgb( 78, 124, 210 )
-
 GEOID = util.GEOID
 TRACT_DASH_GROUP = util.TRACT_DASH_GROUP
 OCC = util.TOTAL_OCCUPANCY
@@ -30,7 +29,8 @@ HEAT_MAP_LABEL = 'heat_map_label'
 HEAT_MAP_PREFIX = 'heat_map_prefix'
 HEAT_MAP_UNIT = 'heat_map_unit'
 HEAT_MAP_VALUE = 'heat_map_value'
-HEAT_MAP_OPACITY = 'heat_map_opacity'
+HEAT_MAP_SPECTRUM = 'heat_map_spectrum'
+SPECTRUM_INDEX = 'spectrum_index'
 
 
 
@@ -48,64 +48,97 @@ POV_HOUSEHOLDS_PCT = POV_HOUSEHOLDS + '_pct'
 MED_INCOME = 'median_household_income'
 
 
+# Generate a color spectrumm represented as a list of RGB tuples
+def make_spectrum( ls_rbg_start, ls_rbg_end, n_colors ):
+
+    # Set start and end colors
+    start_color = np.array( ls_rbg_start )
+    end_color = np.array( ls_rbg_end )
+
+    # Generate spectrum of rgb colors and convert from numpy to native python types
+    ls_spectrum_np = np.linspace( ls_rbg_start, end_color, num=n_colors, dtype=int )
+    ls_spectrum = [tuple(color) for color in ls_spectrum_np]
+
+    return ls_spectrum
+
+SPECTRUM_GRAY = [230, 230, 230]
+SPECTRUM_BLUE = [0, 0, 255]
+SPECTRUM_LEN = 255
+SPECTRUM_HIGH_IS_GOOD = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )  # High is good
+SPECTRUM_HIGH_IS_BAD = make_spectrum( SPECTRUM_GRAY, SPECTRUM_BLUE, SPECTRUM_LEN )  # High is bad
+
+
 # Dictionary of heat maps to be generated
-dc_heat_maps = \
+DC_HEAT_MAPS = \
 {
     ELEC_OIL_HOUSEHOLDS:
     {
         HEAT_MAP_LABEL: 'Electric and Oil Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
     WX_HOUSEHOLDS_PCT:
     {
         HEAT_MAP_LABEL: 'Wx of Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_GOOD,
     },
     WX_RES_PARCELS_PCT:
     {
         HEAT_MAP_LABEL: 'Wx of Res Parcels',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_GOOD,
     },
     POPULATION:
     {
         HEAT_MAP_LABEL: 'Population',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
     HOUSEHOLDS:
     {
         HEAT_MAP_LABEL: 'Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
     POV_POPULATION:
     {
         HEAT_MAP_LABEL: 'Poverty Population',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
     POV_HOUSEHOLDS:
     {
         HEAT_MAP_LABEL: 'Poverty Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
     POV_HOUSEHOLDS_PCT:
     {
         HEAT_MAP_LABEL: 'Percent Poverty Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
     MED_INCOME:
     {
         HEAT_MAP_LABEL: 'Median Household Income',
         HEAT_MAP_PREFIX: '$',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_GOOD,
     },
 }
+
+
+
+
 
 ######################
 
@@ -252,21 +285,21 @@ def make_heatmap_from_stats( df_stats, df_block_groups, s_name ):
 
 
 # Generate heat map styles
-def make_heat_map_styles( df_block_groups, kml, s_label ):
+def make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs ):
 
-    # Add saturation column to block groups dataframe
-    n_max_saturation = 255
+    s_label = dc_heat_map_attrs[HEAT_MAP_LABEL]
+    ls_spectrum = dc_heat_map_attrs[HEAT_MAP_SPECTRUM]
+
+    # Add spectrum index column to block groups dataframe
     f_min_rate = df_block_groups[HEAT_MAP_VALUE].min()
     f_max_rate = df_block_groups[HEAT_MAP_VALUE].max()
     f_normalized_rate = f_max_rate - f_min_rate
 
     for idx, row in df_block_groups.copy().iterrows():
-        n_sat = n_max_saturation * ( row[HEAT_MAP_VALUE] - f_min_rate ) / f_normalized_rate
-        df_block_groups.at[idx, HEAT_MAP_OPACITY] = n_sat
-    df_block_groups[HEAT_MAP_OPACITY] = df_block_groups[HEAT_MAP_OPACITY].astype( int )
+        df_block_groups.at[idx, SPECTRUM_INDEX] = ( len( ls_spectrum ) - 1 ) * ( row[HEAT_MAP_VALUE] - f_min_rate ) / f_normalized_rate
+    df_block_groups[SPECTRUM_INDEX] = df_block_groups[SPECTRUM_INDEX].astype( int )
 
     # Populate dictionary of block group styles
-    s_color = LAWRENCE_BLUE
     dc_heat_map_styles = {}
     doc = kml.newdocument( name=s_label )
     for idx, row in df_block_groups.iterrows():
@@ -274,7 +307,8 @@ def make_heat_map_styles( df_block_groups, kml, s_label ):
         cbg_style.linestyle.color = simplekml.Color.white
         cbg_style.linestyle.width = 3
         cbg_style.polystyle.fill = 1
-        cbg_style.polystyle.color = simplekml.Color.changealphaint( row[HEAT_MAP_OPACITY], s_color )
+        rgb = ls_spectrum[row[SPECTRUM_INDEX]]
+        cbg_style.polystyle.color = simplekml.Color.changealphaint( 150, simplekml.Color.rgb( *rgb ))
 
         # Save style in document and dictionary
         doc.styles.append( cbg_style )
@@ -284,7 +318,11 @@ def make_heat_map_styles( df_block_groups, kml, s_label ):
 
 
 # Generate KML heat map of data partitioned by census block groups
-def make_heat_map_kml_file( kml, doc, df_block_groups, s_prefix, s_unit, s_label, dc_heat_map_styles, output_directory, s_name ):
+def make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_heat_map_styles, output_directory, s_name ):
+
+    s_prefix = dc_heat_map_attrs[HEAT_MAP_PREFIX]
+    s_unit = dc_heat_map_attrs[HEAT_MAP_UNIT]
+    s_label = dc_heat_map_attrs[HEAT_MAP_LABEL]
 
     # Enhance document name
     n_min = df_block_groups[HEAT_MAP_VALUE].min()
@@ -349,13 +387,10 @@ if __name__ == '__main__':
     df_block_groups = util.get_block_groups_geometry( args.block_groups_filename )
 
     # Generate heat maps
-    for s_name in dc_heat_maps:
+    for s_name in DC_HEAT_MAPS:
 
         # Get attributes of current heat map
-        dc = dc_heat_maps[s_name]
-        s_label = dc[HEAT_MAP_LABEL]
-        s_prefix = dc[HEAT_MAP_PREFIX]
-        s_unit = dc[HEAT_MAP_UNIT]
+        dc_heat_map_attrs = DC_HEAT_MAPS[s_name]
 
         # Compute heat map values
         f = getattr( Compute, s_name )
@@ -365,14 +400,14 @@ if __name__ == '__main__':
         kml = simplekml.Kml()
 
         # Generate heat map styles
-        doc, dc_heat_map_styles = make_heat_map_styles( df_block_groups, kml, s_label )
+        doc, dc_heat_map_styles = make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs )
 
         # Generate KML heat map file
-        make_heat_map_kml_file( kml, doc, df_block_groups, s_prefix, s_unit, s_label, dc_heat_map_styles, args.output_directory, s_name )
+        make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_heat_map_styles, args.output_directory, s_name )
 
 
     # Save heat map values to database
-    df_block_groups = df_block_groups.drop( columns=[util.GEOMETRY, HEAT_MAP_VALUE, HEAT_MAP_OPACITY] )
+    df_block_groups = df_block_groups.drop( columns=[util.GEOMETRY, HEAT_MAP_VALUE, SPECTRUM_INDEX] )
     util.create_table( 'HeatMaps_L', conn, cur, df=df_block_groups )
 
     util.report_elapsed_time()
