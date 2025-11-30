@@ -61,7 +61,7 @@ def make_spectrum( ls_rbg_start, ls_rbg_end, n_colors ):
 
     return ls_spectrum
 
-SPECTRUM_GRAY = [230, 230, 230]
+SPECTRUM_GRAY = [220, 220, 220]
 SPECTRUM_BLUE = [0, 0, 255]
 SPECTRUM_LEN = 255
 SPECTRUM_HIGH_IS_GOOD = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )  # High is good
@@ -305,7 +305,7 @@ def make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs ):
     for idx, row in df_block_groups.iterrows():
         cbg_style = simplekml.Style()
         cbg_style.linestyle.color = simplekml.Color.white
-        cbg_style.linestyle.width = 3
+        cbg_style.linestyle.width = 5
         cbg_style.polystyle.fill = 1
         rgb = ls_spectrum[row[SPECTRUM_INDEX]]
         cbg_style.polystyle.color = simplekml.Color.changealphaint( 150, simplekml.Color.rgb( *rgb ))
