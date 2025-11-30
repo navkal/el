@@ -64,8 +64,8 @@ def make_spectrum( ls_rbg_start, ls_rbg_end, n_colors ):
 SPECTRUM_GRAY = [220, 220, 220]
 SPECTRUM_BLUE = [0, 0, 255]
 SPECTRUM_LEN = 255
-SPECTRUM_HIGH_IS_GOOD = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )  # High is good
-SPECTRUM_HIGH_IS_BAD = make_spectrum( SPECTRUM_GRAY, SPECTRUM_BLUE, SPECTRUM_LEN )  # High is bad
+SPECTRUM_HIGH_IS_GOOD = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )
+SPECTRUM_HIGH_IS_BAD = SPECTRUM_HIGH_IS_GOOD[::-1]
 
 
 # Dictionary of heat maps to be generated
