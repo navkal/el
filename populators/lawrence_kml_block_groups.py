@@ -22,7 +22,7 @@ TRACT_DASH_GROUP = util.TRACT_DASH_GROUP
 def make_block_group_style():
     block_group_style = simplekml.Style()
     block_group_style.linestyle.color = simplekml.Color.white
-    block_group_style.linestyle.width = 5
+    block_group_style.linestyle.width = 4
     block_group_style.polystyle.fill = 1
     block_group_style.polystyle.color = '00ffffff'
     return block_group_style

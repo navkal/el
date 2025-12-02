@@ -29,13 +29,14 @@ HEAT_MAP_LABEL = 'heat_map_label'
 HEAT_MAP_PREFIX = 'heat_map_prefix'
 HEAT_MAP_UNIT = 'heat_map_unit'
 HEAT_MAP_VALUE = 'heat_map_value'
-HEAT_MAP_SPECTRUM = 'heat_map_spectrum'
 SPECTRUM_INDEX = 'spectrum_index'
 
 
 
 # Heat map names
 ELEC_OIL_HOUSEHOLDS = 'elec_oil_households'
+ELEC_OIL_HOUSEHOLDS_NWX = 'elec_oil_households_nwx'
+ELEC_OIL_HOUSEHOLDS_WX = 'elec_oil_households_wx'
 WX_HOUSEHOLDS_PCT = 'wx_households_pct'
 WX_RES_PARCELS_PCT = 'wx_res_parcels_pct'
 
@@ -64,8 +65,7 @@ def make_spectrum( ls_rbg_start, ls_rbg_end, n_colors ):
 SPECTRUM_GRAY = [200, 200, 200]
 SPECTRUM_BLUE = [0, 50, 255]
 SPECTRUM_LEN = 256
-SPECTRUM_HIGH_IS_GOOD = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )
-SPECTRUM_HIGH_IS_BAD = SPECTRUM_HIGH_IS_GOOD[::-1]
+HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )
 
 
 # Dictionary of heat maps to be generated
@@ -73,66 +73,69 @@ DC_HEAT_MAPS = \
 {
     ELEC_OIL_HOUSEHOLDS:
     {
-        HEAT_MAP_LABEL: 'Electric and Oil Households',
+        HEAT_MAP_LABEL: 'Elec & Oil Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
-    WX_HOUSEHOLDS_PCT:
+    ELEC_OIL_HOUSEHOLDS_NWX:
     {
-        HEAT_MAP_LABEL: 'Wx of Households',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '%',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_GOOD,
-    },
-    WX_RES_PARCELS_PCT:
-    {
-        HEAT_MAP_LABEL: 'Wx of Res Parcels',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '%',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_GOOD,
-    },
-    POPULATION:
-    {
-        HEAT_MAP_LABEL: 'Population',
+        HEAT_MAP_LABEL: 'Elec & Oil Households Nwx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
+    },
+    ELEC_OIL_HOUSEHOLDS_WX:
+    {
+        HEAT_MAP_LABEL: 'Elec & Oil Households Wx',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
     },
     HOUSEHOLDS:
     {
         HEAT_MAP_LABEL: 'Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
-    },
-    POV_POPULATION:
-    {
-        HEAT_MAP_LABEL: 'Poverty Population',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
-    },
-    POV_HOUSEHOLDS:
-    {
-        HEAT_MAP_LABEL: 'Poverty Households',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
-    },
-    POV_HOUSEHOLDS_PCT:
-    {
-        HEAT_MAP_LABEL: 'Percent Poverty Households',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '%',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_BAD,
     },
     MED_INCOME:
     {
         HEAT_MAP_LABEL: 'Median Household Income',
         HEAT_MAP_PREFIX: '$',
         HEAT_MAP_UNIT: '',
-        HEAT_MAP_SPECTRUM: SPECTRUM_HIGH_IS_GOOD,
+    },
+    POPULATION:
+    {
+        HEAT_MAP_LABEL: 'Population',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    POV_HOUSEHOLDS:
+    {
+        HEAT_MAP_LABEL: 'Poverty Households',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    POV_HOUSEHOLDS_PCT:
+    {
+        HEAT_MAP_LABEL: 'Percent Poverty Households',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '%',
+    },
+    POV_POPULATION:
+    {
+        HEAT_MAP_LABEL: 'Poverty Population',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    WX_HOUSEHOLDS_PCT:
+    {
+        HEAT_MAP_LABEL: 'Wx of Households',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '%',
+    },
+    WX_RES_PARCELS_PCT:
+    {
+        HEAT_MAP_LABEL: 'Wx of Res Parcels',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '%',
     },
 }
 
@@ -201,6 +204,54 @@ class Compute:
         return df_block_groups
 
 
+    def elec_oil_households_nwx( df_res_parcels, df_stats, df_block_groups, s_name ):
+
+        # Add column of heat map values to block groups dataframe
+        for idx, row in df_block_groups.copy().iterrows():
+
+            # Find residential parcels in current block group
+            df_cbg_res = df_res_parcels[df_res_parcels[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+
+            # Isolate residential parcels with either electric or oil heat
+            df_cbg_elec_oil = df_cbg_res[ df_cbg_res[FUEL].isin( [ELEC, OIL] ) ]
+
+            # Find which electric and oil parcels are not weatherized
+            df_cbg_elec_oil_nwx = df_cbg_res[ df_cbg_res[WX_PERMIT].isnull() ]
+
+            # Count households in current block group with electric or oil heat and no weatherization
+            n_households = df_cbg_elec_oil_nwx[OCC].sum()
+            df_block_groups.at[idx, HEAT_MAP_VALUE] = n_households
+
+        df_block_groups[HEAT_MAP_VALUE] = df_block_groups[HEAT_MAP_VALUE].astype( int )
+        df_block_groups[s_name] = df_block_groups[HEAT_MAP_VALUE]
+
+        return df_block_groups
+
+
+    def elec_oil_households_wx( df_res_parcels, df_stats, df_block_groups, s_name ):
+
+        # Add column of heat map values to block groups dataframe
+        for idx, row in df_block_groups.copy().iterrows():
+
+            # Find residential parcels in current block group
+            df_cbg_res = df_res_parcels[df_res_parcels[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+
+            # Isolate residential parcels with either electric or oil heat
+            df_cbg_elec_oil = df_cbg_res[ df_cbg_res[FUEL].isin( [ELEC, OIL] ) ]
+
+            # Find which electric and oil parcels are weatherized
+            df_cbg_elec_oil_wx = df_cbg_res[ ~df_cbg_res[WX_PERMIT].isnull() ]
+
+            # Count households in current block group with electric or oil heat and weatherization
+            n_households = df_cbg_elec_oil_wx[OCC].sum()
+            df_block_groups.at[idx, HEAT_MAP_VALUE] = n_households
+
+        df_block_groups[HEAT_MAP_VALUE] = df_block_groups[HEAT_MAP_VALUE].astype( int )
+        df_block_groups[s_name] = df_block_groups[HEAT_MAP_VALUE]
+
+        return df_block_groups
+
+
     def wx_households_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
 
         # Add column of heat map values to block groups dataframe
@@ -245,13 +296,13 @@ class Compute:
         return df_block_groups
 
 
-    def population( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
-
     def households( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
 
-    def poverty_population( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def median_household_income( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+
+    def population( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
 
     def poverty_households( df_res_parcels, df_stats, df_block_groups, s_name ):
@@ -260,7 +311,7 @@ class Compute:
     def poverty_households_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
 
-    def median_household_income( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def poverty_population( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
 
 
@@ -288,7 +339,6 @@ def make_heatmap_from_stats( df_stats, df_block_groups, s_name ):
 def make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs ):
 
     s_label = dc_heat_map_attrs[HEAT_MAP_LABEL]
-    ls_spectrum = dc_heat_map_attrs[HEAT_MAP_SPECTRUM]
 
     # Add spectrum index column to block groups dataframe
     f_min_rate = df_block_groups[HEAT_MAP_VALUE].min()
@@ -296,7 +346,7 @@ def make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs ):
     f_normalized_rate = f_max_rate - f_min_rate
 
     for idx, row in df_block_groups.copy().iterrows():
-        df_block_groups.at[idx, SPECTRUM_INDEX] = ( len( ls_spectrum ) - 1 ) * ( row[HEAT_MAP_VALUE] - f_min_rate ) / f_normalized_rate
+        df_block_groups.at[idx, SPECTRUM_INDEX] = ( len( HEAT_MAP_SPECTRUM ) - 1 ) * ( row[HEAT_MAP_VALUE] - f_min_rate ) / f_normalized_rate
     df_block_groups[SPECTRUM_INDEX] = df_block_groups[SPECTRUM_INDEX].astype( int )
 
     # Populate dictionary of block group styles
@@ -305,9 +355,9 @@ def make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs ):
     for idx, row in df_block_groups.iterrows():
         cbg_style = simplekml.Style()
         cbg_style.linestyle.color = simplekml.Color.white
-        cbg_style.linestyle.width = 5
+        cbg_style.linestyle.width = 4
         cbg_style.polystyle.fill = 1
-        rgb = ls_spectrum[row[SPECTRUM_INDEX]]
+        rgb = HEAT_MAP_SPECTRUM[row[SPECTRUM_INDEX]]
         cbg_style.polystyle.color = simplekml.Color.changealphaint( 150, simplekml.Color.rgb( *rgb ))
 
         # Save style in document and dictionary
@@ -356,7 +406,7 @@ def make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_hea
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML heat map showing electric- and oil-heated households in Lawrence' )
+    parser = argparse.ArgumentParser( description='Generate KML heat maps showing various metrics pertaining to Lawrence census block groups' )
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-c', dest='census_data_filename',  help='Input filename - Name of CSV file containing US Census data partitioned by block groups', required=True )
