@@ -61,9 +61,9 @@ def make_spectrum( ls_rbg_start, ls_rbg_end, n_colors ):
 
     return ls_spectrum
 
-SPECTRUM_GRAY = [220, 220, 220]
-SPECTRUM_BLUE = [0, 0, 255]
-SPECTRUM_LEN = 255
+SPECTRUM_GRAY = [200, 200, 200]
+SPECTRUM_BLUE = [0, 50, 255]
+SPECTRUM_LEN = 256
 SPECTRUM_HIGH_IS_GOOD = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )
 SPECTRUM_HIGH_IS_BAD = SPECTRUM_HIGH_IS_GOOD[::-1]
 
