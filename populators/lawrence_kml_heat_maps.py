@@ -48,7 +48,7 @@ def make_spectrum( ls_rbg_start, ls_rbg_end, n_colors ):
 SPECTRUM_GRAY = [200, 200, 200]
 SPECTRUM_BLUE = [0, 50, 255]
 SPECTRUM_LEN = 256
-HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )
+HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_GRAY, SPECTRUM_BLUE, SPECTRUM_LEN )
 
 
 
