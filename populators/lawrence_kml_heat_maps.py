@@ -32,23 +32,6 @@ HEAT_MAP_VALUE = 'heat_map_value'
 SPECTRUM_INDEX = 'spectrum_index'
 
 
-
-# Heat map names
-ELEC_OIL_HOUSEHOLDS = 'elec_oil_households'
-ELEC_OIL_HOUSEHOLDS_NWX = 'elec_oil_households_nwx'
-ELEC_OIL_HOUSEHOLDS_WX = 'elec_oil_households_wx'
-WX_HOUSEHOLDS_PCT = 'wx_households_pct'
-WX_RES_PARCELS_PCT = 'wx_res_parcels_pct'
-
-POPULATION = util.POPULATION
-HOUSEHOLDS = util.HOUSEHOLDS
-POV_ = 'poverty_'
-POV_POPULATION = POV_ + POPULATION
-POV_HOUSEHOLDS = POV_ + HOUSEHOLDS
-POV_HOUSEHOLDS_PCT = POV_HOUSEHOLDS + '_pct'
-MED_INCOME = 'median_household_income'
-
-
 # Generate a color spectrumm represented as a list of RGB tuples
 def make_spectrum( ls_rbg_start, ls_rbg_end, n_colors ):
 
@@ -66,6 +49,29 @@ SPECTRUM_GRAY = [200, 200, 200]
 SPECTRUM_BLUE = [0, 50, 255]
 SPECTRUM_LEN = 256
 HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_BLUE, SPECTRUM_GRAY, SPECTRUM_LEN )
+
+
+
+# Heat map names
+ELEC_OIL_HOUSEHOLDS = 'elec_oil_households'
+ELEC_OIL_HOUSEHOLDS_NWX = 'elec_oil_households_nwx'
+ELEC_OIL_HOUSEHOLDS_WX = 'elec_oil_households_wx'
+HOUSEHOLDS = 'households'
+HOUSEHOLDS_NWX = 'households_nwx'
+HOUSEHOLDS_WX = 'households_wx'
+HOUSEHOLDS_WX_PCT = 'households_wx_pct'
+MED_INCOME = 'median_household_income'
+POPULATION = 'population'
+POVERTY_HOUSEHOLDS = 'poverty_households'
+POVERTY_HOUSEHOLDS_PCT = 'poverty_households_pct'
+POVERTY_POPULATION = 'poverty_population'
+RES_PARCELS_NWX = 'res_parcels_nwx'
+RES_PARCELS_WX = 'res_parcels_wx'
+RES_PARCELS_WX_PCT = 'res_parcels_wx_pct'
+
+
+
+
 
 
 # Dictionary of heat maps to be generated
@@ -91,9 +97,27 @@ DC_HEAT_MAPS = \
     },
     HOUSEHOLDS:
     {
-        HEAT_MAP_LABEL: 'Households',
+        HEAT_MAP_LABEL: 'Households (Census)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_NWX:
+    {
+        HEAT_MAP_LABEL: 'Households Nwx',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_WX:
+    {
+        HEAT_MAP_LABEL: 'Households Wx',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_WX_PCT:
+    {
+        HEAT_MAP_LABEL: 'Households Wx Pct',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '%',
     },
     MED_INCOME:
     {
@@ -107,33 +131,39 @@ DC_HEAT_MAPS = \
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
-    POV_HOUSEHOLDS:
+    POVERTY_HOUSEHOLDS:
     {
         HEAT_MAP_LABEL: 'Poverty Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
-    POV_HOUSEHOLDS_PCT:
+    POVERTY_HOUSEHOLDS_PCT:
     {
         HEAT_MAP_LABEL: 'Percent Poverty Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
     },
-    POV_POPULATION:
+    POVERTY_POPULATION:
     {
         HEAT_MAP_LABEL: 'Poverty Population',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
-    WX_HOUSEHOLDS_PCT:
+    RES_PARCELS_NWX:
     {
-        HEAT_MAP_LABEL: 'Wx of Households',
+        HEAT_MAP_LABEL: 'Res Parcels Nwx',
         HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '%',
+        HEAT_MAP_UNIT: '',
     },
-    WX_RES_PARCELS_PCT:
+    RES_PARCELS_WX:
     {
-        HEAT_MAP_LABEL: 'Wx of Res Parcels',
+        HEAT_MAP_LABEL: 'Res Parcels Wx',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    RES_PARCELS_WX_PCT:
+    {
+        HEAT_MAP_LABEL: 'Res Parcels Wx Pct',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
     },
@@ -144,36 +174,6 @@ DC_HEAT_MAPS = \
 
 
 ######################
-
-
-# Prepare dataframe of block group statistics for use in heat map generation
-def get_block_group_stats( census_data_filename ):
-
-    df_stats = pd.read_csv( census_data_filename )
-    df_stats[POV_HOUSEHOLDS_PCT] = round( 100 * df_stats[POV_HOUSEHOLDS] / df_stats[HOUSEHOLDS] )
-    df_stats[POV_HOUSEHOLDS_PCT] = df_stats[POV_HOUSEHOLDS_PCT].astype( int )
-    df_stats[GEOID] = df_stats[GEOID].astype(str)
-    return df_stats
-
-
-# Prepare dataframe of residential parcels for use in heat map generation
-def get_res_parcels( engine ):
-
-    # Read the parcels table
-    print( '' )
-    s_table = 'Assessment_L_Parcels'
-    print( f'Reading {s_table}' )
-    print( '' )
-    df_parcels = pd.read_sql_table( s_table, engine )
-
-    # Prepare dataframe of residential parcels
-    df_res_parcels = df_parcels.copy()
-    df_res_parcels = df_res_parcels[df_res_parcels[util.IS_RESIDENTIAL] == util.YES]
-
-    # Add census block group labeling
-    df_res_parcels[TRACT_DASH_GROUP] = df_res_parcels[util.CENSUS_TRACT].astype(str) + '-' + df_res_parcels[util.CENSUS_BLOCK_GROUP].astype(str)
-
-    return df_res_parcels
 
 
 # --------------------------------------------
@@ -216,7 +216,7 @@ class Compute:
             df_cbg_elec_oil = df_cbg_res[ df_cbg_res[FUEL].isin( [ELEC, OIL] ) ]
 
             # Find which electric and oil parcels are not weatherized
-            df_cbg_elec_oil_nwx = df_cbg_res[ df_cbg_res[WX_PERMIT].isnull() ]
+            df_cbg_elec_oil_nwx = df_cbg_elec_oil[ df_cbg_elec_oil[WX_PERMIT].isnull() ]
 
             # Count households in current block group with electric or oil heat and no weatherization
             n_households = df_cbg_elec_oil_nwx[OCC].sum()
@@ -240,7 +240,7 @@ class Compute:
             df_cbg_elec_oil = df_cbg_res[ df_cbg_res[FUEL].isin( [ELEC, OIL] ) ]
 
             # Find which electric and oil parcels are weatherized
-            df_cbg_elec_oil_wx = df_cbg_res[ ~df_cbg_res[WX_PERMIT].isnull() ]
+            df_cbg_elec_oil_wx = df_cbg_elec_oil[ ~df_cbg_elec_oil[WX_PERMIT].isnull() ]
 
             # Count households in current block group with electric or oil heat and weatherization
             n_households = df_cbg_elec_oil_wx[OCC].sum()
@@ -252,7 +252,53 @@ class Compute:
         return df_block_groups
 
 
-    def wx_households_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def households( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+
+
+    def households_nwx( df_res_parcels, df_stats, df_block_groups, s_name ):
+
+        # Add column of heat map values to block groups dataframe
+        for idx, row in df_block_groups.copy().iterrows():
+
+            # Find residential parcels in current block group
+            df_cbg_res = df_res_parcels[df_res_parcels[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+
+            # Find which residential parcels are not weatherized
+            df_cbg_nwx = df_cbg_res[ df_cbg_res[WX_PERMIT].isnull() ]
+
+            # Count households that are not weatherized
+            n_nwx = df_cbg_nwx[OCC].sum()
+            df_block_groups.at[idx, HEAT_MAP_VALUE] = n_nwx
+
+        df_block_groups[HEAT_MAP_VALUE] = df_block_groups[HEAT_MAP_VALUE].astype( int )
+        df_block_groups[s_name] = df_block_groups[HEAT_MAP_VALUE]
+
+        return df_block_groups
+
+
+    def households_wx( df_res_parcels, df_stats, df_block_groups, s_name ):
+
+        # Add column of heat map values to block groups dataframe
+        for idx, row in df_block_groups.copy().iterrows():
+
+            # Find residential parcels in current block group
+            df_cbg_res = df_res_parcels[df_res_parcels[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+
+            # Find which residential parcels are weatherized
+            df_cbg_wx = df_cbg_res[ ~df_cbg_res[WX_PERMIT].isnull() ]
+
+            # Count households that are weatherized
+            n_wx = df_cbg_wx[OCC].sum()
+            df_block_groups.at[idx, HEAT_MAP_VALUE] = n_wx
+
+        df_block_groups[HEAT_MAP_VALUE] = df_block_groups[HEAT_MAP_VALUE].astype( int )
+        df_block_groups[s_name] = df_block_groups[HEAT_MAP_VALUE]
+
+        return df_block_groups
+
+
+    def households_wx_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
 
         # Add column of heat map values to block groups dataframe
         for idx, row in df_block_groups.copy().iterrows():
@@ -274,7 +320,65 @@ class Compute:
         return df_block_groups
 
 
-    def wx_res_parcels_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def median_household_income( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+
+    def population( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+
+    def poverty_households( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+
+    def poverty_households_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+
+    def poverty_population( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+
+
+    def res_parcels_nwx( df_res_parcels, df_stats, df_block_groups, s_name ):
+
+        # Add column of heat map values to block groups dataframe
+        for idx, row in df_block_groups.copy().iterrows():
+
+            # Find residential parcels in current block group
+            df_cbg_res = df_res_parcels[df_res_parcels[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+
+            # Find which residential parcels are weatherized
+            df_cbg_nwx = df_cbg_res[ df_cbg_res[WX_PERMIT].isnull() ]
+
+            # Count weatherized residential parcels for current block group
+            n_nwx = len( df_cbg_nwx )
+            df_block_groups.at[idx, HEAT_MAP_VALUE] = n_nwx
+
+        df_block_groups[HEAT_MAP_VALUE] = df_block_groups[HEAT_MAP_VALUE].astype( int )
+        df_block_groups[s_name] = df_block_groups[HEAT_MAP_VALUE]
+
+        return df_block_groups
+
+
+    def res_parcels_wx( df_res_parcels, df_stats, df_block_groups, s_name ):
+
+        # Add column of heat map values to block groups dataframe
+        for idx, row in df_block_groups.copy().iterrows():
+
+            # Find residential parcels in current block group
+            df_cbg_res = df_res_parcels[df_res_parcels[TRACT_DASH_GROUP] == row[TRACT_DASH_GROUP]]
+
+            # Find which residential parcels are weatherized
+            df_cbg_wx = df_cbg_res[ ~df_cbg_res[WX_PERMIT].isnull() ]
+
+            # Count weatherized residential parcels for current block group
+            n_wx = len( df_cbg_wx )
+            df_block_groups.at[idx, HEAT_MAP_VALUE] = n_wx
+
+        df_block_groups[HEAT_MAP_VALUE] = df_block_groups[HEAT_MAP_VALUE].astype( int )
+        df_block_groups[s_name] = df_block_groups[HEAT_MAP_VALUE]
+
+        return df_block_groups
+
+
+    def res_parcels_wx_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
 
         # Add column of heat map values to block groups dataframe
         for idx, row in df_block_groups.copy().iterrows():
@@ -296,25 +400,6 @@ class Compute:
         return df_block_groups
 
 
-    def households( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
-
-    def median_household_income( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
-
-    def population( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
-
-    def poverty_households( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
-
-    def poverty_households_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
-
-    def poverty_population( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
-
-
 def make_heatmap_from_stats( df_stats, df_block_groups, s_name ):
 
     # Add column of heat map values to block groups dataframe
@@ -333,6 +418,37 @@ def make_heatmap_from_stats( df_stats, df_block_groups, s_name ):
 # --------------------------------------------
 # <-- Functions to compute heat map values <--
 # --------------------------------------------
+
+
+
+# Prepare dataframe of block group statistics for use in heat map generation
+def get_block_group_stats( census_data_filename ):
+
+    df_stats = pd.read_csv( census_data_filename )
+    df_stats[POVERTY_HOUSEHOLDS_PCT] = round( 100 * df_stats[POVERTY_HOUSEHOLDS] / df_stats[HOUSEHOLDS] )
+    df_stats[POVERTY_HOUSEHOLDS_PCT] = df_stats[POVERTY_HOUSEHOLDS_PCT].astype( int )
+    df_stats[GEOID] = df_stats[GEOID].astype(str)
+    return df_stats
+
+
+# Prepare dataframe of residential parcels for use in heat map generation
+def get_res_parcels( engine ):
+
+    # Read the parcels table
+    print( '' )
+    s_table = 'Assessment_L_Parcels'
+    print( f'Reading {s_table}' )
+    print( '' )
+    df_parcels = pd.read_sql_table( s_table, engine )
+
+    # Prepare dataframe of residential parcels
+    df_res_parcels = df_parcels.copy()
+    df_res_parcels = df_res_parcels[df_res_parcels[util.IS_RESIDENTIAL] == util.YES]
+
+    # Add census block group labeling
+    df_res_parcels[TRACT_DASH_GROUP] = df_res_parcels[util.CENSUS_TRACT].astype(str) + '-' + df_res_parcels[util.CENSUS_BLOCK_GROUP].astype(str)
+
+    return df_res_parcels
 
 
 # Generate heat map styles
