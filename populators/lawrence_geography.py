@@ -89,7 +89,7 @@ def transform_polygon( poly ):
 def load_parcels_geometry():
 
     # Read raw wards table from the shapefile
-    df = gpd.read_file( '../xl/lawrence/geography/parcel_geometry/M149TaxPar_CY23_FY24.shp' )
+    df = gpd.read_file( args.parcels_filename )
 
     # Generate mblu-format column from parcel ID
     df[MBLU] = df['MAP_PAR_ID']
