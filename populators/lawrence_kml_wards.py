@@ -97,7 +97,7 @@ def make_wards_kml_file( kml, doc, df_wards, dc_ward_styles, output_directory ):
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML files showing wards in Lawrence' )
+    parser = argparse.ArgumentParser( description='Generate a KML file showing wards in Lawrence' )
     parser.add_argument( '-w', dest='wards_filename',  help='Input filename - Name of shapefile containing Lawrence ward geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
     args = parser.parse_args()

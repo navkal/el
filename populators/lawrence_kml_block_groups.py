@@ -56,7 +56,7 @@ def make_block_groups_kml_file( df_block_groups, block_group_style, output_direc
 if __name__ == '__main__':
 
     # Read arguments
-    parser = argparse.ArgumentParser( description='Generate KML files showing census block groups in Lawrence' )
+    parser = argparse.ArgumentParser( description='Generate a KML file showing census block groups in Lawrence' )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
     args = parser.parse_args()
