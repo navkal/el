@@ -9,6 +9,9 @@ pd.set_option( 'display.width', 1000 )
 import simplekml
 import numpy as np
 
+import xml.etree.ElementTree as ET
+import uuid
+
 import os
 
 import sys
@@ -51,27 +54,28 @@ SPECTRUM_LEN = 256
 HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_GRAY, SPECTRUM_BLUE, SPECTRUM_LEN )
 
 
-
 # Heat map names
+ELEC_OIL_FOLDER = 'elec_oil_folder'
 ELEC_OIL_HOUSEHOLDS = 'elec_oil_households'
 ELEC_OIL_HOUSEHOLDS_NWX = 'elec_oil_households_nwx'
 ELEC_OIL_HOUSEHOLDS_WX = 'elec_oil_households_wx'
+HOUSEHOLDS_FOLDER = 'households_folder'
 HOUSEHOLDS = 'households'
 HOUSEHOLDS_NWX = 'households_nwx'
 HOUSEHOLDS_WX = 'households_wx'
 HOUSEHOLDS_WX_PCT = 'households_wx_pct'
+CENSUS_FOLDER = 'census_folder'
 MED_INCOME = 'median_household_income'
 POPULATION = 'population'
 POVERTY_HOUSEHOLDS = 'poverty_households'
 POVERTY_HOUSEHOLDS_PCT = 'poverty_households_pct'
 POVERTY_POPULATION = 'poverty_population'
+RES_PARCELS_FOLDER = 'res_parcels_folder'
 RES_PARCELS_NWX = 'res_parcels_nwx'
 RES_PARCELS_WX = 'res_parcels_wx'
 RES_PARCELS_WX_PCT = 'res_parcels_wx_pct'
 
-
-
-
+XML = 'xml'
 
 
 # Dictionary of heat maps to be generated
@@ -79,101 +83,124 @@ DC_HEAT_MAPS = \
 {
     ELEC_OIL_HOUSEHOLDS:
     {
-        HEAT_MAP_LABEL: 'Elec & Oil Households',
+        HEAT_MAP_LABEL: '# Elec & Oil Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     ELEC_OIL_HOUSEHOLDS_NWX:
     {
-        HEAT_MAP_LABEL: 'Elec & Oil Households Nwx',
+        HEAT_MAP_LABEL: '# Elec & Oil Households Nwx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     ELEC_OIL_HOUSEHOLDS_WX:
     {
-        HEAT_MAP_LABEL: 'Elec & Oil Households Wx',
+        HEAT_MAP_LABEL: '# Elec & Oil Households Wx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     HOUSEHOLDS:
     {
-        HEAT_MAP_LABEL: 'Households (Census)',
+        HEAT_MAP_LABEL: '# Households (Census)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     HOUSEHOLDS_NWX:
     {
-        HEAT_MAP_LABEL: 'Households Nwx',
+        HEAT_MAP_LABEL: '# Households Nwx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     HOUSEHOLDS_WX:
     {
-        HEAT_MAP_LABEL: 'Households Wx',
+        HEAT_MAP_LABEL: '# Households Wx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     HOUSEHOLDS_WX_PCT:
     {
-        HEAT_MAP_LABEL: 'Households Wx Pct',
+        HEAT_MAP_LABEL: '% Households Wx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
     },
     MED_INCOME:
     {
-        HEAT_MAP_LABEL: 'Median Household Income',
+        HEAT_MAP_LABEL: '# Median Household Income',
         HEAT_MAP_PREFIX: '$',
         HEAT_MAP_UNIT: '',
     },
     POPULATION:
     {
-        HEAT_MAP_LABEL: 'Population',
+        HEAT_MAP_LABEL: '# Population',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     POVERTY_HOUSEHOLDS:
     {
-        HEAT_MAP_LABEL: 'Poverty Households',
+        HEAT_MAP_LABEL: '# Poverty Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     POVERTY_HOUSEHOLDS_PCT:
     {
-        HEAT_MAP_LABEL: 'Percent Poverty Households',
+        HEAT_MAP_LABEL: '% Poverty Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
     },
     POVERTY_POPULATION:
     {
-        HEAT_MAP_LABEL: 'Poverty Population',
+        HEAT_MAP_LABEL: '# Poverty Population',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     RES_PARCELS_NWX:
     {
-        HEAT_MAP_LABEL: 'Res Parcels Nwx',
+        HEAT_MAP_LABEL: '# Res Parcels Nwx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     RES_PARCELS_WX:
     {
-        HEAT_MAP_LABEL: 'Res Parcels Wx',
+        HEAT_MAP_LABEL: '# Res Parcels Wx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     RES_PARCELS_WX_PCT:
     {
-        HEAT_MAP_LABEL: 'Res Parcels Wx Pct',
+        HEAT_MAP_LABEL: '% Res Parcels Wx',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
     },
 }
 
 
+FOLDER_LABEL = 'folder_label'
+FOLDER_CONTENTS = 'folder_contents'
 
-
-
-######################
+# Dictionary of folders for grouping heat maps
+DC_FOLDERS = \
+{
+    ELEC_OIL_FOLDER: \
+    {
+        FOLDER_LABEL: 'Elec & Oil',
+        FOLDER_CONTENTS: [ELEC_OIL_HOUSEHOLDS, ELEC_OIL_HOUSEHOLDS_NWX, ELEC_OIL_HOUSEHOLDS_WX],
+    },
+    HOUSEHOLDS_FOLDER: \
+    {
+        FOLDER_LABEL: 'Households',
+        FOLDER_CONTENTS: [HOUSEHOLDS, HOUSEHOLDS_NWX, HOUSEHOLDS_WX, HOUSEHOLDS_WX_PCT],
+    },
+    CENSUS_FOLDER: \
+    {
+        FOLDER_LABEL: 'Elec & Oil',
+        FOLDER_CONTENTS: [MED_INCOME, POPULATION, POVERTY_HOUSEHOLDS, POVERTY_HOUSEHOLDS_PCT, POVERTY_POPULATION],
+    },
+    RES_PARCELS_FOLDER: \
+    {
+        FOLDER_LABEL: 'Elec & Oil',
+        FOLDER_CONTENTS: [RES_PARCELS_NWX, RES_PARCELS_WX, RES_PARCELS_WX_PCT],
+    },
+}
 
 
 # --------------------------------------------
@@ -253,7 +280,7 @@ class Compute:
 
 
     def households( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
 
     def households_nwx( df_res_parcels, df_stats, df_block_groups, s_name ):
@@ -321,19 +348,19 @@ class Compute:
 
 
     def median_household_income( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
     def population( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
     def poverty_households( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
     def poverty_households_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
     def poverty_population( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heatmap_from_stats( df_stats, df_block_groups, s_name )
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
 
     def res_parcels_nwx( df_res_parcels, df_stats, df_block_groups, s_name ):
@@ -400,7 +427,7 @@ class Compute:
         return df_block_groups
 
 
-def make_heatmap_from_stats( df_stats, df_block_groups, s_name ):
+def make_heat_map_from_stats( df_stats, df_block_groups, s_name ):
 
     # Add column of heat map values to block groups dataframe
     for idx, row in df_block_groups.copy().iterrows():
@@ -514,9 +541,97 @@ def make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_hea
     print( f'Saving "{s_label}" KML file "{s_saving_to}"' )
     kml.save( os.path.join( output_directory, s_saving_to ) )
 
+    return kml
 
 
-######################
+# Replace simplekml-generated integer IDs with unique IDs
+def replace_ids_with_uuids( kml, output_directory, s_name ):
+
+    # Get XML string from Kml object
+    s_kml = kml.kml()
+
+    # Parse XML
+    root = ET.fromstring( s_kml )
+
+    # Set the KML namespace
+    ET.register_namespace( '', 'http://www.opengis.net/kml/2.2' )
+
+    # Replace simplekml ID with UUID and save mappings in dictionary
+    dc_id_uuid = {}
+    for elem in root.iter():
+        elem_id = elem.get( 'id' )
+        if elem_id:
+            new_id = str( uuid.uuid4() )
+            dc_id_uuid[elem_id] = new_id
+            elem.set( 'id', new_id )
+
+    # Replace references to old IDs
+    for elem in root.iter():
+        if elem.text and elem.text.startswith( '#' ):
+            ref_id = elem.text[1:]
+            if ref_id in dc_id_uuid:
+                elem.text = '#' + dc_id_uuid[ref_id]
+
+    # Return revised KML
+    xml = ET.ElementTree( root )
+
+    return xml
+
+
+# Replicate element with all its children
+def replicate_element( elem ):
+
+    # Replicate element attributes
+    new_elem = ET.Element( elem.tag, elem.attrib )
+    new_elem.text = elem.text
+    new_elem.tail = elem.tail
+
+    # Replicate children
+    for child in list( elem ):
+        new_elem.append( replicate_element( child ) )
+
+    return new_elem
+
+
+# Combine heat maps under a parent folder and save to a KML file
+def combine_heat_maps( s_folder, output_directory ):
+
+    namespace = 'http://www.opengis.net/kml/2.2'
+    ET.register_namespace( '', namespace )
+
+    # Create new KML root
+    schema = f'{{{namespace}}}'
+    root = ET.Element( f'{schema}kml' )
+    doc = ET.SubElement( root, f'{schema}Document' )
+
+    # Create parent folder that will contain all heat maps
+    parent_folder = ET.SubElement( doc, f'{schema}Folder' )
+    ET.SubElement( parent_folder, f'{schema}name' ).text = DC_FOLDERS[s_folder][FOLDER_LABEL]
+
+    # Iterate through saved heat maps
+    for s_heat_map in DC_FOLDERS[s_folder][FOLDER_CONTENTS]:
+
+        # Start with root of saved heat map
+        kml_root = DC_HEAT_MAPS[s_heat_map][XML].getroot()
+
+        # Find <Document> element of the source
+        src_doc = kml_root.find( f'{schema}Document' )
+
+        # Append all children of the source KML to the parent folder
+        for child in list( src_doc ):
+            parent_folder.append( replicate_element( child ) )
+
+    # Write the result to a KML file
+    xml = ET.ElementTree( root )
+    s_filename = f'{s_folder}.kml'
+    print( f'Saving folder "{s_filename}"' )
+    output_path = os.path.join( output_directory, s_filename )
+    xml.write( output_path, encoding='utf-8', xml_declaration=True )
+
+
+
+##################################
+
 
 # Main program
 if __name__ == '__main__':
@@ -526,7 +641,7 @@ if __name__ == '__main__':
     parser.add_argument( '-m', dest='master_filename',  help='Master database filename', required=True )
     parser.add_argument( '-b', dest='block_groups_filename',  help='Input filename - Name of shapefile containing Lawrence block group geometry', required=True )
     parser.add_argument( '-c', dest='census_data_filename',  help='Input filename - Name of CSV file containing US Census data partitioned by block groups', required=True )
-    parser.add_argument( '-o', dest='output_directory', help='Target directory output files', required=True )
+    parser.add_argument( '-o', dest='output_directory', help='Target directory for output files', required=True )
 
     args = parser.parse_args()
 
@@ -546,8 +661,6 @@ if __name__ == '__main__':
 
     # Extract dataframe of residential parcels for generating the heat map
     df_stats = get_block_group_stats( args.census_data_filename )
-    # print( df_stats )
-    # util.exit()
 
     # Extract block group geometries from shapefile
     df_block_groups = util.get_block_groups_geometry( args.block_groups_filename )
@@ -569,7 +682,14 @@ if __name__ == '__main__':
         doc, dc_heat_map_styles = make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs )
 
         # Generate KML heat map file
-        make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_heat_map_styles, args.output_directory, s_name )
+        kml = make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_heat_map_styles, args.output_directory, s_name )
+
+        # Replace simplekml-generated integer IDs with unique IDs and save as tree
+        DC_HEAT_MAPS[s_name][XML] = replace_ids_with_uuids( kml, args.output_directory, s_name )
+
+    # Group heat maps into KML folders
+    for s_folder in DC_FOLDERS:
+        combine_heat_maps( s_folder, args.output_directory )
 
 
     # Save heat map values to database
