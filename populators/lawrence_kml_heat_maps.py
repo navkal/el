@@ -19,6 +19,9 @@ sys.path.append( '../util' )
 import util
 
 
+KML_NAMESPACE = 'http://www.opengis.net/kml/2.2'
+
+
 # Nicknames
 GEOID = util.GEOID
 TRACT_DASH_GROUP = util.TRACT_DASH_GROUP
@@ -201,7 +204,7 @@ DC_FOLDERS = \
     # Heating Fuel
     HEATING_FUEL_FOLDER: \
     {
-        FOLDER_LABEL: 'Heating Fuel',
+        FOLDER_LABEL: 'Households Fuel',
         FOLDER_CONTENTS: [HOUSEHOLDS_ELEC_OIL, HOUSEHOLDS_ELEC_OIL_NWX, HOUSEHOLDS_ELEC_OIL_WX],
     },
 
@@ -566,9 +569,8 @@ def make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_hea
         poly.style = dc_heat_map_styles[s_block_group]
 
     # Save the KML file
-    s_saving_to = f'{s_name}.kml'
-    print( f'Saving "{s_label}" KML file "{s_saving_to}"' )
-    kml.save( os.path.join( output_directory, 'maps', s_saving_to ) )
+    print( f'Saving heat map "{s_label}"' )
+    kml.save( os.path.join( output_directory, 'maps', f'{s_name}.kml' ) )
 
     return kml
 
@@ -583,7 +585,7 @@ def replace_ids_with_uuids( kml, output_directory, s_name ):
     root = ET.fromstring( s_kml )
 
     # Set the KML namespace
-    ET.register_namespace( '', 'http://www.opengis.net/kml/2.2' )
+    ET.register_namespace( '', KML_NAMESPACE )
 
     # Replace simplekml ID with UUID and save mappings in dictionary
     dc_id_uuid = {}
@@ -623,9 +625,9 @@ def replicate_element( elem ):
 
 
 # Combine heat maps under a parent folder
-def combine_heat_maps( s_folder ):
+def combine_heat_maps( s_folder, output_directory=None ):
 
-    namespace = 'http://www.opengis.net/kml/2.2'
+    namespace = KML_NAMESPACE
     ET.register_namespace( '', namespace )
 
     # Create new KML root
@@ -633,12 +635,15 @@ def combine_heat_maps( s_folder ):
     root = ET.Element( f'{schema}kml' )
     doc = ET.SubElement( root, f'{schema}Document' )
 
+    # Get folder attributes
+    dc_folder = DC_FOLDERS[s_folder]
+
     # Create parent folder that will contain all heat maps
     parent_folder = ET.SubElement( doc, f'{schema}Folder' )
-    ET.SubElement( parent_folder, f'{schema}name' ).text = DC_FOLDERS[s_folder][FOLDER_LABEL]
+    ET.SubElement( parent_folder, f'{schema}name' ).text = dc_folder[FOLDER_LABEL]
 
     # Iterate through saved heat maps
-    for s_heat_map in DC_FOLDERS[s_folder][FOLDER_CONTENTS]:
+    for s_heat_map in dc_folder[FOLDER_CONTENTS]:
 
         # Start with root of saved heat map
         kml_root = DC_HEAT_MAPS[s_heat_map][XML].getroot()
@@ -652,13 +657,74 @@ def combine_heat_maps( s_folder ):
 
     # Save folder of combined heat maps
     xml = ET.ElementTree( root )
-    DC_FOLDERS[s_folder][XML] = xml
+    dc_folder[XML] = xml
 
-    # Write the result to a KML file
-    s_filename = f'{s_folder}.kml'
-    print( f'Saving folder "{s_filename}"' )
-    output_path = os.path.join( args.output_directory, 'folders', s_filename )
-    xml.write( output_path, encoding='utf-8', xml_declaration=True )
+    # Optionally write the result to a KML file
+    if output_directory:
+        print( f'Saving folder "{dc_folder[FOLDER_LABEL]}"' )
+        output_path = os.path.join( output_directory, 'folders', f'{s_folder}.kml' )
+        xml.write( output_path, encoding='utf-8', xml_declaration=True )
+
+
+# Extract top-level Document/Folder
+def get_top_folder( kml_tree ):
+    root = kml_tree.getroot()
+    schema = f'{{{KML_NAMESPACE}}}'
+    return root.find( f'./{schema}Document/{schema}Folder' )
+
+
+# Insert kml folders into a new parent folder
+def insert_in_parent_folder( ls_children, s_parent, output_path=None ):
+
+    schema = f'{{{KML_NAMESPACE}}}'
+    ET.register_namespace( '', KML_NAMESPACE )
+
+    # Create new KML root
+    root = ET.Element( f'{schema}kml' )
+    doc = ET.SubElement( root, f'{schema}Document' )
+
+    # Create the new parent folder
+    parent_folder = ET.SubElement( doc, f'{schema}Folder' )
+    ET.SubElement( parent_folder, f'{schema}name' ).text = s_parent
+
+    # Append each existing child folder to the parent
+    for kml_tree in ls_children:
+        child_folder = get_top_folder( kml_tree )
+        parent_folder.append( replicate_element( child_folder ) )
+
+    xml = ET.ElementTree( root )
+
+    # Optionally write the result to a KML file
+    if output_path:
+        print( f'Saving tree "{s_parent}"' )
+        xml.write( output_path, encoding='utf-8', xml_declaration=True )
+
+    # Return the assembled KML tree
+    return xml
+
+
+# Build full heat maps tree for Google Earth presentation
+def make_heat_maps_tree( output_directory ):
+
+    # Build Demographics tree
+    ls_children = [DC_FOLDERS[POPULATION_FOLDER][XML], DC_FOLDERS[HOUSEHOLDS_FOLDER][XML]]
+    output_path = os.path.join( output_directory, 'trees', 'demographics_tree.kml' )
+    demo_tree = insert_in_parent_folder( ls_children, 'Demographics', output_path )
+
+    # Build Heating Fuel tree
+    ls_children = [DC_FOLDERS[HEATING_FUEL_FOLDER][XML]]
+    output_path = os.path.join( output_directory, 'trees', 'heating_fuel_tree.kml' )
+    fuel_tree = insert_in_parent_folder( ls_children, 'Heating Fuel', output_path )
+
+    # Build Weatherization tree
+    ls_children = [DC_FOLDERS[WX_HOUSEHOLDS_FOLDER][XML], DC_FOLDERS[WX_PARCELS_FOLDER][XML]]
+    output_path = os.path.join( output_directory, 'trees', 'weatherization_tree.kml' )
+    wx_tree = insert_in_parent_folder( ls_children, 'Weatherization', output_path )
+
+    # Build full Heat Maps tree
+    ls_children = [demo_tree, fuel_tree, wx_tree]
+    output_path = os.path.join( output_directory, 'heat_maps.kml' )
+    insert_in_parent_folder( ls_children, 'Heat Maps', output_path )
 
 
 
@@ -721,8 +787,13 @@ if __name__ == '__main__':
         DC_HEAT_MAPS[s_name][XML] = replace_ids_with_uuids( kml, args.output_directory, s_name )
 
     # Group heat maps into KML folders
+    print( '' )
     for s_folder in DC_FOLDERS:
-        combine_heat_maps( s_folder )
+        combine_heat_maps( s_folder, args.output_directory )
+
+    # Group folders into tree structure
+    print( '' )
+    make_heat_maps_tree( args.output_directory )
 
     # Save heat map values to database
     df_block_groups = df_block_groups.drop( columns=[util.GEOMETRY, HEAT_MAP_VALUE, SPECTRUM_INDEX] )
