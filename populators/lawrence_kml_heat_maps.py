@@ -34,6 +34,7 @@ WX_PERMIT = util.WX_PERMIT
 HEAT_MAP_LABEL = 'heat_map_label'
 HEAT_MAP_PREFIX = 'heat_map_prefix'
 HEAT_MAP_UNIT = 'heat_map_unit'
+HEAT_MAP_VISIBILITY = 'heat_map_visibility'
 HEAT_MAP_VALUE = 'heat_map_value'
 SPECTRUM_INDEX = 'spectrum_index'
 
@@ -84,90 +85,105 @@ DC_HEAT_MAPS = \
         HEAT_MAP_LABEL: '# Households',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_ELEC_OIL:
     {
         HEAT_MAP_LABEL: '# Households - Elec & Oil',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_ELEC_OIL_NWX:
     {
         HEAT_MAP_LABEL: '# Households - Elec & Oil (Nwx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_ELEC_OIL_WX:
     {
         HEAT_MAP_LABEL: '# Households - Elec & Oil (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_MEDIAN_INCOME:
     {
         HEAT_MAP_LABEL: '$ Households - Median Income',
         HEAT_MAP_PREFIX: '$',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_NWX:
     {
         HEAT_MAP_LABEL: '# Households (Nwx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_POVERTY:
     {
         HEAT_MAP_LABEL: '# Households - Poverty',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_POVERTY_PCT:
     {
         HEAT_MAP_LABEL: '% Households - Poverty',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_WX:
     {
         HEAT_MAP_LABEL: '# Households (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_WX_PCT:
     {
         HEAT_MAP_LABEL: '% Households (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
+        HEAT_MAP_VISIBILITY: 0,
     },
     POPULATION:
     {
         HEAT_MAP_LABEL: '# Population',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 1,
     },
     POPULATION_POVERTY:
     {
         HEAT_MAP_LABEL: '# Population - Poverty',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     RES_PARCELS_NWX:
     {
         HEAT_MAP_LABEL: '# Res Parcels (Nwx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     RES_PARCELS_WX:
     {
         HEAT_MAP_LABEL: '# Res Parcels (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
     },
     RES_PARCELS_WX_PCT:
     {
         HEAT_MAP_LABEL: '% Res Parcels (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
+        HEAT_MAP_VISIBILITY: 0,
     },
 }
 
@@ -527,6 +543,8 @@ def make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs ):
     # Populate dictionary of block group styles
     dc_heat_map_styles = {}
     doc = kml.newdocument( name=s_label )
+    doc.visibility = dc_heat_map_attrs[HEAT_MAP_VISIBILITY]
+
     for idx, row in df_block_groups.iterrows():
         cbg_style = simplekml.Style()
         cbg_style.linestyle.color = simplekml.Color.white
