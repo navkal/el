@@ -53,24 +53,19 @@ SPECTRUM_BLUE = [0, 50, 255]
 SPECTRUM_LEN = 256
 HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_GRAY, SPECTRUM_BLUE, SPECTRUM_LEN )
 
-
 # Heat map names
-ELEC_OIL_FOLDER = 'elec_oil_folder'
-ELEC_OIL_HOUSEHOLDS = 'elec_oil_households'
-ELEC_OIL_HOUSEHOLDS_NWX = 'elec_oil_households_nwx'
-ELEC_OIL_HOUSEHOLDS_WX = 'elec_oil_households_wx'
-HOUSEHOLDS_FOLDER = 'households_folder'
 HOUSEHOLDS = 'households'
+HOUSEHOLDS_ELEC_OIL = 'households_elec_oil'
+HOUSEHOLDS_ELEC_OIL_NWX = 'households_elec_oil_nwx'
+HOUSEHOLDS_ELEC_OIL_WX = 'households_elec_oil_wx'
+HOUSEHOLDS_MEDIAN_INCOME = 'households_median_income'
 HOUSEHOLDS_NWX = 'households_nwx'
+HOUSEHOLDS_POVERTY = 'households_poverty'
+HOUSEHOLDS_POVERTY_PCT = 'households_poverty_pct'
 HOUSEHOLDS_WX = 'households_wx'
 HOUSEHOLDS_WX_PCT = 'households_wx_pct'
-CENSUS_FOLDER = 'census_folder'
-MED_INCOME = 'median_household_income'
 POPULATION = 'population'
-POVERTY_HOUSEHOLDS = 'poverty_households'
-POVERTY_HOUSEHOLDS_PCT = 'poverty_households_pct'
-POVERTY_POPULATION = 'poverty_population'
-RES_PARCELS_FOLDER = 'res_parcels_folder'
+POPULATION_POVERTY = 'population_poverty'
 RES_PARCELS_NWX = 'res_parcels_nwx'
 RES_PARCELS_WX = 'res_parcels_wx'
 RES_PARCELS_WX_PCT = 'res_parcels_wx_pct'
@@ -81,53 +76,65 @@ XML = 'xml'
 # Dictionary of heat maps to be generated
 DC_HEAT_MAPS = \
 {
-    ELEC_OIL_HOUSEHOLDS:
-    {
-        HEAT_MAP_LABEL: '# Elec & Oil Households',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '',
-    },
-    ELEC_OIL_HOUSEHOLDS_NWX:
-    {
-        HEAT_MAP_LABEL: '# Elec & Oil Households Nwx',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '',
-    },
-    ELEC_OIL_HOUSEHOLDS_WX:
-    {
-        HEAT_MAP_LABEL: '# Elec & Oil Households Wx',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '',
-    },
     HOUSEHOLDS:
     {
-        HEAT_MAP_LABEL: '# Households (Census)',
+        HEAT_MAP_LABEL: '# Households',
         HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_ELEC_OIL:
+    {
+        HEAT_MAP_LABEL: '# Households - Elec & Oil',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_ELEC_OIL_NWX:
+    {
+        HEAT_MAP_LABEL: '# Households - Elec & Oil (Nwx)',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_ELEC_OIL_WX:
+    {
+        HEAT_MAP_LABEL: '# Households - Elec & Oil (Wx)',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_MEDIAN_INCOME:
+    {
+        HEAT_MAP_LABEL: '$ Households - Median Income',
+        HEAT_MAP_PREFIX: '$',
         HEAT_MAP_UNIT: '',
     },
     HOUSEHOLDS_NWX:
     {
-        HEAT_MAP_LABEL: '# Households Nwx',
+        HEAT_MAP_LABEL: '# Households (Nwx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
+    HOUSEHOLDS_POVERTY:
+    {
+        HEAT_MAP_LABEL: '# Households - Poverty',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '',
+    },
+    HOUSEHOLDS_POVERTY_PCT:
+    {
+        HEAT_MAP_LABEL: '% Households - Poverty',
+        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_UNIT: '%',
+    },
     HOUSEHOLDS_WX:
     {
-        HEAT_MAP_LABEL: '# Households Wx',
+        HEAT_MAP_LABEL: '# Households (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     HOUSEHOLDS_WX_PCT:
     {
-        HEAT_MAP_LABEL: '% Households Wx',
+        HEAT_MAP_LABEL: '% Households (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
-    },
-    MED_INCOME:
-    {
-        HEAT_MAP_LABEL: '# Median Household Income',
-        HEAT_MAP_PREFIX: '$',
-        HEAT_MAP_UNIT: '',
     },
     POPULATION:
     {
@@ -135,39 +142,27 @@ DC_HEAT_MAPS = \
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
-    POVERTY_HOUSEHOLDS:
+    POPULATION_POVERTY:
     {
-        HEAT_MAP_LABEL: '# Poverty Households',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '',
-    },
-    POVERTY_HOUSEHOLDS_PCT:
-    {
-        HEAT_MAP_LABEL: '% Poverty Households',
-        HEAT_MAP_PREFIX: '',
-        HEAT_MAP_UNIT: '%',
-    },
-    POVERTY_POPULATION:
-    {
-        HEAT_MAP_LABEL: '# Poverty Population',
+        HEAT_MAP_LABEL: '# Population - Poverty',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     RES_PARCELS_NWX:
     {
-        HEAT_MAP_LABEL: '# Res Parcels Nwx',
+        HEAT_MAP_LABEL: '# Res Parcels (Nwx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     RES_PARCELS_WX:
     {
-        HEAT_MAP_LABEL: '# Res Parcels Wx',
+        HEAT_MAP_LABEL: '# Res Parcels (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
     },
     RES_PARCELS_WX_PCT:
     {
-        HEAT_MAP_LABEL: '% Res Parcels Wx',
+        HEAT_MAP_LABEL: '% Res Parcels (Wx)',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '%',
     },
@@ -177,27 +172,48 @@ DC_HEAT_MAPS = \
 FOLDER_LABEL = 'folder_label'
 FOLDER_CONTENTS = 'folder_contents'
 
+# Demographics folders
+POPULATION_FOLDER = 'demo_population_folder'
+HOUSEHOLDS_FOLDER = 'demo_households_folder'
+
+# Heating fuel folders
+HEATING_FUEL_FOLDER = 'heating_fuel_folder'
+
+# Weatherization folders
+WX_HOUSEHOLDS_FOLDER = 'wx_households_folder'
+WX_PARCELS_FOLDER = 'wx_parcels_folder'
+
 # Dictionary of folders for grouping heat maps
 DC_FOLDERS = \
 {
-    ELEC_OIL_FOLDER: \
+    # Demographics
+    POPULATION_FOLDER: \
     {
-        FOLDER_LABEL: 'Elec & Oil',
-        FOLDER_CONTENTS: [ELEC_OIL_HOUSEHOLDS, ELEC_OIL_HOUSEHOLDS_NWX, ELEC_OIL_HOUSEHOLDS_WX],
+        FOLDER_LABEL: 'Population',
+        FOLDER_CONTENTS: [POPULATION, POPULATION_POVERTY],
     },
     HOUSEHOLDS_FOLDER: \
     {
         FOLDER_LABEL: 'Households',
-        FOLDER_CONTENTS: [HOUSEHOLDS, HOUSEHOLDS_NWX, HOUSEHOLDS_WX, HOUSEHOLDS_WX_PCT],
+        FOLDER_CONTENTS: [HOUSEHOLDS, HOUSEHOLDS_MEDIAN_INCOME, HOUSEHOLDS_POVERTY, HOUSEHOLDS_POVERTY_PCT],
     },
-    CENSUS_FOLDER: \
+
+    # Heating Fuel
+    HEATING_FUEL_FOLDER: \
     {
-        FOLDER_LABEL: 'Elec & Oil',
-        FOLDER_CONTENTS: [MED_INCOME, POPULATION, POVERTY_HOUSEHOLDS, POVERTY_HOUSEHOLDS_PCT, POVERTY_POPULATION],
+        FOLDER_LABEL: 'Heating Fuel',
+        FOLDER_CONTENTS: [HOUSEHOLDS_ELEC_OIL, HOUSEHOLDS_ELEC_OIL_NWX, HOUSEHOLDS_ELEC_OIL_WX],
     },
-    RES_PARCELS_FOLDER: \
+
+    # Weatherization
+    WX_HOUSEHOLDS_FOLDER: \
     {
-        FOLDER_LABEL: 'Elec & Oil',
+        FOLDER_LABEL: 'Households Weatherization',
+        FOLDER_CONTENTS: [HOUSEHOLDS_NWX, HOUSEHOLDS_WX, HOUSEHOLDS_WX_PCT],
+    },
+    WX_PARCELS_FOLDER: \
+    {
+        FOLDER_LABEL: 'Parcels Weatherization',
         FOLDER_CONTENTS: [RES_PARCELS_NWX, RES_PARCELS_WX, RES_PARCELS_WX_PCT],
     },
 }
@@ -210,7 +226,11 @@ DC_FOLDERS = \
 class Compute:
 
 
-    def elec_oil_households( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def households( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
+
+
+    def households_elec_oil( df_res_parcels, df_stats, df_block_groups, s_name ):
 
         # Add column of heat map values to block groups dataframe
         for idx, row in df_block_groups.copy().iterrows():
@@ -231,7 +251,7 @@ class Compute:
         return df_block_groups
 
 
-    def elec_oil_households_nwx( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def households_elec_oil_nwx( df_res_parcels, df_stats, df_block_groups, s_name ):
 
         # Add column of heat map values to block groups dataframe
         for idx, row in df_block_groups.copy().iterrows():
@@ -255,7 +275,7 @@ class Compute:
         return df_block_groups
 
 
-    def elec_oil_households_wx( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def households_elec_oil_wx( df_res_parcels, df_stats, df_block_groups, s_name ):
 
         # Add column of heat map values to block groups dataframe
         for idx, row in df_block_groups.copy().iterrows():
@@ -279,7 +299,7 @@ class Compute:
         return df_block_groups
 
 
-    def households( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def households_median_income( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
 
@@ -325,6 +345,14 @@ class Compute:
         return df_block_groups
 
 
+    def households_poverty( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
+
+
+    def households_poverty_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
+
+
     def households_wx_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
 
         # Add column of heat map values to block groups dataframe
@@ -346,20 +374,11 @@ class Compute:
 
         return df_block_groups
 
-
-    def median_household_income( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
-
     def population( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
-    def poverty_households( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
-    def poverty_households_pct( df_res_parcels, df_stats, df_block_groups, s_name ):
-        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
-
-    def poverty_population( df_res_parcels, df_stats, df_block_groups, s_name ):
+    def population_poverty( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
 
@@ -452,9 +471,19 @@ def make_heat_map_from_stats( df_stats, df_block_groups, s_name ):
 def get_block_group_stats( census_data_filename ):
 
     df_stats = pd.read_csv( census_data_filename )
-    df_stats[POVERTY_HOUSEHOLDS_PCT] = round( 100 * df_stats[POVERTY_HOUSEHOLDS] / df_stats[HOUSEHOLDS] )
-    df_stats[POVERTY_HOUSEHOLDS_PCT] = df_stats[POVERTY_HOUSEHOLDS_PCT].astype( int )
+
+    dc_rename = \
+    {
+        'median_household_income': HOUSEHOLDS_MEDIAN_INCOME,
+        'poverty_population': POPULATION_POVERTY,
+        'poverty_households': HOUSEHOLDS_POVERTY,
+    }
+    df_stats = df_stats.rename( columns=dc_rename )
+
+    df_stats[HOUSEHOLDS_POVERTY_PCT] = round( 100 * df_stats[HOUSEHOLDS_POVERTY] / df_stats[HOUSEHOLDS] )
+    df_stats[HOUSEHOLDS_POVERTY_PCT] = df_stats[HOUSEHOLDS_POVERTY_PCT].astype( int )
     df_stats[GEOID] = df_stats[GEOID].astype(str)
+
     return df_stats
 
 
@@ -539,7 +568,7 @@ def make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_hea
     # Save the KML file
     s_saving_to = f'{s_name}.kml'
     print( f'Saving "{s_label}" KML file "{s_saving_to}"' )
-    kml.save( os.path.join( output_directory, s_saving_to ) )
+    kml.save( os.path.join( output_directory, 'maps', s_saving_to ) )
 
     return kml
 
@@ -593,8 +622,8 @@ def replicate_element( elem ):
     return new_elem
 
 
-# Combine heat maps under a parent folder and save to a KML file
-def combine_heat_maps( s_folder, output_directory ):
+# Combine heat maps under a parent folder
+def combine_heat_maps( s_folder ):
 
     namespace = 'http://www.opengis.net/kml/2.2'
     ET.register_namespace( '', namespace )
@@ -621,11 +650,14 @@ def combine_heat_maps( s_folder, output_directory ):
         for child in list( src_doc ):
             parent_folder.append( replicate_element( child ) )
 
-    # Write the result to a KML file
+    # Save folder of combined heat maps
     xml = ET.ElementTree( root )
+    DC_FOLDERS[s_folder][XML] = xml
+
+    # Write the result to a KML file
     s_filename = f'{s_folder}.kml'
     print( f'Saving folder "{s_filename}"' )
-    output_path = os.path.join( output_directory, s_filename )
+    output_path = os.path.join( args.output_directory, 'folders', s_filename )
     xml.write( output_path, encoding='utf-8', xml_declaration=True )
 
 
@@ -650,7 +682,7 @@ if __name__ == '__main__':
     print( 'Arguments' )
     print( ' Input database:', args.master_filename )
     print( ' Block Groups filename:', args.block_groups_filename )
-    print( ' Census DAta filename:', args.census_data_filename )
+    print( ' Census Data filename:', args.census_data_filename )
     print( ' Output directory:', args.output_directory )
 
     # Open the database
@@ -664,6 +696,7 @@ if __name__ == '__main__':
 
     # Extract block group geometries from shapefile
     df_block_groups = util.get_block_groups_geometry( args.block_groups_filename )
+    df_block_groups[HEAT_MAP_VALUE] = None
 
     # Generate heat maps
     for s_name in DC_HEAT_MAPS:
@@ -689,8 +722,7 @@ if __name__ == '__main__':
 
     # Group heat maps into KML folders
     for s_folder in DC_FOLDERS:
-        combine_heat_maps( s_folder, args.output_directory )
-
+        combine_heat_maps( s_folder )
 
     # Save heat map values to database
     df_block_groups = df_block_groups.drop( columns=[util.GEOMETRY, HEAT_MAP_VALUE, SPECTRUM_INDEX] )
