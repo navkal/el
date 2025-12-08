@@ -163,7 +163,6 @@ OIL = 'Oil'
 
 LAWRENCE_ZIPS = ['01840','01841','01842','01843']
 
-
 # Lawrence wards
 A = 'A'
 B = 'B'
@@ -171,6 +170,8 @@ C = 'C'
 D = 'D'
 E = 'E'
 F = 'F'
+
+LAWRENCE_WARDS = [A,B,C,D,E,F]
 
 # Map from column values to pin attributes
 KML_MAP = \

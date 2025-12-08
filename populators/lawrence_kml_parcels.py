@@ -1,5 +1,7 @@
 # Copyright 2025 Energize Andover.  All rights reserved.
 
+B_DEBUG = False
+
 import argparse
 import os
 
@@ -35,16 +37,8 @@ ICON = util.ICON
 OCC = util.TOTAL_OCCUPANCY
 WX_PERMIT = util.WX_PERMIT
 IS_RENTAL = 'is_rental'
-
-
-# Wards
-A = util.A
-B = util.B
-C = util.C
-D = util.D
-E = util.E
-F = util.F
-
+WARDS=util.LAWRENCE_WARDS
+STYLEMAP = 'stylemap'
 
 #
 # ==> Dictionary of filters ==>
@@ -118,15 +112,34 @@ FILTERS = \
     },
 }
 
-# Add filters for each ward and fuel
-for ward in [A,B,C,D,E,F]:
-    for fuel in [ELEC,OIL,GAS]:
-        FILTERS[f'{ward}_{fuel}'.lower()] = \
+# Add ward-specific filters
+
+if B_DEBUG:
+    FILTERS = \
+    {
+    }
+
+    WARDS = [util.A]
+
+for ward in WARDS:
+    for fuel in [ELEC,GAS,OIL]:
+        FILTERS[f'{ward}_{fuel}_res'.lower()] = \
         {
             WARD: [ward],
+            IS_RES: [YES],
             FUEL: [fuel],
-            LEAN_ELIG: [LEAN, LMF],
         }
+
+for ward in WARDS:
+    for fuel in [ELEC,GAS,OIL]:
+        FILTERS[f'{ward}_{fuel}_rent'.lower()] = \
+        {
+            WARD: [ward],
+            IS_RES: [YES],
+            IS_RENTAL: [True],
+            FUEL: [fuel],
+        }
+
 
 # Secondary filtering based on weatherization status
 WX_FILTERS = \
@@ -147,42 +160,71 @@ KML_MAP = util.KML_MAP
 ######################
 
 
+def make_styles():
+
+    df_styles = pd.DataFrame()
+
+    for s_ward in KML_MAP[COLOR]:
+        for s_fuel in KML_MAP[ICON]:
+
+            # Extract mapped placemark attributes
+            s_color = KML_MAP[COLOR][s_ward]
+            icon_colors = s_color.split('|')
+            if len( icon_colors ) == 1:
+                icon_colors.append( icon_colors[0] )
+
+            s_icon = KML_MAP[ICON][s_fuel]
+            shape_scale = s_icon.split('|')
+
+            # Generate normal style
+            normal_style = simplekml.Style()
+            normal_style.labelstyle.scale = 0
+            normal_style.iconstyle.color = icon_colors[0]
+            normal_style.iconstyle.icon.href = 'https://maps.google.com/mapfiles/kml/shapes/' + shape_scale[0] + '.png'
+            normal_style.iconstyle.scale = shape_scale[1]
+
+            # Generate highlight style for mouseover
+            highlight_style = simplekml.Style()
+            highlight_style.labelstyle.scale = 1.1
+            highlight_style.iconstyle.color = icon_colors[1]
+
+            # Combine normal and highlight styles in a stylemap
+            style_map = simplekml.StyleMap()
+            style_map.normalstyle = normal_style
+            style_map.highlightstyle = highlight_style
+
+            # Save the stylemap in the styles dataframe
+            dc_row = \
+            {
+                WARD: s_ward,
+                FUEL: s_fuel,
+                STYLEMAP: style_map
+            }
+            df_styles = df_styles.append( dc_row, ignore_index=True )
+
+    return df_styles
+
+
 # Generate a KML file containing POIs
-def make_kml_file( df, kml_filepath ):
+def make_kml_file( df, df_styles, docname, kml_filepath ):
 
     # Create empty KML
     kml = simplekml.Kml()
+    kml.document.name = docname
 
     for index, row in df.iterrows():
+
+        # Create a point for this parcel
         point = kml.newpoint( name=f'{row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
-
-        # Hide the label
-        point.style.labelstyle.scale = 0
-
-        # Extract mapped placemark attributes
-        shape_scale = str( row[ICON] ).split('|')
-        icon_colors = str( row[COLOR] ).split('|')
-        if len( icon_colors ) == 1:
-            icon_colors.append( icon_colors[0] )
-
-        # Set icon attributes
-        point.style.iconstyle.color = icon_colors[0]
-        point.style.iconstyle.icon.href = 'https://maps.google.com/mapfiles/kml/shapes/' + shape_scale[0] + '.png'
-        point.style.iconstyle.scale = shape_scale[1]
 
         # Set link
         point.description = f'<a href={row[LINK]}>{row[ADDR]}</a><br/>{row[FUEL]} heat'
 
-        # Create a highlight style for mouseover
-        highlight_style = simplekml.Style()
-        highlight_style.labelstyle.scale = 1.1
-        highlight_style.iconstyle.color = icon_colors[1]
-
-        # Create a style map to switch between normal and highlight styles
-        style_map = simplekml.StyleMap()
-        style_map.normalstyle = point.style
-        style_map.highlightstyle = highlight_style
-
+        # Set the style map to switch between normal and highlight styles
+        s_ward = row[WARD]
+        s_fuel = row[FUEL]
+        style_row = df_styles[ ( df_styles[WARD] == s_ward ) & ( df_styles[FUEL] == s_fuel )]
+        style_map = style_row['stylemap'].values[0]
         point.stylemap = style_map
 
     kml.save( kml_filepath )
@@ -196,6 +238,9 @@ def make_kml_files( df_parcels, output_directory ):
     print( '' )
     print( f'Generating {len( FILTERS ) * len( WX_FILTERS )} KML files' )
     print( '' )
+
+    # Generate styles of placemarks based on ward and fuel
+    df_styles = make_styles()
 
     # Add rental flag column
     df_parcels[IS_RENTAL] = df_parcels[OCC] > 1
@@ -232,12 +277,8 @@ def make_kml_files( df_parcels, output_directory ):
             pattern = r'=HYPERLINK\("(http.*pid=\d+)".*'
             df = df.replace( to_replace=pattern, value=r'\1', regex=True )
 
-            # Add columns to be replaced with mapped values
-            df[COLOR] = df[WARD]
-            df[ICON] = df[FUEL]
-
             # Reorder columns and rows
-            ls_columns = [WARD, STREET_NAME, ADDR, FUEL, ICON, LAT, LONG, COLOR, LINK]
+            ls_columns = [WARD, STREET_NAME, ADDR, FUEL, LAT, LONG, LINK]
             df = df[ls_columns]
             df = df.sort_values( by=ls_columns )
             df = df.reset_index( drop=True )
@@ -248,15 +289,35 @@ def make_kml_files( df_parcels, output_directory ):
                     df[col] = df[col].replace( KML_MAP[col] )
 
             # Convert dataframe to KML
-            filename = f'{s_label}_{n_parcels}_{n_units}.kml'
+            docname = make_doc_name( s_label, n_parcels, n_units )
+            filename = f'{s_label}.kml'
             filepath = os.path.join( output_directory, filename )
-            make_kml_file( df, filepath )
+            make_kml_file( df, df_styles, docname, filepath )
 
             # Report progress
             n_files += 1
             print( '{: >3d}: {}'.format( n_files, filename ) )
 
     return
+
+
+# Generate document name
+def make_doc_name( s_label, n_parcels, n_units ):
+
+    ls_in = s_label.split( '_' )
+
+    ls_out = []
+
+    for s_in in ls_in:
+        s_out = s_in.upper() if s_in in ['lean', 'lmf'] else s_in.capitalize()
+        ls_out.append( s_out )
+
+    s_out = ' '.join( ls_out )
+
+    s_out += f' - P:{n_parcels} H:{n_units}'
+
+    return s_out
+
 
 
 
