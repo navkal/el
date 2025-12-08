@@ -801,8 +801,19 @@ if __name__ == '__main__':
         # Generate KML heat map file
         kml = make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_heat_map_styles, args.output_directory, s_name )
 
+        # -> Commented out -> not needed ->
+        #
         # Replace simplekml-generated integer IDs with unique IDs and save as tree
-        DC_HEAT_MAPS[s_name][XML] = replace_ids_with_uuids( kml, args.output_directory, s_name )
+        # DC_HEAT_MAPS[s_name][XML] = replace_ids_with_uuids( kml, args.output_directory, s_name )
+        #
+        # <- Commented out <- not needed <-
+        #
+        # -> Instead, do this ->
+        #
+        # Save current heat map in dictionary
+        DC_HEAT_MAPS[s_name][XML] = ET.ElementTree( ET.fromstring( kml.kml() ) )
+        #
+        # <- Instead, do this <-
 
     # Group heat maps into KML folders
     print( '' )

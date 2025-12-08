@@ -229,7 +229,7 @@ def make_kml_file( df, df_styles, docname, kml_filepath ):
 
     kml.save( kml_filepath )
 
-    return
+    return kml
 
 
 # Generate KML files
@@ -283,16 +283,11 @@ def make_kml_files( df_parcels, output_directory ):
             df = df.sort_values( by=ls_columns )
             df = df.reset_index( drop=True )
 
-            # Replace column values with visualization attributes
-            for col in KML_MAP:
-                if col in df.columns:
-                    df[col] = df[col].replace( KML_MAP[col] )
-
             # Convert dataframe to KML
             docname = make_doc_name( s_label, n_parcels, n_units )
             filename = f'{s_label}.kml'
             filepath = os.path.join( output_directory, filename )
-            make_kml_file( df, df_styles, docname, filepath )
+            kml = make_kml_file( df, df_styles, docname, filepath )
 
             # Report progress
             n_files += 1
@@ -314,7 +309,7 @@ def make_doc_name( s_label, n_parcels, n_units ):
 
     s_out = ' '.join( ls_out )
 
-    s_out += f' - P:{n_parcels} H:{n_units}'
+    s_out += f' - P:{n_parcels:,} - H:{n_units:,}'
 
     return s_out
 
