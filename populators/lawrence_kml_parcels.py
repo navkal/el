@@ -32,6 +32,8 @@ YES = util.YES
 LEAN_ELIG = util.LEAN_ELIGIBILITY
 LEAN = util.LEAN
 LMF = util.LEAN_MULTI_FAMILY
+WX = util.WX
+NWX = 'n' + WX
 COLOR = util.COLOR
 ICON = util.ICON
 OCC = util.TOTAL_OCCUPANCY
@@ -40,6 +42,9 @@ IS_RENTAL = 'is_rental'
 WARDS=util.LAWRENCE_WARDS
 STYLEMAP = 'stylemap'
 
+RES = 'res'
+RENT = 'rent'
+
 #
 # ==> Dictionary of filters ==>
 #
@@ -47,68 +52,68 @@ STYLEMAP = 'stylemap'
 # Each filter corresponds to a single KML output file
 FILTERS = \
 {
-    'lean_electric':
+    f'{LEAN}_{ELEC}':
     {
         LEAN_ELIG: [LEAN],
         FUEL: [ELEC],
     },
-    'lean_gas':
+    f'{LEAN}_{GAS}':
     {
         LEAN_ELIG: [LEAN],
         FUEL: [GAS],
     },
-    'lean_oil':
+    f'{LEAN}_{OIL}':
     {
         LEAN_ELIG: [LEAN],
         FUEL: [OIL],
     },
-    'lmf_electric':
+    f'{LMF}_{ELEC}':
     {
         LEAN_ELIG: [LMF],
         FUEL: [ELEC],
     },
-    'lmf_gas':
+    f'{LMF}_{GAS}':
     {
         LEAN_ELIG: [LMF],
         FUEL: [GAS],
     },
-    'lmf_oil':
+    f'{LMF}_{OIL}':
     {
         LEAN_ELIG: [LMF],
         FUEL: [OIL],
     },
-    'res_electric':
+    f'{RES}_{ELEC}':
     {
         IS_RES: [YES],
         FUEL: [ELEC],
     },
-    'res_gas':
+    f'{RES}_{GAS}':
     {
         IS_RES: [YES],
         FUEL: [GAS],
     },
-    'res_oil':
+    f'{RES}_{OIL}':
     {
         IS_RES: [YES],
         FUEL: [OIL],
     },
-    'rent_electric':
+    f'{RENT}_{ELEC}':
     {
         IS_RES: [YES],
+        IS_RENTAL: [True],
         FUEL: [ELEC],
-        IS_RENTAL: [True],
     },
-    'rent_gas':
+    f'{RENT}_{GAS}':
     {
         IS_RES: [YES],
+        IS_RENTAL: [True],
         FUEL: [GAS],
-        IS_RENTAL: [True],
     },
-    'rent_oil':
+    f'{RENT}_{OIL}':
     {
         IS_RES: [YES],
-        FUEL: [OIL],
         IS_RENTAL: [True],
+        FUEL: [OIL],
     },
 }
 
@@ -123,7 +128,7 @@ if B_DEBUG:
 
 for ward in WARDS:
     for fuel in [ELEC,GAS,OIL]:
-        FILTERS[f'{ward}_{fuel}_res'.lower()] = \
+        FILTERS[f'{ward}_{RES}_{fuel}'.lower()] = \
         {
             WARD: [ward],
             IS_RES: [YES],
@@ -132,7 +137,7 @@ for ward in WARDS:
 
 for ward in WARDS:
     for fuel in [ELEC,GAS,OIL]:
-        FILTERS[f'{ward}_{fuel}_rent'.lower()] = \
+        FILTERS[f'{ward}_{RENT}_{fuel}'.lower()] = \
         {
             WARD: [ward],
             IS_RES: [YES],
@@ -145,8 +150,8 @@ for ward in WARDS:
 WX_FILTERS = \
 [
     '',     # No filter
-    'wx',   # Weatherized
-    'nwx',  # Not weatherized
+    WX,     # Weatherized
+    NWX,    # Not weatherized
 ]
 
 #
@@ -206,11 +211,15 @@ def make_styles():
 
 
 # Generate a KML file containing POIs
-def make_kml_file( df, df_styles, docname, kml_filepath ):
+def make_kml_file( df, df_styles, s_label, n_parcels, n_units, output_directory ):
+
+    s_docname = make_doc_name( s_label, n_parcels, n_units )
+    s_filename = f'{s_label.lower()}.kml'
+    s_filepath = os.path.join( output_directory, s_filename )
 
     # Create empty KML
     kml = simplekml.Kml()
-    kml.document.name = docname
+    kml.document.name = s_docname
 
     for index, row in df.iterrows():
 
@@ -227,9 +236,9 @@ def make_kml_file( df, df_styles, docname, kml_filepath ):
         style_map = style_row['stylemap'].values[0]
         point.stylemap = style_map
 
-    kml.save( kml_filepath )
+    kml.save( s_filepath )
 
-    return kml
+    return s_filename
 
 
 # Generate KML files
@@ -267,7 +276,7 @@ def make_kml_files( df_parcels, output_directory ):
             # Select further, based on weatherization status
             if s_wx:
                 s_label += '_' + s_wx
-                df = df[ df[WX_PERMIT].isnull() ] if s_wx == 'nwx' else df[ ~df[WX_PERMIT].isnull() ]
+                df = df[ df[WX_PERMIT].isnull() ] if s_wx == NWX else df[ ~df[WX_PERMIT].isnull() ]
 
             # Count parcels and housing units that will be represented by this KML
             n_parcels = len( df )
@@ -284,14 +293,11 @@ def make_kml_files( df_parcels, output_directory ):
             df = df.reset_index( drop=True )
 
             # Convert dataframe to KML
-            docname = make_doc_name( s_label, n_parcels, n_units )
-            filename = f'{s_label}.kml'
-            filepath = os.path.join( output_directory, filename )
-            kml = make_kml_file( df, df_styles, docname, filepath )
+            s_filename = make_kml_file( df, df_styles, s_label, n_parcels, n_units, output_directory )
 
             # Report progress
             n_files += 1
-            print( '{: >3d}: {}'.format( n_files, filename ) )
+            print( '{: >3d}: {}'.format( n_files, s_filename ) )
 
     return
 
@@ -304,7 +310,7 @@ def make_doc_name( s_label, n_parcels, n_units ):
     ls_out = []
 
     for s_in in ls_in:
-        s_out = s_in.upper() if s_in in ['lean', 'lmf'] else s_in.capitalize()
+        s_out = s_in if s_in in [LEAN, LMF] else s_in.capitalize()
         ls_out.append( s_out )
 
     s_out = ' '.join( ls_out )
