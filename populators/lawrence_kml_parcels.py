@@ -52,9 +52,13 @@ FUELS = [ELEC, GAS, OIL]
 FILTER = 'filter'
 DOCS = 'docs'
 
-XML = 'xml'
-KML = 'kml'
 KML_NAMESPACE = 'http://www.opengis.net/kml/2.2'
+
+KML = 'kml'
+KML_LIST = 'kml_list'
+PARCEL_COUNT = 'parcel_count'
+UNIT_COUNT = 'unit_count'
+XML = 'xml'
 
 #
 # ==> Dictionary of documents ==>
@@ -210,7 +214,12 @@ for s_key in DC_DOCUMENTS:
         s_label = s_key
         if s_wx:
             s_label += '_' + s_wx
-        DC_DOCUMENTS[s_key][DOCS][s_label.lower()] = None
+        DC_DOCUMENTS[s_key][DOCS][s_label.lower()] = \
+        {
+            KML: None,
+            PARCEL_COUNT: 0,
+            UNIT_COUNT: 0,
+        }
 
 #
 # <== Dictionary of documents <==
@@ -319,11 +328,14 @@ def format_words( s_words, s_delimiter=' ' ):
 
     return s_out
 
+# Format trailing counts of parcels and units
+def format_counts( n_parcels, n_units ):
+    return f' - P:{n_parcels:,} - H:{n_units:,}'
 
 # Generate document name
 def make_doc_name( s_label, n_parcels, n_units ):
     s_out = format_words( s_label, s_delimiter='_' )
-    s_out += f' - P:{n_parcels:,} - H:{n_units:,}'
+    s_out += format_counts( n_parcels, n_units )
     return s_out
 
 
@@ -378,8 +390,10 @@ def make_kml_documents( df_parcels, df_styles, output_directory ):
             # Convert dataframe to KML
             kml, s_doc_key = make_kml_file( s_label, df, df_styles, n_parcels, n_units, output_directory )
 
-            # Save the KML file
-            DC_DOCUMENTS[s_key][DOCS][s_doc_key] = kml
+            # Save the KML file and associated counts
+            DC_DOCUMENTS[s_key][DOCS][s_doc_key][KML] = kml
+            DC_DOCUMENTS[s_key][DOCS][s_doc_key][PARCEL_COUNT] = n_parcels
+            DC_DOCUMENTS[s_key][DOCS][s_doc_key][UNIT_COUNT] = n_units
 
             # Report progress
             n_files += 1
@@ -418,8 +432,10 @@ def make_dc_folders():
                 s_name = f'{hs} {fu} {wx}'
                 DC_FOLDERS[s_name] = \
                 {
-                    KML: [],
-                    XML: None
+                    KML_LIST: [],
+                    PARCEL_COUNT: 0,
+                    UNIT_COUNT: 0,
+                    XML: None,
                 }
 
     # Iterate over dictionary, 3 documents per element
@@ -460,8 +476,10 @@ def make_dc_folders():
                 fu = dc_kml_attrs[FU]
                 wx = dc_kml_attrs[WX]
                 s_folder_name = f'{hs} {fu} {wx}'
-                kml = DC_DOCUMENTS[s_doc_label][DOCS][s_kml_label]
-                DC_FOLDERS[s_folder_name][KML].append( kml )
+                kml = DC_DOCUMENTS[s_doc_label][DOCS][s_kml_label][KML]
+                DC_FOLDERS[s_folder_name][KML_LIST].append( kml )
+                DC_FOLDERS[s_folder_name][PARCEL_COUNT] += DC_DOCUMENTS[s_doc_label][DOCS][s_kml_label][PARCEL_COUNT]
+                DC_FOLDERS[s_folder_name][UNIT_COUNT] += DC_DOCUMENTS[s_doc_label][DOCS][s_kml_label][UNIT_COUNT]
 
                 print( f'Label "{s_doc_label}": Saving doc "{s_kml_label}" in folder "{s_folder_name}"' )
 
@@ -484,6 +502,11 @@ def group_docs_in_folders( output_directory=None ):
         # Convert lowercase folder string to formatted name
         s_folder_name = format_words( s_folder )
 
+        # Append counts
+        n_parcels = DC_FOLDERS[s_folder][PARCEL_COUNT]
+        n_units = DC_FOLDERS[s_folder][UNIT_COUNT]
+        s_folder_name += format_counts( n_parcels, n_units )
+
         # Initialize document to contain everything
         parent_document = ET.SubElement( root, f'{schema}Document' )
         ET.SubElement( parent_document, f'{schema}name' ).text = s_folder_name
@@ -499,7 +522,7 @@ def group_docs_in_folders( output_directory=None ):
         ls_features = []
 
         # Iterate over source KML documents
-        for kml in DC_FOLDERS[s_folder][KML]:
+        for kml in DC_FOLDERS[s_folder][KML_LIST]:
             xml_root = ET.fromstring( kml.kml() )
             src_doc = xml_root.find( f'{schema}Document' )
 
