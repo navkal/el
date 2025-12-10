@@ -10,6 +10,7 @@ import openpyxl
 import chardet
 import geopandas as gpd
 import simplekml
+import xml.etree.ElementTree as ET
 import re
 import string
 import datetime
@@ -3448,8 +3449,8 @@ def read_excel_with_hyperlinks( input_filename, skiprows ):
 
 
 # Clear all files from a specified directory
-def clear_directory( dir ):
-    filepath = os.path.join( dir, '*' )
+def clear_directory( dir, files='*' ):
+    filepath = os.path.join( dir, files )
     files = glob.glob( filepath )
     for f in files:
         os.remove(f)
@@ -4033,6 +4034,21 @@ def publish_database( input_db, output_filename, publish_info ):
         print( 'Publishing table', table_name )
         df = output_db[table_name]
         df.to_sql( table_name, conn, index=False )
+
+
+# Replicate KML element with all its children
+def replicate_kml_element( elem ):
+
+    # Replicate element attributes
+    new_elem = ET.Element( elem.tag, elem.attrib )
+    new_elem.text = elem.text
+    new_elem.tail = elem.tail
+
+    # Replicate children
+    for child in list( elem ):
+        new_elem.append( replicate_kml_element( child ) )
+
+    return new_elem
 
 
 def print_full( x ):

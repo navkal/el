@@ -75,6 +75,7 @@ RES_PARCELS_WX = 'res_parcels_wx'
 RES_PARCELS_WX_PCT = 'res_parcels_wx_pct'
 
 XML = 'xml'
+KML = 'kml'
 
 
 # Dictionary of heat maps to be generated
@@ -627,21 +628,6 @@ def replace_ids_with_uuids( kml, output_directory, s_name ):
     return xml
 
 
-# Replicate element with all its children
-def replicate_element( elem ):
-
-    # Replicate element attributes
-    new_elem = ET.Element( elem.tag, elem.attrib )
-    new_elem.text = elem.text
-    new_elem.tail = elem.tail
-
-    # Replicate children
-    for child in list( elem ):
-        new_elem.append( replicate_element( child ) )
-
-    return new_elem
-
-
 # Combine heat maps under a parent folder
 def combine_heat_maps( s_folder, output_directory=None ):
 
@@ -664,14 +650,29 @@ def combine_heat_maps( s_folder, output_directory=None ):
     for s_heat_map in dc_folder[FOLDER_CONTENTS]:
 
         # Start with root of saved heat map
-        kml_root = DC_HEAT_MAPS[s_heat_map][XML].getroot()
+        kml = DC_HEAT_MAPS[s_heat_map][KML]
+
+        # -> Commented out -> not needed ->
+        #
+        # Replace simplekml-generated integer IDs with unique IDs and save as tree
+        # xml = replace_ids_with_uuids( kml, args.output_directory, s_name )
+        #
+        # <- Commented out <- not needed <-
+        #
+        # -> Instead, do this ->
+        #
+        xml = ET.ElementTree( ET.fromstring( kml.kml() ) )
+        #
+        # <- Instead, do this <-
+
+        xml_root = xml.getroot()
 
         # Find <Document> element of the source
-        src_doc = kml_root.find( f'{schema}Document' )
+        src_doc = xml_root.find( f'{schema}Document' )
 
         # Append all children of the source KML to the parent folder
         for child in list( src_doc ):
-            parent_folder.append( replicate_element( child ) )
+            parent_folder.append( util.replicate_kml_element( child ) )
 
     # Save folder of combined heat maps
     xml = ET.ElementTree( root )
@@ -708,7 +709,7 @@ def insert_in_parent_folder( ls_children, s_parent, output_path=None ):
     # Append each existing child folder to the parent
     for kml_tree in ls_children:
         child_folder = get_top_folder( kml_tree )
-        parent_folder.append( replicate_element( child_folder ) )
+        parent_folder.append( util.replicate_kml_element( child_folder ) )
 
     xml = ET.ElementTree( root )
 
@@ -799,26 +800,13 @@ if __name__ == '__main__':
         doc, dc_heat_map_styles = make_heat_map_styles( df_block_groups, kml, dc_heat_map_attrs )
 
         # Generate KML heat map file
-        kml = make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_heat_map_styles, args.output_directory, s_name )
+        DC_HEAT_MAPS[s_name][KML] = make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_heat_map_styles, args.output_directory, s_name )
 
-        # -> Commented out -> not needed ->
-        #
-        # Replace simplekml-generated integer IDs with unique IDs and save as tree
-        # DC_HEAT_MAPS[s_name][XML] = replace_ids_with_uuids( kml, args.output_directory, s_name )
-        #
-        # <- Commented out <- not needed <-
-        #
-        # -> Instead, do this ->
-        #
-        # Save current heat map in dictionary
-        DC_HEAT_MAPS[s_name][XML] = ET.ElementTree( ET.fromstring( kml.kml() ) )
-        #
-        # <- Instead, do this <-
 
     # Group heat maps into KML folders
     print( '' )
     for s_folder in DC_FOLDERS:
-        combine_heat_maps( s_folder, args.output_directory )
+        combine_heat_maps( s_folder, output_directory=args.output_directory )
 
     # Group folders into tree structure
     print( '' )
