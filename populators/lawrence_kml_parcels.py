@@ -1,6 +1,7 @@
 # Copyright 2025 Energize Andover.  All rights reserved.
 
 B_DEBUG = False
+# B_DEBUG = True
 
 import argparse
 import os
@@ -56,9 +57,22 @@ KML_NAMESPACE = 'http://www.opengis.net/kml/2.2'
 
 KML = 'kml'
 KML_LIST = 'kml_list'
+XML = 'xml'
+XML_LIST = 'xml_list'
 PARCEL_COUNT = 'parcel_count'
 UNIT_COUNT = 'unit_count'
-XML = 'xml'
+
+# Field values to be used in generating folders
+FOLDER_HOUSE_TYPES = [RES, RENT]
+FOLDER_WX_TYPES = [WX, NWX]
+
+# Dictionary of folders
+DC_FOLDERS = {}
+
+# Dictionary of trees
+DC_TREES = {}
+TREE_DEBUG = 'tree_debug'
+
 
 #
 # ==> Dictionary of documents ==>
@@ -176,13 +190,18 @@ DC_DOCUMENTS = \
 
 # Add ward-specific filters
 
+# --> Scaled-down scope for debugging -->
 if B_DEBUG:
     DC_DOCUMENTS = \
     {
     }
 
+    WARDS = WARDS[:3]
+    WARDS = WARDS[:1]
     WARDS = WARDS[:6]
+    HOUSE_TYPES = [RES]
     HOUSE_TYPES = [RES, RENT]
+# <-- Scaled-down scope for debugging <--
 
 for ward in WARDS:
     for fuel in FUELS:
@@ -224,9 +243,6 @@ for s_key in DC_DOCUMENTS:
 #
 # <== Dictionary of documents <==
 #
-
-
-DC_FOLDERS = {}
 
 # KML rendering attributes
 KML_MAP = util.KML_MAP
@@ -296,7 +312,7 @@ def make_kml_file( s_label, df, df_styles, n_parcels, n_units, output_directory 
         point = doc.newpoint( name=f'{row[WARD]}: {row[ADDR]}', coords=[ ( row[LONG], row[LAT] ) ] )
 
         # Set link
-        point.description = f'<a href={row[LINK]}>{row[ADDR]}</a><br/>{row[FUEL]} heat'
+        point.description = f'<a href="{row[LINK]}">{row[ADDR]}</a><br/>{row[FUEL]} heat'
 
         # Set the style map to switch between normal and highlight styles
         s_ward = row[WARD]
@@ -420,9 +436,9 @@ def make_dc_folders():
     dc_required_attrs = \
     {
         WD: lc_wd,
-        HS: [item.lower() for item in [RES, RENT]],
+        HS: [item.lower() for item in FOLDER_HOUSE_TYPES],
         FU: lc_fu,
-        WX: [item.lower() for item in [WX, NWX]],
+        WX: [item.lower() for item in FOLDER_WX_TYPES],
     }
 
     # Initialize dictionary of folders we want to populate with ward KMLs
@@ -487,11 +503,13 @@ def make_dc_folders():
 
 
 # Group KML documents into KML folders
-def group_docs_in_folders( output_directory=None ):
+def insert_maps_in_folders( output_directory=None ):
 
     namespace = KML_NAMESPACE
     schema = f'{{{namespace}}}'
     ET.register_namespace( '', namespace )
+
+    print( '' )
 
     # Iterate over dictionary of folders
     for s_folder in DC_FOLDERS:
@@ -555,6 +573,10 @@ def group_docs_in_folders( output_directory=None ):
         # Save the combined KML
         xml = ET.ElementTree( root )
 
+        # Save for later, to be inserted into a tree
+        DC_FOLDERS[s_folder][XML] = xml
+
+
         if output_directory:
             s_filename = f'{"_".join( s_folder.split() )}.kml'
             print( f'Saving folder "{s_folder_name}" to {s_filename}' )
@@ -562,6 +584,63 @@ def group_docs_in_folders( output_directory=None ):
             xml.write( output_path, encoding='utf-8', xml_declaration=True )
 
     return
+
+
+# Generate data structure to group folders into trees
+def make_dc_trees():
+
+    # Iterate over house and weatherization types that we want in folders
+    for hs in FOLDER_HOUSE_TYPES:
+        for wx in FOLDER_WX_TYPES:
+
+            # Generate a tree label
+            hs = hs.lower()
+            wx = wx.lower()
+            s_label = '_'.join( [hs, wx] )
+
+            # Initialize an empty dictionary for this tree
+            DC_TREES[s_label] = \
+            {
+                TREE_DEBUG: [],
+                XML_LIST: [],
+                PARCEL_COUNT: 0,
+                UNIT_COUNT: 0,
+                XML: None,
+            }
+
+            # Populate the dictionary for this tree
+            for s_folder, dc_folder in DC_FOLDERS.items():
+
+                # Split the label into its parts
+                ls_folder_parts = s_folder.split()
+
+                # If the current house and weatherization types are in the split folder label...
+                if hs in ls_folder_parts and wx in ls_folder_parts:
+                    #... Add current folder to this tree
+                    DC_TREES[s_label][TREE_DEBUG].append( s_folder )
+                    DC_TREES[s_label][XML_LIST].append( dc_folder[XML] )
+                    DC_TREES[s_label][PARCEL_COUNT] += ( dc_folder[PARCEL_COUNT] )
+                    DC_TREES[s_label][UNIT_COUNT] += ( dc_folder[UNIT_COUNT] )
+
+    return
+
+
+# Insert KML folders into trees
+def insert_folders_in_trees( output_directory ):
+
+    print( '' )
+    print( 'DC_TREES' )
+    print( '' )
+
+    for k, v in DC_TREES.items():
+        print( '' )
+        print( k )
+        for w, x in v.items():
+            print( w, x )
+
+    return
+
+
 
 
 ######################
@@ -585,7 +664,9 @@ if __name__ == '__main__':
 
     # Optionally clear target directory
     if B_DEBUG:
+        print( '' )
         print( '===> Running in debug mode <===' )
+        print( '' )
     else:
         if args.clear_directory:
             print( ' Clearing output directory' )
@@ -609,6 +690,18 @@ if __name__ == '__main__':
     make_dc_folders()
 
     # Generate KML files representing single-tier groupings of documents into foldersl
-    group_docs_in_folders( output_directory=args.output_directory )
+    insert_maps_in_folders( output_directory=args.output_directory )
+
+    # Build data structure of trees
+    make_dc_trees()
+
+    # Insert KML folders into trees
+    insert_folders_in_trees( args.output_directory )
+
+
+    if B_DEBUG:
+        print( '' )
+        print( '===> Running in debug mode <===' )
+        print( '' )
 
     util.report_elapsed_time()
