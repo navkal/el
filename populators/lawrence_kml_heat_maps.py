@@ -114,7 +114,7 @@ DC_HEAT_MAPS = \
         HEAT_MAP_LABEL: '$ Households - Median Income',
         HEAT_MAP_PREFIX: '$',
         HEAT_MAP_UNIT: '',
-        HEAT_MAP_VISIBILITY: 0,
+        HEAT_MAP_VISIBILITY: 1,
     },
     HOUSEHOLDS_NWX:
     {
@@ -156,7 +156,7 @@ DC_HEAT_MAPS = \
         HEAT_MAP_LABEL: '# Population',
         HEAT_MAP_PREFIX: '',
         HEAT_MAP_UNIT: '',
-        HEAT_MAP_VISIBILITY: 1,
+        HEAT_MAP_VISIBILITY: 0,
     },
     POPULATION_POVERTY:
     {
