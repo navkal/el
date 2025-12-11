@@ -48,7 +48,7 @@ RES = 'res'
 RENT = 'rent'
 
 HOUSE_TYPES = [LEAN, LMF, RES, RENT]
-FUELS = [ELEC, GAS, OIL]
+FUELS = [ELEC, OIL, GAS]
 
 FILTER = 'filter'
 DOCS = 'docs'
@@ -90,15 +90,6 @@ DC_DOCUMENTS = \
             FUEL: [ELEC],
         },
     },
-    f'{LEAN}_{GAS}':
-    {
-        FILTER:
-        {
-            IS_RES: [YES],
-            LEAN_ELIG: [LEAN],
-            FUEL: [GAS],
-        },
-    },
     f'{LEAN}_{OIL}':
     {
         FILTER:
@@ -106,6 +97,15 @@ DC_DOCUMENTS = \
             IS_RES: [YES],
             LEAN_ELIG: [LEAN],
             FUEL: [OIL],
+        },
+    },
+    f'{LEAN}_{GAS}':
+    {
+        FILTER:
+        {
+            IS_RES: [YES],
+            LEAN_ELIG: [LEAN],
+            FUEL: [GAS],
         },
     },
     f'{LMF}_{ELEC}':
@@ -117,15 +117,6 @@ DC_DOCUMENTS = \
             FUEL: [ELEC],
         },
     },
-    f'{LMF}_{GAS}':
-    {
-        FILTER:
-        {
-            IS_RES: [YES],
-            LEAN_ELIG: [LMF],
-            FUEL: [GAS],
-        },
-    },
     f'{LMF}_{OIL}':
     {
         FILTER:
@@ -133,6 +124,15 @@ DC_DOCUMENTS = \
             IS_RES: [YES],
             LEAN_ELIG: [LMF],
             FUEL: [OIL],
+        },
+    },
+    f'{LMF}_{GAS}':
+    {
+        FILTER:
+        {
+            IS_RES: [YES],
+            LEAN_ELIG: [LMF],
+            FUEL: [GAS],
         },
     },
     f'{RES}_{ELEC}':
@@ -143,20 +143,20 @@ DC_DOCUMENTS = \
             FUEL: [ELEC],
         },
     },
-    f'{RES}_{GAS}':
-    {
-        FILTER:
-        {
-            IS_RES: [YES],
-            FUEL: [GAS],
-        },
-    },
     f'{RES}_{OIL}':
     {
         FILTER:
         {
             IS_RES: [YES],
             FUEL: [OIL],
+        },
+    },
+    f'{RES}_{GAS}':
+    {
+        FILTER:
+        {
+            IS_RES: [YES],
+            FUEL: [GAS],
         },
     },
     f'{RENT}_{ELEC}':
@@ -168,15 +168,6 @@ DC_DOCUMENTS = \
             FUEL: [ELEC],
         },
     },
-    f'{RENT}_{GAS}':
-    {
-        FILTER:
-        {
-            IS_RES: [YES],
-            IS_RENTAL: [True],
-            FUEL: [GAS],
-        },
-    },
     f'{RENT}_{OIL}':
     {
         FILTER:
@@ -184,6 +175,15 @@ DC_DOCUMENTS = \
             IS_RES: [YES],
             IS_RENTAL: [True],
             FUEL: [OIL],
+        },
+    },
+    f'{RENT}_{GAS}':
+    {
+        FILTER:
+        {
+            IS_RES: [YES],
+            IS_RENTAL: [True],
+            FUEL: [GAS],
         },
     },
 }
@@ -196,11 +196,11 @@ if B_DEBUG:
     {
     }
 
-    WARDS = WARDS[:3]
     WARDS = WARDS[:1]
+    WARDS = WARDS[:3]
     WARDS = WARDS[:6]
     HOUSE_TYPES = [RES]
-    HOUSE_TYPES = [RES, RENT]
+    HOUSE_TYPES = FOLDER_HOUSE_TYPES
 # <-- Scaled-down scope for debugging <--
 
 for ward in WARDS:
@@ -324,7 +324,7 @@ def make_kml_file( s_label, df, df_styles, n_parcels, n_units, output_directory 
         point.stylemap = style_row[STYLEMAP].values[0]
 
     s_doc_key = s_label.lower()
-    s_filepath = os.path.join( output_directory, f'{s_doc_key}.kml' )
+    s_filepath = os.path.join( output_directory, 'maps', f'{s_doc_key}.kml' )
     kml.save( s_filepath )
 
     return kml, s_doc_key
@@ -632,13 +632,67 @@ def insert_folders_in_trees( output_directory ):
     print( 'DC_TREES' )
     print( '' )
 
-    for k, v in DC_TREES.items():
+    for s_tree, dc_tree in DC_TREES.items():
         print( '' )
-        print( k )
-        for w, x in v.items():
-            print( w, x )
+        print( f'Tree name: "{s_tree}"' )
+        print( 'XML list', dc_tree[XML_LIST] )
+        print( 'All tree values:' )
+        for key, value in dc_tree.items():
+            print( key, value )
+
+        output_path = os.path.join( output_directory, 'trees', f'{s_tree}.kml' )
+        dc_tree[XML] = insert_in_parent_folder( dc_tree[XML_LIST], s_tree, output_path )
 
     return
+
+
+
+
+
+
+
+# Insert kml folders into a new parent folder
+def insert_in_parent_folder( ls_children, s_parent, output_path=None ):
+
+    schema = f'{{{KML_NAMESPACE}}}'
+    ET.register_namespace( '', KML_NAMESPACE )
+
+    # Create new KML root
+    root = ET.Element( f'{schema}kml' )
+    doc = ET.SubElement( root, f'{schema}Document' )
+
+    # Create the new parent folder
+    parent_folder = ET.SubElement( doc, f'{schema}Folder' )
+    ET.SubElement( parent_folder, f'{schema}name' ).text = s_parent
+
+    # Append each existing child folder to the parent
+    for kml_tree in ls_children:
+        child_folder = get_top_folder( kml_tree )
+        parent_folder.append( util.replicate_kml_element( child_folder ) )
+
+    xml = ET.ElementTree( root )
+
+    # Optionally write the result to a KML file
+    if output_path:
+        print( f'Saving tree "{s_parent}"' )
+        xml.write( output_path, encoding='utf-8', xml_declaration=True )
+
+    # Return the assembled KML tree
+    return xml
+
+
+
+
+
+# Extract top-level Document/Folder
+def get_top_folder( kml_tree ):
+    root = kml_tree.getroot()
+    schema = f'{{{KML_NAMESPACE}}}'
+    return root.find( f'./{schema}Document/{schema}Folder' )
+
+
+
+
 
 
 
@@ -669,9 +723,11 @@ if __name__ == '__main__':
         print( '' )
     else:
         if args.clear_directory:
-            print( ' Clearing output directory' )
+            print( ' Clearing output directories' )
             util.clear_directory( args.output_directory, files='*.kml' )
-            util.clear_directory( os.path.join( args.output_directory, 'folders' ), files='*.kml' )
+            util.clear_directory( os.path.join( args.output_directory, 'maps' ) )
+            util.clear_directory( os.path.join( args.output_directory, 'folders' ) )
+            util.clear_directory( os.path.join( args.output_directory, 'trees' ) )
 
     # Read the parcels table
     conn, cur, engine = util.open_database( args.master_filename, False )
