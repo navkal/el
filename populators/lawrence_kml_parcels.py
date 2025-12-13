@@ -47,7 +47,7 @@ STYLEMAP = 'stylemap'
 RES = 'res'
 RENT = 'rent'
 
-HOUSE_TYPES = [LEAN, LMF, RES, RENT]
+HOUSE_TYPES = [LEAN, LMF, RENT, RES]
 FUELS = [ELEC, OIL, GAS]
 
 FILTER = 'filter'
@@ -63,8 +63,8 @@ PARCEL_COUNT = 'parcel_count'
 UNIT_COUNT = 'unit_count'
 
 # Field values to be used in generating folders
-FOLDER_HOUSE_TYPES = [RES, RENT]
-FOLDER_WX_TYPES = [WX, NWX]
+FOLDER_HOUSE_TYPES = [RENT, RES]
+FOLDER_WX_TYPES = [NWX, WX]
 
 # Dictionary of folders
 DC_FOLDERS = {}
@@ -610,7 +610,6 @@ def insert_maps_in_folders( output_directory=None ):
 
         # Save for later, to be inserted into a tree
         DC_FOLDERS[s_folder][XML] = xml
-
 
         if output_directory:
             s_filename = f'{"_".join( s_folder.split() )}.kml'
