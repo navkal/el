@@ -691,22 +691,22 @@ def make_heat_maps_tree( output_directory ):
     # Build Demographics tree
     ls_children = [DC_FOLDERS[POPULATION_FOLDER][XML], DC_FOLDERS[HOUSEHOLDS_FOLDER][XML]]
     output_path = os.path.join( output_directory, 'trees', 'demographics_tree.kml' )
-    demo_tree = util.insert_in_parent_kml_folder( ls_children, 'Demographics', output_path )
+    demo_tree = util.insert_in_parent_kml_folder( ls_children, 'Demographics', output_path=output_path )
 
     # Build Heating Fuel tree
     ls_children = [DC_FOLDERS[HEATING_FUEL_FOLDER][XML]]
     output_path = os.path.join( output_directory, 'trees', 'heating_fuel_tree.kml' )
-    fuel_tree = util.insert_in_parent_kml_folder( ls_children, 'Heating Fuel', output_path )
+    fuel_tree = util.insert_in_parent_kml_folder( ls_children, 'Heating Fuel', output_path=output_path )
 
     # Build Weatherization tree
     ls_children = [DC_FOLDERS[WX_HOUSEHOLDS_FOLDER][XML], DC_FOLDERS[WX_PARCELS_FOLDER][XML]]
     output_path = os.path.join( output_directory, 'trees', 'weatherization_tree.kml' )
-    wx_tree = util.insert_in_parent_kml_folder( ls_children, 'Weatherization', output_path )
+    wx_tree = util.insert_in_parent_kml_folder( ls_children, 'Weatherization', output_path=output_path )
 
     # Build full Heat Maps tree
     ls_children = [demo_tree, fuel_tree, wx_tree]
     output_path = os.path.join( output_directory, 'heat_maps.kml' )
-    util.insert_in_parent_kml_folder( ls_children, 'Heat Maps', output_path )
+    util.insert_in_parent_kml_folder( ls_children, 'Heat Maps', output_path=output_path )
 
 
 

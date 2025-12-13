@@ -68,10 +68,12 @@ FOLDER_WX_TYPES = [NWX, WX]
 
 # Dictionary of folders
 DC_FOLDERS = {}
+FOLDER_CONTENTS = 'folder_contents'
+VISIBILITY = 'visibility'
 
 # Dictionary of trees
 DC_TREES = {}
-TREE_DEBUG = 'tree_debug'
+TREE_CONTENTS = 'tree_contents'
 
 
 #
@@ -481,11 +483,14 @@ def make_dc_folders():
         for fu in dc_required_attrs[FU]:
             for wx in dc_required_attrs[WX]:
                 s_name = f'{hs} {fu} {wx}'  # This decides the ordering of name fragments
+                s_vis = '0' if ( fu == GAS.lower() ) else '1'
                 DC_FOLDERS[s_name] = \
                 {
+                    FOLDER_CONTENTS: [],
                     KML_LIST: [],
                     PARCEL_COUNT: 0,
                     UNIT_COUNT: 0,
+                    VISIBILITY: s_vis,
                     XML: None,
                 }
 
@@ -528,11 +533,10 @@ def make_dc_folders():
                 wx = dc_kml_attrs[WX]
                 s_folder_name = f'{hs} {fu} {wx}'
                 kml = DC_DOCUMENTS[s_doc_label][DOCS][s_kml_label][KML]
+                DC_FOLDERS[s_folder_name][FOLDER_CONTENTS].append( s_kml_label )
                 DC_FOLDERS[s_folder_name][KML_LIST].append( kml )
                 DC_FOLDERS[s_folder_name][PARCEL_COUNT] += DC_DOCUMENTS[s_doc_label][DOCS][s_kml_label][PARCEL_COUNT]
                 DC_FOLDERS[s_folder_name][UNIT_COUNT] += DC_DOCUMENTS[s_doc_label][DOCS][s_kml_label][UNIT_COUNT]
-
-                print( f'Label "{s_doc_label}": Saving doc "{s_kml_label}" in folder "{s_folder_name}"' )
 
     return
 
@@ -543,8 +547,6 @@ def insert_maps_in_folders( output_directory=None ):
     namespace = KML_NAMESPACE
     schema = f'{{{namespace}}}'
     ET.register_namespace( '', namespace )
-
-    print( '' )
 
     # Iterate over dictionary of folders
     for s_folder in DC_FOLDERS:
@@ -570,6 +572,7 @@ def insert_maps_in_folders( output_directory=None ):
         # Create the top-level folder
         content_folder = ET.SubElement( parent_document, f'{schema}Folder' )
         ET.SubElement( content_folder, f'{schema}name' ).text = s_folder_name
+        ET.SubElement( content_folder, f'{schema}visibility' ).text = DC_FOLDERS[s_folder][VISIBILITY]
 
         # Initialize list to collect features ( Placemarks, Documents, etc.)
         ls_features = []
@@ -613,7 +616,7 @@ def insert_maps_in_folders( output_directory=None ):
 
         if output_directory:
             s_filename = f'{"_".join( s_folder.split() )}.kml'
-            print( f'Saving folder "{s_folder_name}" to {s_filename}' )
+            print( f'Saving folder "{s_folder_name}" containing {DC_FOLDERS[s_folder][FOLDER_CONTENTS]} to {s_filename}' )
             output_path = os.path.join( output_directory, 'folders', s_filename )
             xml.write( output_path, encoding='utf-8', xml_declaration=True )
 
@@ -631,14 +634,16 @@ def make_dc_trees():
             hs = hs.lower()
             wx = wx.lower()
             s_label = '_'.join( [hs, wx] )
+            s_vis = '0' if ( wx == WX ) else '1'
 
             # Initialize an empty dictionary for this tree
             DC_TREES[s_label] = \
             {
-                TREE_DEBUG: [],
+                TREE_CONTENTS: [],
                 XML_LIST: [],
                 PARCEL_COUNT: 0,
                 UNIT_COUNT: 0,
+                VISIBILITY: s_vis,
                 XML: None,
             }
 
@@ -651,7 +656,7 @@ def make_dc_trees():
                 # If the current house and weatherization types are in the split folder label...
                 if hs in ls_folder_parts and wx in ls_folder_parts:
                     #... Add current folder to this tree
-                    DC_TREES[s_label][TREE_DEBUG].append( s_folder )
+                    DC_TREES[s_label][TREE_CONTENTS].append( s_folder )
                     DC_TREES[s_label][XML_LIST].append( dc_folder[XML] )
                     DC_TREES[s_label][PARCEL_COUNT] += ( dc_folder[PARCEL_COUNT] )
                     DC_TREES[s_label][UNIT_COUNT] += ( dc_folder[UNIT_COUNT] )
@@ -673,7 +678,7 @@ def insert_folders_in_trees( output_directory ):
         s_tree_name += format_counts( n_parcels, n_units )
 
         output_path = os.path.join( output_directory, 'trees', f'{s_tree}.kml' )
-        dc_tree[XML] = util.insert_in_parent_kml_folder( dc_tree[XML_LIST], s_tree_name, output_path )
+        dc_tree[XML] = util.insert_in_parent_kml_folder( dc_tree[XML_LIST], s_tree_name, s_visibility=dc_tree[VISIBILITY], output_path=output_path )
 
     return
 
@@ -699,7 +704,8 @@ def make_treetop( s_house_type, output_directory ):
     # Make treetop for this house type
     s_name = make_doc_name( s_house_type, n_parcels, n_units )
     output_path = os.path.join( output_directory, 'treetops', f'{s_house_type}.kml' )
-    xml = util.insert_in_parent_kml_folder( ls_xml, s_name, output_path )
+    s_vis = '0' if ( s_house_type == RES ) else '1'
+    xml = util.insert_in_parent_kml_folder( ls_xml, s_name, s_visibility=s_vis, output_path=output_path )
 
     return xml
 
@@ -721,7 +727,7 @@ def make_parcels_tree( output_directory ):
 
     # Generate full parcels tree
     output_path = os.path.join( output_directory, '', 'parcels.kml' )
-    util.insert_in_parent_kml_folder( ls_xml, 'Parcels', output_path )
+    util.insert_in_parent_kml_folder( ls_xml, 'Parcels', output_path=output_path )
 
     return
 

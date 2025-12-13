@@ -4039,7 +4039,7 @@ def publish_database( input_db, output_filename, publish_info ):
 
 
 # Insert a list kml folders into a new parent folder
-def insert_in_parent_kml_folder( ls_children, s_parent, output_path=None ):
+def insert_in_parent_kml_folder( ls_children, s_parent, s_visibility=None, output_path=None ):
 
     schema = f'{{{KML_NAMESPACE}}}'
     ET.register_namespace( '', KML_NAMESPACE )
@@ -4051,6 +4051,8 @@ def insert_in_parent_kml_folder( ls_children, s_parent, output_path=None ):
     # Create the new parent folder
     parent_folder = ET.SubElement( doc, f'{schema}Folder' )
     ET.SubElement( parent_folder, f'{schema}name' ).text = s_parent
+    if s_visibility:
+        ET.SubElement( parent_folder, f'{schema}visibility' ).text = s_visibility
 
     # Append each existing child folder to the parent
     for kml_tree in ls_children:
