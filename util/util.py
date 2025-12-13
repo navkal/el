@@ -174,6 +174,8 @@ F = 'F'
 
 LAWRENCE_WARDS = [A,B,C,D,E,F]
 
+KML_NAMESPACE = 'http://www.opengis.net/kml/2.2'
+
 # Map from column values to pin attributes
 KML_MAP = \
 {
@@ -4034,6 +4036,43 @@ def publish_database( input_db, output_filename, publish_info ):
         print( 'Publishing table', table_name )
         df = output_db[table_name]
         df.to_sql( table_name, conn, index=False )
+
+
+# Insert a list kml folders into a new parent folder
+def insert_in_parent_kml_folder( ls_children, s_parent, output_path=None ):
+
+    schema = f'{{{KML_NAMESPACE}}}'
+    ET.register_namespace( '', KML_NAMESPACE )
+
+    # Create new KML root
+    root = ET.Element( f'{schema}kml' )
+    doc = ET.SubElement( root, f'{schema}Document' )
+
+    # Create the new parent folder
+    parent_folder = ET.SubElement( doc, f'{schema}Folder' )
+    ET.SubElement( parent_folder, f'{schema}name' ).text = s_parent
+
+    # Append each existing child folder to the parent
+    for kml_tree in ls_children:
+        child_folder = get_top_kml_folder( kml_tree )
+        parent_folder.append( replicate_kml_element( child_folder ) )
+
+    xml = ET.ElementTree( root )
+
+    # Optionally write the result to a KML file
+    if output_path:
+        print( f'Saving tree "{s_parent}"' )
+        xml.write( output_path, encoding='utf-8', xml_declaration=True )
+
+    # Return the assembled KML tree
+    return xml
+
+
+# Extract top-level Document/Folder from a KML object
+def get_top_kml_folder( kml_tree ):
+    root = kml_tree.getroot()
+    schema = f'{{{KML_NAMESPACE}}}'
+    return root.find( f'./{schema}Document/{schema}Folder' )
 
 
 # Replicate KML element with all its children

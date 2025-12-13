@@ -53,7 +53,7 @@ FUELS = [ELEC, OIL, GAS]
 FILTER = 'filter'
 DOCS = 'docs'
 
-KML_NAMESPACE = 'http://www.opengis.net/kml/2.2'
+KML_NAMESPACE = util.KML_NAMESPACE
 
 KML = 'kml'
 KML_LIST = 'kml_list'
@@ -188,7 +188,7 @@ DC_DOCUMENTS = \
     },
 }
 
-# Add ward-specific filters
+# Add ward-specific filters for all house types
 
 # --> Scaled-down scope for debugging -->
 if B_DEBUG:
@@ -196,26 +196,59 @@ if B_DEBUG:
     {
     }
 
-    WARDS = WARDS[:1]
-    WARDS = WARDS[:3]
-    WARDS = WARDS[:6]
-    HOUSE_TYPES = [RES]
-    HOUSE_TYPES = FOLDER_HOUSE_TYPES
+    WARDS = WARDS[:2]
 # <-- Scaled-down scope for debugging <--
 
 for ward in WARDS:
     for fuel in FUELS:
-        for house_type in HOUSE_TYPES:
-            DC_DOCUMENTS[f'{ward}_{house_type}_{fuel}'.lower()] = \
+        DC_DOCUMENTS[f'{ward}_{LEAN}_{fuel}'.lower()] = \
+        {
+            FILTER:
             {
-                FILTER:
-                {
-                    WARD: [ward],
-                    IS_RES: [YES],
-                    IS_RENTAL: [house_type == RENT],
-                    FUEL: [fuel],
-                },
-            }
+                WARD: [ward],
+                IS_RES: [YES],
+                LEAN_ELIG: [LEAN],
+                FUEL: [fuel],
+            },
+        }
+
+for ward in WARDS:
+    for fuel in FUELS:
+        DC_DOCUMENTS[f'{ward}_{LMF}_{fuel}'.lower()] = \
+        {
+            FILTER:
+            {
+                WARD: [ward],
+                IS_RES: [YES],
+                LEAN_ELIG: [LMF],
+                FUEL: [fuel],
+            },
+        }
+
+for ward in WARDS:
+    for fuel in FUELS:
+        DC_DOCUMENTS[f'{ward}_{RES}_{fuel}'.lower()] = \
+        {
+            FILTER:
+            {
+                WARD: [ward],
+                IS_RES: [YES],
+                FUEL: [fuel],
+            },
+        }
+
+for ward in WARDS:
+    for fuel in FUELS:
+        DC_DOCUMENTS[f'{ward}_{RENT}_{fuel}'.lower()] = \
+        {
+            FILTER:
+            {
+                WARD: [ward],
+                IS_RES: [YES],
+                IS_RENTAL: [True],
+                FUEL: [fuel],
+            },
+        }
 
 
 # Secondary filtering based on weatherization status
@@ -415,6 +448,8 @@ def make_kml_documents( df_parcels, df_styles, output_directory ):
             n_files += 1
             print( '{: >3d}: {}, "{}"'.format( n_files, s_doc_key, kml.document.name ) )
 
+    print( '' )
+
     return
 
 
@@ -445,7 +480,7 @@ def make_dc_folders():
     for hs in dc_required_attrs[HS]:
         for fu in dc_required_attrs[FU]:
             for wx in dc_required_attrs[WX]:
-                s_name = f'{hs} {fu} {wx}'
+                s_name = f'{hs} {fu} {wx}'  # This decides the ordering of name fragments
                 DC_FOLDERS[s_name] = \
                 {
                     KML_LIST: [],
@@ -628,72 +663,68 @@ def make_dc_trees():
 # Insert KML folders into trees
 def insert_folders_in_trees( output_directory ):
 
-    print( '' )
-    print( 'DC_TREES' )
-    print( '' )
-
     for s_tree, dc_tree in DC_TREES.items():
-        print( '' )
-        print( f'Tree name: "{s_tree}"' )
-        print( 'XML list', dc_tree[XML_LIST] )
-        print( 'All tree values:' )
-        for key, value in dc_tree.items():
-            print( key, value )
+
+        # Convert lowercase folder string to formatted name
+        s_tree_name = format_words( s_tree, '_' )
+
+        # Append counts
+        n_parcels = dc_tree[PARCEL_COUNT]
+        n_units = dc_tree[UNIT_COUNT]
+        s_tree_name += format_counts( n_parcels, n_units )
 
         output_path = os.path.join( output_directory, 'trees', f'{s_tree}.kml' )
-        dc_tree[XML] = insert_in_parent_folder( dc_tree[XML_LIST], s_tree, output_path )
+        dc_tree[XML] = util.insert_in_parent_kml_folder( dc_tree[XML_LIST], s_tree_name, output_path )
 
     return
 
 
+# Group trees into folders based on house type
+def make_treetop( s_house_type, output_directory ):
 
+    # Select trees by house type
+    ls_trees = []
+    for s_tree in DC_TREES:
+        if s_house_type in s_tree:
+            ls_trees.append( DC_TREES[s_tree] )
 
+    # Collect XMLs and counts from selected trees
+    ls_xml = []
+    n_parcels = 0
+    n_units = 0
+    for dc_tree in ls_trees:
+        ls_xml.append( dc_tree[XML] )
+        n_parcels += dc_tree[PARCEL_COUNT]
+        n_units += dc_tree[UNIT_COUNT]
 
+    # Make treetop for this house type
+    s_name = make_doc_name( s_house_type, n_parcels, n_units )
+    output_path = os.path.join( output_directory, 'treetops', f'{s_house_type}.kml' )
+    xml = util.insert_in_parent_kml_folder( ls_xml, s_name, output_path )
 
-
-# Insert kml folders into a new parent folder
-def insert_in_parent_folder( ls_children, s_parent, output_path=None ):
-
-    schema = f'{{{KML_NAMESPACE}}}'
-    ET.register_namespace( '', KML_NAMESPACE )
-
-    # Create new KML root
-    root = ET.Element( f'{schema}kml' )
-    doc = ET.SubElement( root, f'{schema}Document' )
-
-    # Create the new parent folder
-    parent_folder = ET.SubElement( doc, f'{schema}Folder' )
-    ET.SubElement( parent_folder, f'{schema}name' ).text = s_parent
-
-    # Append each existing child folder to the parent
-    for kml_tree in ls_children:
-        child_folder = get_top_folder( kml_tree )
-        parent_folder.append( util.replicate_kml_element( child_folder ) )
-
-    xml = ET.ElementTree( root )
-
-    # Optionally write the result to a KML file
-    if output_path:
-        print( f'Saving tree "{s_parent}"' )
-        xml.write( output_path, encoding='utf-8', xml_declaration=True )
-
-    # Return the assembled KML tree
     return xml
 
 
+# Build treetops and full parcels tree
+def make_parcels_tree( output_directory ):
 
+    # Initialize values for parcels tree root
+    ls_xml = []
 
+    # Generate top-level subtrees based on house types
+    for s_house_type in FOLDER_HOUSE_TYPES:
 
-# Extract top-level Document/Folder
-def get_top_folder( kml_tree ):
-    root = kml_tree.getroot()
-    schema = f'{{{KML_NAMESPACE}}}'
-    return root.find( f'./{schema}Document/{schema}Folder' )
+        # Generate the subtree
+        xml = make_treetop( s_house_type, output_directory )
 
+        # Accumulate information for parcels tree root
+        ls_xml.append( xml )
 
+    # Generate full parcels tree
+    output_path = os.path.join( output_directory, '', 'parcels.kml' )
+    util.insert_in_parent_kml_folder( ls_xml, 'Parcels', output_path )
 
-
-
+    return
 
 
 
@@ -728,6 +759,7 @@ if __name__ == '__main__':
             util.clear_directory( os.path.join( args.output_directory, 'maps' ) )
             util.clear_directory( os.path.join( args.output_directory, 'folders' ) )
             util.clear_directory( os.path.join( args.output_directory, 'trees' ) )
+            util.clear_directory( os.path.join( args.output_directory, 'treetops' ) )
 
     # Read the parcels table
     conn, cur, engine = util.open_database( args.master_filename, False )
@@ -753,6 +785,9 @@ if __name__ == '__main__':
 
     # Insert KML folders into trees
     insert_folders_in_trees( args.output_directory )
+
+    # Build treetops and full parcels tree
+    make_parcels_tree( args.output_directory )
 
 
     if B_DEBUG:
