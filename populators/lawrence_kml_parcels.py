@@ -201,32 +201,38 @@ if B_DEBUG:
     WARDS = WARDS[:2]
 # <-- Scaled-down scope for debugging <--
 
-for ward in WARDS:
-    for fuel in FUELS:
-        DC_DOCUMENTS[f'{ward}_{LEAN}_{fuel}'.lower()] = \
-        {
-            FILTER:
-            {
-                WARD: [ward],
-                IS_RES: [YES],
-                LEAN_ELIG: [LEAN],
-                FUEL: [fuel],
-            },
-        }
 
-for ward in WARDS:
-    for fuel in FUELS:
-        DC_DOCUMENTS[f'{ward}_{LMF}_{fuel}'.lower()] = \
-        {
-            FILTER:
-            {
-                WARD: [ward],
-                IS_RES: [YES],
-                LEAN_ELIG: [LMF],
-                FUEL: [fuel],
-            },
-        }
+if not B_DEBUG:
 
+    # LEAN
+    for ward in WARDS:
+        for fuel in FUELS:
+            DC_DOCUMENTS[f'{ward}_{LEAN}_{fuel}'.lower()] = \
+            {
+                FILTER:
+                {
+                    WARD: [ward],
+                    IS_RES: [YES],
+                    LEAN_ELIG: [LEAN],
+                    FUEL: [fuel],
+                },
+            }
+
+    # LMF
+    for ward in WARDS:
+        for fuel in FUELS:
+            DC_DOCUMENTS[f'{ward}_{LMF}_{fuel}'.lower()] = \
+            {
+                FILTER:
+                {
+                    WARD: [ward],
+                    IS_RES: [YES],
+                    LEAN_ELIG: [LMF],
+                    FUEL: [fuel],
+                },
+            }
+
+# Residential
 for ward in WARDS:
     for fuel in FUELS:
         DC_DOCUMENTS[f'{ward}_{RES}_{fuel}'.lower()] = \
@@ -239,6 +245,7 @@ for ward in WARDS:
             },
         }
 
+# Rental
 for ward in WARDS:
     for fuel in FUELS:
         DC_DOCUMENTS[f'{ward}_{RENT}_{fuel}'.lower()] = \
@@ -667,6 +674,10 @@ def make_dc_trees():
 # Insert KML folders into trees
 def insert_folders_in_trees( output_directory ):
 
+    print( '' )
+
+    ls_tree_names = []
+
     for s_tree, dc_tree in DC_TREES.items():
 
         # Convert lowercase folder string to formatted name
@@ -680,7 +691,9 @@ def insert_folders_in_trees( output_directory ):
         output_path = os.path.join( output_directory, 'trees', f'{s_tree}.kml' )
         dc_tree[XML] = util.insert_in_parent_kml_folder( dc_tree[XML_LIST], s_tree_name, s_visibility=dc_tree[VISIBILITY], output_path=output_path )
 
-    return
+        ls_tree_names.append( s_tree_name )
+
+    return ls_tree_names
 
 
 # Group trees into folders based on house type
@@ -707,7 +720,7 @@ def make_treetop( s_house_type, output_directory ):
     s_vis = '0' if ( s_house_type == RES ) else '1'
     xml = util.insert_in_parent_kml_folder( ls_xml, s_name, s_visibility=s_vis, output_path=output_path )
 
-    return xml
+    return xml, s_name
 
 
 # Build treetops and full parcels tree
@@ -716,21 +729,43 @@ def make_parcels_tree( output_directory ):
     # Initialize values for parcels tree root
     ls_xml = []
 
+    # Initialize return value
+    ls_treetop_names = []
+
     # Generate top-level subtrees based on house types
     for s_house_type in FOLDER_HOUSE_TYPES:
 
         # Generate the subtree
-        xml = make_treetop( s_house_type, output_directory )
+        xml, s_name = make_treetop( s_house_type, output_directory )
 
         # Accumulate information for parcels tree root
         ls_xml.append( xml )
+        ls_treetop_names.append( s_name )
 
     # Generate full parcels tree
     output_path = os.path.join( output_directory, '', 'parcels.kml' )
     util.insert_in_parent_kml_folder( ls_xml, 'Parcels', output_path=output_path )
 
-    return
+    return ls_treetop_names
 
+
+# Save treetop and tree names in a text file
+def save_tree_names( ls_treetop_names, ls_tree_names, output_directory ):
+
+    print( '' )
+    print( 'Saving tree names' )
+
+    s_filepath = os.path.join( output_directory, 'tree_names.txt' )
+
+    with open( s_filepath, 'w' ) as f:
+
+        for s in ls_treetop_names:
+            f.write( f'{s}\n' )
+
+        for s in ls_tree_names:
+            f.write( f'{s}\n' )
+
+    return
 
 
 ######################
@@ -789,11 +824,13 @@ if __name__ == '__main__':
     make_dc_trees()
 
     # Insert KML folders into trees
-    insert_folders_in_trees( args.output_directory )
+    ls_tree_names = insert_folders_in_trees( args.output_directory )
 
     # Build treetops and full parcels tree
-    make_parcels_tree( args.output_directory )
+    ls_treetop_names = make_parcels_tree( args.output_directory )
 
+    # Save tree names in a text file
+    save_tree_names( ls_treetop_names, ls_tree_names, args.output_directory )
 
     if B_DEBUG:
         print( '' )
