@@ -84,28 +84,28 @@ DC_HEAT_MAPS = \
     HOUSEHOLDS:
     {
         HEAT_MAP_LABEL: '# Households',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_ELEC_OIL:
     {
         HEAT_MAP_LABEL: '# Households - Elec & Oil',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_ELEC_OIL_NWX:
     {
         HEAT_MAP_LABEL: '# Households - Elec & Oil (Nwx)',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_ELEC_OIL_WX:
     {
         HEAT_MAP_LABEL: '# Households - Elec & Oil (Wx)',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
@@ -119,14 +119,14 @@ DC_HEAT_MAPS = \
     HOUSEHOLDS_NWX:
     {
         HEAT_MAP_LABEL: '# Households (Nwx)',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
     HOUSEHOLDS_POVERTY:
     {
         HEAT_MAP_LABEL: '# Households - Poverty',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
@@ -140,7 +140,7 @@ DC_HEAT_MAPS = \
     HOUSEHOLDS_WX:
     {
         HEAT_MAP_LABEL: '# Households (Wx)',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
@@ -154,28 +154,28 @@ DC_HEAT_MAPS = \
     POPULATION:
     {
         HEAT_MAP_LABEL: '# Population',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
     POPULATION_POVERTY:
     {
         HEAT_MAP_LABEL: '# Population - Poverty',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
     RES_PARCELS_NWX:
     {
         HEAT_MAP_LABEL: '# Res Parcels (Nwx)',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
     RES_PARCELS_WX:
     {
         HEAT_MAP_LABEL: '# Res Parcels (Wx)',
-        HEAT_MAP_PREFIX: '',
+        HEAT_MAP_PREFIX: '#',
         HEAT_MAP_UNIT: '',
         HEAT_MAP_VISIBILITY: 0,
     },
@@ -573,8 +573,8 @@ def make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_hea
     n_max = df_block_groups[HEAT_MAP_VALUE].max()
     s_min = f'{s_prefix}{n_min:,}{s_unit}'
     s_max = f'{s_prefix}{n_max:,}{s_unit}'
-    s_to = ' - ' if ( s_prefix or s_unit ) else '-'
-    s_range = f': {s_min}{s_to}{s_max}'
+    s_to = ' to '
+    s_range = f': Range {s_min}{s_to}{s_max}'
     doc.name += s_range
 
     # Generate polygon for each census block group
@@ -582,7 +582,7 @@ def make_heat_map_kml_file( kml, doc, df_block_groups, dc_heat_map_attrs, dc_hea
         s_block_group = row[TRACT_DASH_GROUP]
         n_value = row[HEAT_MAP_VALUE]
         s_value = f'{s_prefix}{n_value:,}{s_unit}'
-        poly = doc.newpolygon( name=f'{s_block_group}: {s_value}' )
+        poly = doc.newpolygon( name=f'CBG {s_block_group}: {s_value}' )
         poly.outerboundaryis = list( row[util.GEOMETRY].exterior.coords )
         poly.description = f'<p>Geographic ID: {row[GEOID]}</p><p>{s_label}: {s_value}</p>'
         poly.style = dc_heat_map_styles[s_block_group]
