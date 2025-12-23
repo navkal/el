@@ -233,6 +233,6 @@ if __name__ == '__main__':
     df_parcels = df_parcels.sort_values( by=[ACCT] )
 
     # Save final table of commercial assessments
-    util.create_table( 'Assessment_L_Parcels', conn, cur, df=df_parcels )
+    util.create_table( 'Assessment_L_Parcels_Merged', conn, cur, df=df_parcels )
 
     util.report_elapsed_time()

@@ -120,6 +120,18 @@ def add_vehicle_counts( df_ej, df_mv ):
     return df_ej
 
 
+# Calculate health risk score for each census block group
+def add_health_risk_score( df_ej ):
+
+    health_risk_columns = ['D2_PM25', 'D2_RESP', 'D2_RSEI_AIR', 'D2_LDPNT']
+
+    # Calculate health risk score ranging from 1 to 10
+    df_ej[util.HEALTH_RISK_SCORE] = pd.qcut( df_ej[health_risk_columns].mean( axis=1 ), 10, labels=False ) + 1
+
+    return df_ej
+
+
+
 ######################
 
 # Main program
@@ -152,7 +164,7 @@ if __name__ == '__main__':
     df_ej = pd.merge( df_ej, df_mp, how='outer', on=[util.CENSUS_GEO_ID] )
 
     # Read parcels table from database and select residential parcels with known block groups
-    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
+    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels_Merged', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.CENSUS_GEO_ID] != 0 )]
 
     # Add columns counting per-block-group occurrences of specified heating fuels
@@ -187,6 +199,9 @@ if __name__ == '__main__':
     df_mv = pd.read_sql_table( 'MotorVehicles_L', engine, index_col=util.ID, parse_dates=True )
     df_ej = add_vehicle_counts( df_ej, df_mv )
 
+    # Add column representing a per-block-group health risk score
+    df_ej = add_health_risk_score( df_ej )
+
     # Fix datatypes
     df_ej[util.PCT_OWNER_OCCUPIED] = df_ej[util.PCT_OWNER_OCCUPIED].fillna( 0 ).astype( int )
     df_ej[util.OWNER_HOUSEHOLDS] = df_ej[util.OWNER_HOUSEHOLDS].fillna( 0 ).astype( int )
@@ -194,6 +209,7 @@ if __name__ == '__main__':
         df_ej[HEATING_FUEL_PARCELS_MAP[s_key]] = df_ej[HEATING_FUEL_PARCELS_MAP[s_key]].fillna( 0 ).astype( int )
     for s_key in HEATING_TYPE_MAP:
         df_ej[HEATING_TYPE_MAP[s_key]] = df_ej[HEATING_TYPE_MAP[s_key]].fillna( 0 ).astype( int )
+    df_ej[util.HEALTH_RISK_SCORE] = df_ej[util.HEALTH_RISK_SCORE].fillna( 0 ).astype( int )
 
     # Sort on census global ID
     df_ej = df_ej.sort_values( by=[util.CENSUS_GEO_ID] )

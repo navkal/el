@@ -280,7 +280,7 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Initialize table of residential parcels with known wards
-    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
+    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels_Merged', engine, index_col=util.ID, parse_dates=True )
     df_parcels = df_parcels[( df_parcels[util.IS_RESIDENTIAL] == util.YES ) & ( df_parcels[util.WARD_NUMBER].notnull() )]
 
     # Create one parcels table for each ward

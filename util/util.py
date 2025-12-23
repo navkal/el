@@ -133,6 +133,8 @@ NORMALIZED_STREET_NAME = 'street_name'
 NORMALIZED_OCCUPANCY = 'occupancy'
 NORMALIZED_ADDITIONAL_INFO = 'additional_address_info'
 
+HEALTH_RISK_SCORE = 'health_risk_score'
+
 LATITUDE = 'latitude'
 LONGITUDE = 'longitude'
 GEO_SERVICE = 'geo_service'

@@ -25,7 +25,7 @@ if __name__ == '__main__':
     df_permits = pd.read_sql_table( 'BuildingPermits_L_Wx', engine, index_col=util.ID, parse_dates=True )
 
     # Retrieve pertinent columns of assessment table
-    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, columns=[util.ACCOUNT_NUMBER, * util.WX_EXTENDED], parse_dates=True )
+    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels_Merged', engine, index_col=util.ID, columns=[util.ACCOUNT_NUMBER, * util.WX_EXTENDED], parse_dates=True )
 
     # Merge assessment table fields into weatherization permit table
     df_permits = pd.merge( df_permits, df_parcels, how='left', on=[util.ACCOUNT_NUMBER] )

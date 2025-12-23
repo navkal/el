@@ -59,7 +59,7 @@ HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_GRAY, SPECTRUM_BLUE, SPECTRUM_LEN )
 
 # Heat map names
 HEALTH = 'health'
-HEALTH_RISK_SCORE = 'health_risk_score'
+HEALTH_RISK_SCORE = util.HEALTH_RISK_SCORE
 HOUSEHOLDS = 'households'
 HOUSEHOLDS_ELEC_OIL = 'households_elec_oil'
 HOUSEHOLDS_ELEC_OIL_NWX = 'households_elec_oil_nwx'
@@ -505,29 +505,27 @@ def make_heat_map_from_stats( df_stats, df_block_groups, s_name ):
 # --------------------------------------------
 
 
-
-# Prepare dataframe of block group statistics for use in heat map generation
-def get_block_group_stats( engine, census_data_filename ):
+# Calculate health risk score for each census block group
+def get_health_risk_score( engine ):
 
     # Read the EJ screen summary table
     s_table = 'EJScreenSummary_L'
     print( f'Reading {s_table}' )
     print( '' )
-    health_risk_columns = ['D2_PM25', 'D2_RESP', 'D2_RSEI_AIR', 'D2_LDPNT']
-    df_ejs = pd.read_sql_table( s_table, engine, columns=[util.CENSUS_GEO_ID, *health_risk_columns] )
+    df_score = pd.read_sql_table( s_table, engine, columns=[util.CENSUS_GEO_ID, util.HEALTH_RISK_SCORE] )
+    df_score = df_score.rename( columns={ util.CENSUS_GEO_ID: GEOID } )
 
-    # Clean up EJ Screen dataframe
-    df_ejs = df_ejs.dropna( subset=health_risk_columns, how='all' )
-    df_ejs = df_ejs.rename( columns={ util.CENSUS_GEO_ID: GEOID } )
+    return df_score
 
-    # Calculate health risk score ranging from 1 to 10
-    df_ejs[HEALTH_RISK_SCORE] = pd.qcut( df_ejs[health_risk_columns].mean( axis=1 ), 10, labels=False ) + 1
+
+# Prepare dataframe of block group statistics for use in heat map generation
+def get_block_group_stats( census_data_filename, df_score ):
 
     # Read census statistics
     df_stats = pd.read_csv( census_data_filename )
 
     # Merge in health risk score
-    df_stats = pd.merge( df_stats, df_ejs[[GEOID, HEALTH_RISK_SCORE]], how='left', on=[GEOID] )
+    df_stats = pd.merge( df_stats, df_score, how='left', on=[GEOID] )
 
     # Rename columns
     dc_rename = \
@@ -553,7 +551,7 @@ def get_res_parcels( engine ):
 
     # Read the parcels table
     print( '' )
-    s_table = 'Assessment_L_Parcels'
+    s_table = 'Assessment_L_Parcels_Merged'
     print( f'Reading {s_table}' )
     df_parcels = pd.read_sql_table( s_table, engine )
 
@@ -779,8 +777,11 @@ if __name__ == '__main__':
     # Extract dataframe of residential parcels for generating the heat map
     df_res_parcels = get_res_parcels( engine )
 
+    # Calculate health risk score
+    df_score = get_health_risk_score( engine )
+
     # Get dataframe of block group statistics
-    df_stats = get_block_group_stats( engine, args.census_data_filename )
+    df_stats = get_block_group_stats( args.census_data_filename, df_score )
 
     # Extract block group geometries from shapefile
     df_block_groups = util.get_block_groups_geometry( args.block_groups_filename )

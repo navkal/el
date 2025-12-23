@@ -265,6 +265,10 @@ if __name__ == '__main__':
     print( '\n=======> EJScreen summary' )
     os.system( 'python lawrence_ejscreen_summarize.py -e ../db/lawrence_ejscreen.sqlite -m {0}'.format( args.master_filename ) )
 
+    # Finish generating Assessment Parcels table
+    print( '\n=======> Parcels finish' )
+    os.system( 'python lawrence_parcels_finish.py -m {0}'.format( args.master_filename ) )
+
     # Analyze building contractor activity
     print( '\n=======> Contractor activity' )
     os.system( 'python lawrence_contractor_activity.py -m {0}'.format( args.master_filename ) )
@@ -352,6 +356,7 @@ if __name__ == '__main__':
         'drop_table_names':
         [
             'Assessment_L_Commercial_Merged',
+            'Assessment_L_Parcels_Merged',
             'Assessment_L_Residential_Merged',
             'GeoParcels_L',
             'RawBuildingPermits',

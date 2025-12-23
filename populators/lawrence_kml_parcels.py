@@ -804,7 +804,7 @@ if __name__ == '__main__':
     # Read the parcels table
     conn, cur, engine = util.open_database( args.master_filename, False )
     print( '' )
-    s_table = 'Assessment_L_Parcels'
+    s_table = 'Assessment_L_Parcels_Merged'
     print( f'Reading {s_table}' )
     df_parcels = pd.read_sql_table( s_table, engine )
 
