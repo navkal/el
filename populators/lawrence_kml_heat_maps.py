@@ -58,6 +58,8 @@ SPECTRUM_LEN = 256
 HEAT_MAP_SPECTRUM = make_spectrum( SPECTRUM_GRAY, SPECTRUM_BLUE, SPECTRUM_LEN )
 
 # Heat map names
+HEALTH = 'health'
+HEALTH_RISK_SCORE = 'health_risk_score'
 HOUSEHOLDS = 'households'
 HOUSEHOLDS_ELEC_OIL = 'households_elec_oil'
 HOUSEHOLDS_ELEC_OIL_NWX = 'households_elec_oil_nwx'
@@ -81,6 +83,13 @@ KML = 'kml'
 # Dictionary of heat maps to be generated
 DC_HEAT_MAPS = \
 {
+    HEALTH_RISK_SCORE:
+    {
+        HEAT_MAP_LABEL: '# Health - Risk Score',
+        HEAT_MAP_PREFIX: '#',
+        HEAT_MAP_UNIT: '',
+        HEAT_MAP_VISIBILITY: 0,
+    },
     HOUSEHOLDS:
     {
         HEAT_MAP_LABEL: '# Households',
@@ -195,6 +204,7 @@ FOLDER_CONTENTS = 'folder_contents'
 # Demographics folders
 POPULATION_FOLDER = 'demo_population_folder'
 HOUSEHOLDS_FOLDER = 'demo_households_folder'
+HEALTH_FOLDER = 'demo_health_folder'
 
 # Heating fuel folders
 HEATING_FUEL_FOLDER = 'heating_fuel_folder'
@@ -216,6 +226,11 @@ DC_FOLDERS = \
     {
         FOLDER_LABEL: 'Households',
         FOLDER_CONTENTS: [HOUSEHOLDS, HOUSEHOLDS_MEDIAN_INCOME, HOUSEHOLDS_POVERTY, HOUSEHOLDS_POVERTY_PCT],
+    },
+    HEALTH_FOLDER: \
+    {
+        FOLDER_LABEL: 'Health',
+        FOLDER_CONTENTS: [HEALTH_RISK_SCORE],
     },
 
     # Heating Fuel
@@ -398,6 +413,10 @@ class Compute:
         return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
 
+    def health_risk_score( df_res_parcels, df_stats, df_block_groups, s_name ):
+        return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
+
+
     def population_poverty( df_res_parcels, df_stats, df_block_groups, s_name ):
         return make_heat_map_from_stats( df_stats, df_block_groups, s_name )
 
@@ -488,10 +507,29 @@ def make_heat_map_from_stats( df_stats, df_block_groups, s_name ):
 
 
 # Prepare dataframe of block group statistics for use in heat map generation
-def get_block_group_stats( census_data_filename ):
+def get_block_group_stats( engine, census_data_filename ):
 
+    # Read the EJ screen summary table
+    s_table = 'EJScreenSummary_L'
+    print( f'Reading {s_table}' )
+    print( '' )
+    health_risk_columns = ['D2_PM25', 'D2_RESP', 'D2_RSEI_AIR', 'D2_LDPNT']
+    df_ejs = pd.read_sql_table( s_table, engine, columns=[util.CENSUS_GEO_ID, *health_risk_columns] )
+
+    # Clean up EJ Screen dataframe
+    df_ejs = df_ejs.dropna( subset=health_risk_columns, how='all' )
+    df_ejs = df_ejs.rename( columns={ util.CENSUS_GEO_ID: GEOID } )
+
+    # Calculate health risk score ranging from 1 to 10
+    df_ejs[HEALTH_RISK_SCORE] = pd.qcut( df_ejs[health_risk_columns].mean( axis=1 ), 10, labels=False ) + 1
+
+    # Read census statistics
     df_stats = pd.read_csv( census_data_filename )
 
+    # Merge in health risk score
+    df_stats = pd.merge( df_stats, df_ejs[[GEOID, HEALTH_RISK_SCORE]], how='left', on=[GEOID] )
+
+    # Rename columns
     dc_rename = \
     {
         'median_household_income': HOUSEHOLDS_MEDIAN_INCOME,
@@ -500,8 +538,11 @@ def get_block_group_stats( census_data_filename ):
     }
     df_stats = df_stats.rename( columns=dc_rename )
 
+    # Calculate poverty percentage
     df_stats[HOUSEHOLDS_POVERTY_PCT] = round( 100 * df_stats[HOUSEHOLDS_POVERTY] / df_stats[HOUSEHOLDS] )
     df_stats[HOUSEHOLDS_POVERTY_PCT] = df_stats[HOUSEHOLDS_POVERTY_PCT].astype( int )
+
+    # Fix datatype
     df_stats[GEOID] = df_stats[GEOID].astype(str)
 
     return df_stats
@@ -514,7 +555,6 @@ def get_res_parcels( engine ):
     print( '' )
     s_table = 'Assessment_L_Parcels'
     print( f'Reading {s_table}' )
-    print( '' )
     df_parcels = pd.read_sql_table( s_table, engine )
 
     # Prepare dataframe of residential parcels
@@ -689,7 +729,7 @@ def combine_heat_maps( s_folder, output_directory=None ):
 def make_heat_maps_tree( output_directory ):
 
     # Build Demographics tree
-    ls_children = [DC_FOLDERS[POPULATION_FOLDER][XML], DC_FOLDERS[HOUSEHOLDS_FOLDER][XML]]
+    ls_children = [DC_FOLDERS[POPULATION_FOLDER][XML], DC_FOLDERS[HOUSEHOLDS_FOLDER][XML], DC_FOLDERS[HEALTH_FOLDER][XML]]
     output_path = os.path.join( output_directory, 'trees', 'demographics_tree.kml' )
     demo_tree = util.insert_in_parent_kml_folder( ls_children, 'Demographics', output_path=output_path )
 
@@ -739,8 +779,8 @@ if __name__ == '__main__':
     # Extract dataframe of residential parcels for generating the heat map
     df_res_parcels = get_res_parcels( engine )
 
-    # Extract dataframe of residential parcels for generating the heat map
-    df_stats = get_block_group_stats( args.census_data_filename )
+    # Get dataframe of block group statistics
+    df_stats = get_block_group_stats( engine, args.census_data_filename )
 
     # Extract block group geometries from shapefile
     df_block_groups = util.get_block_groups_geometry( args.block_groups_filename )
