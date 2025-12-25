@@ -337,7 +337,7 @@ if __name__ == '__main__':
 
     # Generate summaries
     print( '\n=======> Summary' )
-    os.system( 'python lawrence_summary.py -o ../db/summary -m {0} -c'.format( args.master_filename ) )
+    os.system( 'python lawrence_summary.py -o ../db/xlsx -m {0} -c'.format( args.master_filename ) )
 
     # ----------------------------------------------------
     # <-- Lawrence summary build ends here <--
