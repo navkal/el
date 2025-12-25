@@ -13,7 +13,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/analyzers/compare_scrapes.py" />
-    <option name="PARAMETERS" value="-o ../test/Parcels_L_2023-10-18.csv -n ../test/Parcels_L.csv -c normalized_address,primary_land_use_code,primary_land_use_code_description,total_occupancy -r ../db/compare_scrapes_2023-10-18.xlsx" />
+    <option name="PARAMETERS" value="-o ../test/Parcels_L_2023-10-18.csv -n ../test/Parcels_L.csv -c normalized_address,primary_land_use_code,primary_land_use_code_description,total_occupancy -r ../db/xlsx/compare_scrapes_2023-10-18.xlsx" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
