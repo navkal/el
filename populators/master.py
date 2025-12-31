@@ -28,7 +28,7 @@ if __name__ == '__main__':
     print( '\n=======> Gender_2014' )
     os.system( 'python xl_to_db.py -i ../xl/gender_2014.xlsx -o ../db/{0} -k "Resident Id Number,Gender" -t Gender_2014'.format( args.output_filename ) )
     print( '\n=======> Assessment' )
-    os.system( 'python xl_to_db.py -i ../xl/assessment_2019-06.xlsx -o ../db/{0} -t Assessment'.format( args.output_filename ) )
+    os.system( 'python xl_to_db.py -i ../xl/assessment_2025-12.xlsx -m -p "LUC.1" -q "TotalValue,0" -o ../db/{0} -t Assessment'.format( args.output_filename ) )
     print( '\n=======> Water' )
     os.system( 'python xl_to_db.py -d ../xl/water -l service_type -n acct_no -s name,number,cur_date -o ../db/{0} -t Water'.format( args.output_filename ) )
     print( '\n=======> Raw Local Election Results' )

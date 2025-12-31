@@ -544,7 +544,7 @@ if __name__ == '__main__':
     #
 
     # Set up columns for merge
-    df_assessment[util.LADDR_STREET_NUMBER] = df_assessment[util.LADDR_STREET_NUMBER].fillna(0).astype(int).astype(str)
+    df_assessment[util.LADDR_STREET_NUMBER] = df_assessment[util.LADDR_STREET_NUMBER].fillna(0).astype(str)
     df_assessment[util.LADDR_STREET_NAME] = df_assessment[util.LADDR_STREET_NAME].fillna('').astype(str)
     df_assessment[ADDR] = df_assessment[util.LADDR_STREET_NUMBER] + ' ' + df_assessment[util.LADDR_STREET_NAME]
     df_assessment[ADDR] = df_assessment.apply( lambda row: normalize.normalize_address( row, ADDR ), axis=1 )

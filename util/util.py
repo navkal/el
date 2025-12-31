@@ -221,9 +221,11 @@ ADDR_STREET_NAME = STREET_NAME.format( ADDRESS )
 LOCATION_ADDRESS = 'location_address'
 LADDR_STREET_NUMBER = STREET_NUMBER.format( LOCATION_ADDRESS )
 LADDR_ALT_STREET_NUMBER = STREET_NUMBER.format( LOCATION_ADDRESS + '_alternate' )
+LADDR_COMB_STREET_NUMBER = STREET_NUMBER.format( LOCATION_ADDRESS + '_combined' )
 LADDR_STREET_NAME = STREET_NAME.format( LOCATION_ADDRESS )
 LADDR_CITY = LOCATION_ADDRESS + '_city'
 LADDR_CONDO_UNIT = LOCATION_ADDRESS + '_condo_unit'
+LADDR_CONDO_FLOOR = LOCATION_ADDRESS + '_condo_floor'
 LADDR_CONDO_COMPLEX = LOCATION_ADDRESS + '_condo_complex'
 
 RESIDENTIAL_ADDRESS = 'residential_address'
@@ -751,11 +753,13 @@ CONSISTENT_COLUMN_NAMES = \
         'AccountNumber': ACCOUNT_NUMBER,
         'ParcelID': PARCEL_ID,
         'UserAccount': 'user_account',
-        'Street.': LADDR_STREET_NUMBER,
-        'AltStreet.': LADDR_ALT_STREET_NUMBER,
+        'Street#': LADDR_STREET_NUMBER,
+        'AltStreet#': LADDR_ALT_STREET_NUMBER,
+        'CombStreet#': LADDR_COMB_STREET_NUMBER,
         'StreetName': LADDR_STREET_NAME,
         'LocCity': LADDR_CITY,
         'CondoUnit': LADDR_CONDO_UNIT,
+        'CondoFloor': LADDR_CONDO_FLOOR,
         'CondoComplex': LADDR_CONDO_COMPLEX,
         'Owner1': OWNER_1_NAME,
         'Owner2': OWNER_2_NAME,
@@ -766,7 +770,7 @@ CONSISTENT_COLUMN_NAMES = \
         'State': MADDR_STATE,
         'Zip': MADDR_ZIP_CODE,
         'OwnerOccupied': OWNER_OCCUPIED,
-        'Zone1': ZONING_CODE_1,
+        'Zone': ZONING_CODE_1,
         'FloodHazard': 'flood_hazard_zone',
         'Census': 'census_code',
         'Utility1': 'utility_code_1',
@@ -774,20 +778,21 @@ CONSISTENT_COLUMN_NAMES = \
         'Utility3': 'utility_code_3',
         'Traffic': 'traffic_code',
         'LUC': LAND_USE_CODE,
+        'LUCDescription': LAND_USE_CODE_DESC,
         'YearBuilt': YEAR_BUILT,
         'EffYr': EFFECTIVE_YEAR_BUILT,
         'TotalAcres': TOTAL_ACRES,
         'GrossBldArea': GROSS_BUILDING_AREA,
-        'BuildType': 'building_type_1',
-        'BuildType2': 'building_type_2',
-        'BuildType3': 'building_type_3',
+        'BuildType': 'building_type',
+        'BuildTypeDescription': 'building_type_description',
         'FinArea': 'finished_building_area',
         'NumofBuilding': 'number_of_buildings',
         'StoryHeight': STORY_HEIGHT,
         'RentalLivUnits': RENTAL_LIVING_UNITS,
+        'TotalNumberofUnits': TOTAL_OCCUPANCY,
         'Rooms': ROOMS,
         'Bedrooms': BEDROOOMS,
-        'Fullbaths': FULL_BATHS,
+        'FullBaths': FULL_BATHS,
         'HalfBaths': HALF_BATHS,
         'OtherFixtures': 'number_of_other_fixtures',
         'BathRating': 'bathroom_rating',
@@ -813,7 +818,7 @@ CONSISTENT_COLUMN_NAMES = \
         'Frame': 'building_frame_type',
         'Floor': 'floor_type',
         'BaseYear': 'base_depreciation_year',
-        'Grade': BUILDING_GRADE,
+        'Grad': BUILDING_GRADE,
         'Cond': BUILDING_CONDITION,
         'LegalReference': 'legal_reference_number',
         'LegalRefDate': LEGAL_REFERENCE_SALE_DATE,
@@ -823,7 +828,7 @@ CONSISTENT_COLUMN_NAMES = \
         'PrevLegalReference': 'previous_legal_reference_number',
         'PrevLegalRefDate': PREVIOUS_LEGAL_REFERENCE_SALE_DATE,
         'PrevSalePrice': 'previous_sale_price',
-        'PrevNal': PREVIOUS_NAL_DESCRIPTION,
+        'PrevNAL': PREVIOUS_NAL_DESCRIPTION,
         'PrevGrantor': PREVIOUS_GRANTOR,
         'TotalLandValue': 'total_land_value',
         'TotalYardItemValue': 'total_yard_item_value',
@@ -834,6 +839,20 @@ CONSISTENT_COLUMN_NAMES = \
         'PercSprink': 'percolation_sprinkler',
         'RevDate': 'revision_date',
         'GisKey': 'gis_key',
+        'GISLatitude': 'gis_latitude',
+        'GISLongitude': 'gis_longitude',
+        'CardNumber': 'card_number',
+        'ZonePercentage': 'zone_percentage',
+        'PictureLink': 'picture_link',
+        'SketchLink': 'sketch_link',
+        'MasterAccount': 'master_account',
+        'AssessorMap': 'assessor_map',
+        'MailingUnit': 'mailing_unit',
+        'OccupancyCode': 'occupancy_code',
+        'OwnerPhoneNumber': 'owner_phone_number',
+        'OwnerEmailAddress': 'owner_email_address',
+        'Name': 'name',
+        'Notes': 'notes',
     },
     'AssessmentAddendum': \
     {

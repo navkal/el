@@ -39,6 +39,7 @@ if __name__ == '__main__':
     parser.add_argument( '-s', dest='sort_columns',  help='Comma-separated list of column labels to be used as basis for sort' )
     parser.add_argument( '-x', dest='exclude_unmapped', action='store_true', help='Exclude unmapped column names?'  )
     parser.add_argument( '-z', dest='synthesize_unmapped', action='store_true', help='Synthesize unmapped column names?'  )
+    parser.add_argument( '-q', dest='required_columns',  help='Required columns to add if missing from the input, expressed as list of name-value pairs' )
     parser.add_argument( '-o', dest='output_filename',  help='Output filename - Name of SQLite database file', required=True )
     parser.add_argument( '-t', dest='output_table_name',  help='Output table name - Name of target table in SQLite database file', required=True )
     parser.add_argument( '-c', dest='create', action='store_true', help='Create new database?' )
@@ -125,6 +126,32 @@ if __name__ == '__main__':
     # Keep only specified columns
     if args.keep_columns != None:
         df_xl = df_xl[ args.keep_columns.split( ',' ) ]
+
+    # Create any required columns that are missing and initialize with the supplied value
+    if args.required_columns != None:
+
+        # Split comma-separated list of alternating column names and values
+        ls_required = args.required_columns.split( ',' )
+
+        # Create iterator
+        it_required = iter( ls_required )
+
+        # Iterate over name-value pairs
+        for s_col, s_val in zip( it_required, it_required ):
+
+            # If column is not already in dataframe, add it with the indicated value
+            if s_col not in df_xl.columns:
+
+                # Determine column value
+                try:
+                    # Try to evaluate as non-string
+                    val = eval( s_val )
+                except:
+                    # Evaluate as a literal string
+                    val = eval( f'"{s_val}"' )
+
+                df_xl[s_col] = val
+
 
     # Prepare data for saving to database
     df_xl = util.prepare_for_database( df_xl, args.output_table_name, exclude_unmapped=args.exclude_unmapped, synthesize_unmapped=args.synthesize_unmapped )

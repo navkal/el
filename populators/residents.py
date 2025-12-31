@@ -61,12 +61,12 @@ def guess_gender( row ):
 def report_gender_findings():
 
     vc = df_residents[util.GENDER].value_counts()
-    pct_mf = int( 100 * ( vc.loc[GENDER_F] + vc.loc[GENDER_M] ) / len( df_census ) )
+    pct_mf = int( 100 * ( vc.loc[GENDER_F] + vc.loc[GENDER_M] ) / vc.sum() )
     print( 'Gender found for {0}% of residents'.format( pct_mf ) )
 
     df_voted = df_residents[ df_residents[util.VOTED] == util.YES ]
     vc = df_voted[util.GENDER].value_counts()
-    pct_mf = int( 100 * ( vc.loc[GENDER_F] + vc.loc[GENDER_M] ) / len( df_voted ) )
+    pct_mf = int( 100 * ( vc.loc[GENDER_F] + vc.loc[GENDER_M] ) / vc.sum() )
     print( 'Gender found for {0}% of voters'.format( pct_mf ) )
 
 
@@ -520,6 +520,9 @@ if __name__ == '__main__':
         debug_columns = [
         ]
         df_residents = df_residents.drop( columns=debug_columns )
+
+    # Drop duplicates
+    df_residents = df_residents.drop_duplicates()
 
     # Save result to database
     util.create_table( 'Residents', conn, cur, df=df_residents )
