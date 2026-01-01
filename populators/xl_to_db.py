@@ -8,6 +8,8 @@ import pandas as pd
 pd.set_option( 'display.max_columns', 500 )
 pd.set_option( 'display.width', 1000 )
 
+import ast
+
 import warnings
 
 import sys
@@ -145,10 +147,10 @@ if __name__ == '__main__':
                 # Determine column value
                 try:
                     # Try to evaluate as non-string
-                    val = eval( s_val )
+                    val = ast.literal_eval( s_val )
                 except:
-                    # Evaluate as a literal string
-                    val = eval( f'"{s_val}"' )
+                    # Treat as a literal string
+                    val = s_val
 
                 df_xl[s_col] = val
 
