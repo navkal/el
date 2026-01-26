@@ -95,6 +95,46 @@ if __name__ == '__main__':
     print( '\n=======> Analyze Semiannual Reports' )
     os.system( 'python mass_save_semiannual_report.py -d {0}'.format( args.output_filename ) )
 
+    #
+    # Participation Reports
+    #
+
+    s_sector = util.SECTOR_COM_AND_IND.split()[0].lower()
+    s_sector_cap = s_sector.capitalize()
+    s_fuel = util.ELECTRIC.lower()
+    s_fuel_cap = s_fuel.capitalize()
+    s_dir = f'/{s_sector}/{s_fuel}'
+    s_table = f'RawParticipation{s_sector_cap}{s_fuel_cap}'
+
+    print( f'\n=======> Participation Report: {s_sector_cap} {s_fuel_cap}' )
+    os.system( 'python xl_to_db.py -d ../xl/mass_save/participation_report{0} -l year -t {1} -o {2}'.format( s_dir, s_table, args.output_filename ) )
+
+    s_fuel = util.GAS.lower()
+    s_fuel_cap = s_fuel.capitalize()
+    s_dir = f'/{s_sector}/{s_fuel}'
+    s_table = f'RawParticipation{s_sector_cap}{s_fuel_cap}'
+
+    print( f'\n=======> Participation Report: {s_sector_cap} {s_fuel_cap}' )
+    os.system( 'python xl_to_db.py -d ../xl/mass_save/participation_report{0} -l year -t {1} -o {2}'.format( s_dir, s_table, args.output_filename ) )
+
+    s_sector = util.SECTOR_RES_AND_LOW.split()[0].lower()
+    s_sector_cap = s_sector.capitalize()
+    s_fuel = util.ELECTRIC.lower()
+    s_fuel_cap = s_fuel.capitalize()
+    s_dir = f'/{s_sector}/{s_fuel}'
+    s_table = f'RawParticipation{s_sector_cap}{s_fuel_cap}'
+
+    print( f'\n=======> Participation Report: {s_sector_cap} {s_fuel_cap}' )
+    os.system( 'python xl_to_db.py -d ../xl/mass_save/participation_report{0} -l year -t {1} -o {2}'.format( s_dir, s_table, args.output_filename ) )
+
+    s_fuel = util.GAS.lower()
+    s_fuel_cap = s_fuel.capitalize()
+    s_dir = f'/{s_sector}/{s_fuel}'
+    s_table = f'RawParticipation{s_sector_cap}{s_fuel_cap}'
+
+    print( f'\n=======> Participation Report: {s_sector_cap} {s_fuel_cap}' )
+    os.system( 'python xl_to_db.py -d ../xl/mass_save/participation_report{0} -l year -t {1} -o {2}'.format( s_dir, s_table, args.output_filename ) )
+
 
     # Generate copyright notice
     print( '\n=======> Copyright' )

@@ -18,6 +18,10 @@ PUBLISH_INFO = \
         [
             'RawElectricUsage',
             'RawGasUsage',
+            'RawParticipationCommercialElectric',
+            'RawParticipationCommercialGas',
+            'RawParticipationResidentialElectric',
+            'RawParticipationResidentialGas',
             'RawSemiannualReport',
             'ElectricUsage',
             'EquityZipCodes',

@@ -432,6 +432,26 @@ RESIDENTIAL_R1_RATE = 'residential_r1_rate'
 RESIDENTIAL_R2_RATE = 'residential_r2_rate'
 COMMERCIAL_RATE = 'commercial_rate'
 
+PARTICIPANTS_DOWNSTREAM = 'participants_downstream'
+PARTICIPANTS_MIDSTREAM = 'participants_midstream'
+PARTICIPANTS_MULTISTREAM = 'participants_multistream'
+PARTICIPANTS_UPSTREAM = 'participants_upstream'
+PARTICIPATING_ACCOUNTS = 'participating_accounts'
+
+SAVINGS_DOWNSTREAM_KWH = 'savings_downstream_kwh'
+SAVINGS_MIDSTREAM_KWH = 'savings_midstream_kwh'
+SAVINGS_MULTISTREAM_KWH = 'savings_multistream_kwh'
+SAVINGS_NONUPSTREAM_KWH = 'savings_nonupstream_kwh'
+SAVINGS_UPSTREAM_KWH = 'savings_upstream_kwh'
+SAVINGS_TOTAL_KWH = 'savings_total_kwh'
+
+SAVINGS_DOWNSTREAM_THERM = 'savings_downstream_therm'
+SAVINGS_MIDSTREAM_THERM = 'savings_midstream_therm'
+SAVINGS_MULTISTREAM_THERM = 'savings_multistream_therm'
+SAVINGS_NONUPSTREAM_THERM = 'savings_nonupstream_therm'
+SAVINGS_UPSTREAM_THERM = 'savings_upstream_therm'
+SAVINGS_TOTAL_THERM = 'savings_total_therm'
+
 VISION_ID = 'vision_id'
 VISION_LINK = 'vision_link'
 GIS_ID = 'gis_id'
@@ -1744,6 +1764,38 @@ CONSISTENT_COLUMN_NAMES = \
         'census_geo_id': CENSUS_GEO_ID,
         'Percent_Owner_Occupied': PCT_OWNER_OCCUPIED,
     },
+    'RawParticipationCommercialElectric': \
+    {
+        'year': YEAR,
+        'City': TOWN_NAME,
+        'PA name': ELECTRIC_UTILITY,
+        'Participants (downstream)': PARTICIPANTS_DOWNSTREAM,
+        'Participants (midstream)': PARTICIPANTS_MIDSTREAM,
+        'Participants (multistream)': PARTICIPANTS_MULTISTREAM,
+        'Participating accounts': PARTICIPATING_ACCOUNTS,
+        'Savings (downstream) [kWh]': SAVINGS_DOWNSTREAM_KWH,
+        'Savings (midstream) [kWh]': SAVINGS_MIDSTREAM_KWH,
+        'Savings (multistream) [kWh]': SAVINGS_MULTISTREAM_KWH,
+        'Savings (non-upstream) [kWh]': SAVINGS_NONUPSTREAM_KWH,
+        'Savings (upstream) [kWh]': SAVINGS_UPSTREAM_KWH,
+        'Total savings [kWh]': SAVINGS_TOTAL_KWH,
+    },
+    'RawParticipationCommercialGas': \
+    {
+        'year': YEAR,
+        'City': TOWN_NAME,
+        'PA name': GAS_UTILITY,
+        'Participants (downstream)': PARTICIPANTS_DOWNSTREAM,
+        'Participants (midstream)': PARTICIPANTS_MIDSTREAM,
+        'Participants (multistream)': PARTICIPANTS_MULTISTREAM,
+        'Participating accounts': PARTICIPATING_ACCOUNTS,
+        'Savings (downstream) [therm]': SAVINGS_DOWNSTREAM_THERM,
+        'Savings (midstream) [therm]': SAVINGS_MIDSTREAM_THERM,
+        'Savings (multistream) [therm]': SAVINGS_MULTISTREAM_THERM,
+        'Savings (non-upstream) [therm]': SAVINGS_NONUPSTREAM_THERM,
+        'Savings (upstream) [therm]': SAVINGS_UPSTREAM_THERM,
+        'Total savings [therm]': SAVINGS_TOTAL_THERM,
+    },
     'RawResidential_1': \
     {
         'REM_ACCT_NUM': ACCOUNT_NUMBER,
@@ -2015,6 +2067,8 @@ CONSISTENT_COLUMN_NAMES['RawBuildingPermits_Gas'] = CONSISTENT_COLUMN_NAMES['Raw
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A']
 CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_L_OldFormat'] = CONSISTENT_COLUMN_NAMES['RawMassEnergyInsight_A_OldFormat']
 CONSISTENT_COLUMN_NAMES['RawElectricMeters_L'] = CONSISTENT_COLUMN_NAMES['RawElectricMeters_A']
+CONSISTENT_COLUMN_NAMES['RawParticipationResidentialElectric'] = CONSISTENT_COLUMN_NAMES['RawParticipationCommercialElectric']
+CONSISTENT_COLUMN_NAMES['RawParticipationResidentialGas'] = CONSISTENT_COLUMN_NAMES['RawParticipationCommercialGas']
 
 
 # Format with-units suffix for Lawrence ward data
