@@ -2692,6 +2692,30 @@ COLUMN_ORDER = \
         SERVICE_NAME,
         NORMALIZED_ADDRESS,
     ],
+    'ParticipationCommercialElectric':
+    [
+        TOWN_NAME,
+        YEAR,
+        ELECTRIC_UTILITY,
+    ],
+    'ParticipationCommercialGas':
+    [
+        TOWN_NAME,
+        YEAR,
+        GAS_UTILITY,
+    ],
+    'ParticipationResidentialElectric':
+    [
+        TOWN_NAME,
+        YEAR,
+        ELECTRIC_UTILITY,
+    ],
+    'ParticipationResidentialGas':
+    [
+        TOWN_NAME,
+        YEAR,
+        GAS_UTILITY,
+    ],
     'Partisans':
     [
         * COLUMN_GROUP['RESIDENT'],
