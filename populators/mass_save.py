@@ -135,7 +135,7 @@ if __name__ == '__main__':
     print( f'\n=======> Participation Report: {s_sector_cap} {s_fuel_cap}' )
     os.system( 'python xl_to_db.py -d ../xl/mass_save/participation_report{0} -l year -t {1} -o {2}'.format( s_dir, s_table, args.output_filename ) )
 
-    print( '\n=======> Analyze Participation Reports' )
+    print( '\n=======> Clean Participation Reports' )
     os.system( 'python mass_save_participation_report.py -d {0}'.format( args.output_filename ) )
 
 
