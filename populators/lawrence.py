@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description='Generate Lawrence master database' )
     parser.add_argument( '-m', dest='master_filename',  help='Output filename - Name of master database file', required=True )
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
+    parser.add_argument( '-l', dest='leap_filename',  help='Output filename - Name of LEAP database file', required=True )
     args = parser.parse_args()
 
     # --------------------------------------------------------
@@ -345,11 +346,13 @@ if __name__ == '__main__':
 
 
     # ----------------------------------------------------
-    # --> Lawrence research database build starts here -->
+    # --> Lawrence database publishing starts here -->
     # ----------------------------------------------------
 
-    # Publish research copy of database
+    # Read all tables in master database
     input_db = util.read_database( args.master_filename )
+
+    # Publish research copy of database
     publish_info = \
     {
         'number_columns': True,
@@ -401,5 +404,29 @@ if __name__ == '__main__':
         ]
     }
     util.publish_database( input_db, args.research_filename, publish_info )
+
+    # Publish LEAP copy of database
+    publish_info = \
+    {
+        'number_columns': False,
+        'drop_table_names_complement': True,
+        'drop_table_names':
+        [
+            'Assessment_L_Parcels',
+            '_AboutLawrenceDatabase',
+         ],
+        'encipher_column_names':
+        [
+        ],
+        'drop_column_names':
+        [
+        ]
+    }
+    util.publish_database( input_db, args.leap_filename, publish_info )
+
+    # ----------------------------------------------------
+    # <-- Lawrence database publishing ends here <--
+    # ----------------------------------------------------
+
 
     util.report_elapsed_time()

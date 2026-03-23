@@ -711,7 +711,6 @@ MAKE_ID = 'make_id'
 MODEL = 'model'
 MODEL_ID = 'model_id'
 TRIM = 'trim'
-DEPARTMENT = 'department'
 PLATE_TYPE = 'plate_type'
 REG_EXPIRATION_DATE = 'reg_expiration_date'
 TAX_YEAR = 'tax_year'
@@ -4102,7 +4101,14 @@ def create_about_table( about_what, df_about, output_filename ):
 
 def publish_database( input_db, output_filename, publish_info ):
 
+    # Determine which tables to drop
     drop_table_names = publish_info['drop_table_names']
+
+    # Optionally drop the complement of the table names listed
+    if 'drop_table_names_complement' in publish_info and publish_info['drop_table_names_complement']:
+        drop_table_names = [s for s in list( input_db.keys() ) if s not in drop_table_names]
+
+    # Determine handling of column names
     drop_column_names = publish_info['drop_column_names']
     encipher_column_names = publish_info['encipher_column_names']
     number_columns = publish_info['number_columns']
