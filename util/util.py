@@ -4106,7 +4106,7 @@ def publish_database( input_db, output_filename, publish_info ):
 
     # Optionally drop the complement of the table names listed
     if 'drop_table_names_complement' in publish_info and publish_info['drop_table_names_complement']:
-        drop_table_names = [s for s in list( input_db.keys() ) if s not in drop_table_names]
+        drop_table_names = [s for s in input_db.keys() if s not in drop_table_names]
 
     # Determine handling of column names
     drop_column_names = publish_info['drop_column_names']
