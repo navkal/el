@@ -14,7 +14,7 @@ import util
 # Main program
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser( description='Generate Lawrence master database' )
+    parser = argparse.ArgumentParser( description='Publish copies of the Lawrence master database tailored for specific audiences' )
     parser.add_argument( '-m', dest='master_filename',  help='Output filename - Name of master database file', required=True )
     parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
     parser.add_argument( '-k', dest='leap_columns_keep',  help='List of LEAP columns to keep', required=True )
