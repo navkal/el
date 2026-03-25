@@ -349,80 +349,9 @@ if __name__ == '__main__':
     # --> Lawrence database publishing starts here -->
     # ----------------------------------------------------
 
-    # Read all tables in master database
-    input_db = util.read_database( args.master_filename )
-
-    # Publish research copy of database
-    publish_info = \
-    {
-        'number_columns': True,
-        'drop_table_names':
-        [
-            'Assessment_L_Commercial_Merged',
-            'Assessment_L_Parcels_Merged',
-            'Assessment_L_Residential_Merged',
-            'GeoParcels_L',
-            'RawBuildingPermits',
-            'RawBuildingPermits_Cga',
-            'RawBuildingPermits_Electrical',
-            'RawBuildingPermits_Gas',
-            'RawBuildingPermits_Plumbing',
-            'RawBuildingPermits_Roof',
-            'RawBuildingPermits_Siding',
-            'RawBuildingPermits_Solar',
-            'RawBuildingPermits_Sunrun',
-            'RawBuildingPermits_Wx',
-            'RawBuildingPermits_Wx_Ongoing',
-            'RawBuildingPermits_Wx_Past',
-            'RawBusinesses_1',
-            'RawBusinesses_2',
-            'RawCensus_L',
-            'RawCommercial_1',
-            'RawCommercial_2',
-            'RawDpwVehicles_L',
-            'RawEnergyMeterParticipation_L',
-            'RawGlcacJobs',
-            'RawNgAccountsBasic_L',
-            'RawNgAccountsTps_L',
-            'RawNgStreetNames_L',
-            'RawOwnerOccupied_L',
-            'RawResidential_1',
-            'RawResidential_2',
-            'RawResidential_3',
-            'RawResidential_4',
-            'RawResidential_5',
-            'RawVehicleAttributes_L',
-            'RawVehicleExciseTax_L',
-            'RawWards_L',
-            'VinDictionary_L',
-         ],
-        'encipher_column_names':
-        [
-        ],
-        'drop_column_names':
-        [
-        ]
-    }
-    util.publish_database( input_db, args.research_filename, publish_info )
-
-    # Publish LEAP copy of database
-    publish_info = \
-    {
-        'number_columns': False,
-        'drop_table_names_complement': True,
-        'drop_table_names':
-        [
-            'Assessment_L_Parcels',
-            '_AboutLawrenceDatabase',
-         ],
-        'encipher_column_names':
-        [
-        ],
-        'drop_column_names':
-        [
-        ]
-    }
-    util.publish_database( input_db, args.leap_filename, publish_info )
+    # Publish database
+    print( '\n=======> Publish' )
+    os.system( 'python lawrence_publish.py -k ../xl/lawrence/leap/leap_columns_keep.xlsx -m {0} -r {1} -l {2}'.format( args.master_filename, args.research_filename, args.leap_filename ) )
 
     # ----------------------------------------------------
     # <-- Lawrence database publishing ends here <--
