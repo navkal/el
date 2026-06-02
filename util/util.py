@@ -4209,10 +4209,26 @@ def print_full( x ):
 
 
 def report_elapsed_time( prefix='\n', start_time=START_TIME ):
-    elapsed_time = round( ( time.time() - start_time ) * 1000 ) / 1000
-    minutes, seconds = divmod( elapsed_time, 60 )
-    ms = round( ( elapsed_time - int( elapsed_time ) ) * 1000 )
-    print( prefix + 'Elapsed time: {:02d}:{:02d}.{:d}'.format( int( minutes ), int( seconds ), ms ) )
+    # Calculate minutes, seconds, milliseconds
+    f_elapsed_time = round( ( time.time() - start_time ) * 1000 ) / 1000
+    f_minutes, f_seconds = divmod( f_elapsed_time, 60 )
+    n_ms = round( ( f_elapsed_time - int( f_elapsed_time ) ) * 1000 )
+
+    # Calculate hours
+    n_minutes = int( f_minutes )
+    n_seconds = int( f_seconds )
+    n_hours, n_minutes = divmod( n_minutes, 60 )
+
+    # Construct print format
+    s_hours = f'{n_hours:02d}:' if n_hours else ''
+    s_minutes = f'{n_minutes:02d}:'
+    s_seconds = f'{n_seconds:02d}.'
+    s_ms = f'{n_ms:d}'
+    s_format = prefix + 'Elapsed time: ' + s_hours + s_minutes + s_seconds + s_ms
+
+    print( s_format )
+
+    return s_format
 
 
 def exit():
