@@ -11,24 +11,38 @@ sys.path.append( '../util' )
 import util
 
 
-COLUMNS = \
+PARCELS_COLUMNS = \
+[
+    util.ACCOUNT_NUMBER,
+    util.HEATING_FUEL_DESC,
+]
+
+# Set up dictionary representing columns in desired order
+CONTRACTOR_COLUMNS = \
 [
     util.YEAR,
     util.CONTRACTOR_NAME,
     util.PROJECT_TYPE,
     util.PROJECT_COUNT,
     util.TOTAL_PROJECT_COST,
-    util.PERMIT_REGEX,
 ]
+for s_fuel in util.FUELS:
+    s_fuel_prefix = s_fuel.lower() + '_'
+    CONTRACTOR_COLUMNS.append( s_fuel_prefix + util.PROJECT_COUNT )
+    CONTRACTOR_COLUMNS.append( s_fuel_prefix + util.PROJECT_COST )
+CONTRACTOR_COLUMNS.append( util.PERMIT_REGEX )
 
-ROW = dict( ( el, 0 ) for el in COLUMNS )
+CONTRACTOR_ROW = dict( ( el, 0 ) for el in CONTRACTOR_COLUMNS )
 
 
 # Analyze contractor activity recorded in specified permit table
-def analyze_contractor_activity( df, table_name, contractor_columns, project_type ):
+def analyze_contractor_activity( df, df_parcels, table_name, contractor_columns, project_type ):
 
     # Read specified table of building permits
     df_permits = pd.read_sql_table( table_name, engine, index_col=util.ID, parse_dates=True )
+
+    # Merge heating fuel data from parcels table
+    df_permits = pd.merge( df_permits, df_parcels, how='left', on=[util.ACCOUNT_NUMBER] )
 
     # Extract year from permit nmber
     df_permits[util.YEAR] = '20' + df_permits[util.PERMIT_NUMBER].str.split( '-', expand=True )[0].str[-2:]
@@ -45,14 +59,22 @@ def analyze_contractor_activity( df, table_name, contractor_columns, project_typ
     # Analyze per-year activity for each contractor
     for idx, df_group in df_permits.groupby( by=[util.CONTRACTOR_NAME, util.YEAR] ):
 
-        ROW[util.YEAR] = df_group.iloc[0][util.YEAR]
-        ROW[util.CONTRACTOR_NAME] = df_group.iloc[0][util.CONTRACTOR_NAME]
-        ROW[util.PROJECT_TYPE] = project_type
-        ROW[util.PROJECT_COUNT] = len( df_group )
-        ROW[util.TOTAL_PROJECT_COST] = df_group[util.PROJECT_COST].sum()
-        ROW[util.PERMIT_REGEX] = '/' + '|'.join( list( df_group[util.PERMIT_NUMBER] ) ) + '/'
+        CONTRACTOR_ROW[util.YEAR] = df_group.iloc[0][util.YEAR]
+        CONTRACTOR_ROW[util.CONTRACTOR_NAME] = df_group.iloc[0][util.CONTRACTOR_NAME]
+        CONTRACTOR_ROW[util.PROJECT_TYPE] = project_type
+        CONTRACTOR_ROW[util.PROJECT_COUNT] = len( df_group )
+        CONTRACTOR_ROW[util.TOTAL_PROJECT_COST] = df_group[util.PROJECT_COST].sum()
 
-        df = df.append( ROW, ignore_index=True )
+        # Partition by heating fuel type
+        for s_fuel in util.FUELS:
+            df_fuel = df_group[df_group[util.HEATING_FUEL_DESC] == s_fuel]
+            s_fuel_prefix = s_fuel.lower() + '_'
+            CONTRACTOR_ROW[s_fuel_prefix + util.PROJECT_COUNT] = len( df_fuel )
+            CONTRACTOR_ROW[s_fuel_prefix + util.PROJECT_COST] = df_fuel[util.PROJECT_COST].sum()
+
+        CONTRACTOR_ROW[util.PERMIT_REGEX] = '/' + '|'.join( list( df_group[util.PERMIT_NUMBER] ) ) + '/'
+
+        df = df.append( CONTRACTOR_ROW, ignore_index=True )
 
     # Return result
     return df
@@ -71,19 +93,26 @@ if __name__ == '__main__':
     # Open the master database
     conn, cur, engine = util.open_database( args.master_filename, False )
 
+    # Retrieve parcels table from database
+    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True, columns=PARCELS_COLUMNS )
+
     # Initialize empty dataframe
-    df = pd.DataFrame( columns=COLUMNS )
+    df = pd.DataFrame( columns=CONTRACTOR_COLUMNS )
 
     # Analyze contractor activity recorded in specified permit tables
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Electrical', [util.APPLICANT], 'electrical' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Gas', [util.APPLICANT], 'gas' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Plumbing', [util.APPLICANT], 'plumbing' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Roof', [util.BUSINESS_NAME, util.APPLICANT], 'roof' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Siding', [util.BUSINESS_NAME, util.APPLICANT], 'siding' )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Solar', [util.APPLICANT], util.SOLAR )
-    df = analyze_contractor_activity( df, 'BuildingPermits_L_Wx', [util.BUSINESS_NAME], util.WX )
-    df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
+    df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Electrical', [util.APPLICANT], 'electrical' )
+    df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Gas', [util.APPLICANT], 'gas' )
+    df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Plumbing', [util.APPLICANT], 'plumbing' )
+    df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Roof', [util.BUSINESS_NAME, util.APPLICANT], 'roof' )
+    df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Siding', [util.BUSINESS_NAME, util.APPLICANT], 'siding' )
+    df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Solar', [util.APPLICANT], util.SOLAR )
+    df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Wx', [util.BUSINESS_NAME], util.WX )
     df[util.PROJECT_COUNT] = df[util.PROJECT_COUNT].astype(int)
+    df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
+    for s_fuel in util.FUELS:
+        s_fuel_prefix = s_fuel.lower() + '_'
+        df[s_fuel_prefix + util.PROJECT_COUNT ] =  df[s_fuel_prefix + util.PROJECT_COUNT ].astype(int)
+        df[s_fuel_prefix + util.PROJECT_COST ] =  df[s_fuel_prefix + util.PROJECT_COST ].round().astype(int)
 
     # Sort final result
     df = df.sort_values( by=[util.PROJECT_TYPE, util.YEAR, util.PROJECT_COUNT], ascending=[True, False, False] )

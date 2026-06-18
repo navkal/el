@@ -24,12 +24,7 @@ PERIOD = 'period'
 WX_COUNT = 'wx_count'
 WX_COUNT_LEAN = 'wx_count_lean'
 
-FUELS = \
-[
-    util.ELECTRIC,
-    util.OIL,
-    util.GAS,
-]
+FUELS = util.FUELS
 _LEAN = '_lean'
 
 BN = util.BUSINESS_NAME

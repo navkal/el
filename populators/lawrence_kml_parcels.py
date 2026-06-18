@@ -48,7 +48,7 @@ RES = 'res'
 RENT = 'rent'
 
 HOUSE_TYPES = [LEAN, LMF, RENT, RES]
-FUELS = [ELEC, OIL, GAS]
+FUELS = util.FUELS
 
 FILTER = 'filter'
 DOCS = 'docs'

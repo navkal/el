@@ -163,6 +163,7 @@ ICON = 'icon'
 ELECTRIC = 'Electric'
 GAS = 'Gas'
 OIL = 'Oil'
+FUELS = [ELECTRIC, OIL, GAS]
 
 LAWRENCE_ZIPS = ['01840','01841','01842','01843']
 
