@@ -18,10 +18,13 @@ PARCELS_COLUMNS = \
     util.LEAN_ELIGIBILITY,
 ]
 
+CONTRACTOR_ID = 'contractor_id'
+
 # Set up dictionary representing columns in desired order
 CONTRACTOR_COLUMNS = \
 [
     util.YEAR,
+    CONTRACTOR_ID,
     util.CONTRACTOR_NAME,
     util.PROJECT_TYPE,
     util.PROJECT_COUNT,
@@ -115,6 +118,13 @@ if __name__ == '__main__':
     df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Siding', [util.BUSINESS_NAME, util.APPLICANT], 'siding' )
     df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Solar', [util.APPLICANT], util.SOLAR )
     df = analyze_contractor_activity( df, df_parcels, 'BuildingPermits_L_Wx', [util.BUSINESS_NAME], util.WX )
+
+    # Load column of unique contractor IDs
+    df[CONTRACTOR_ID] = df[util.CONTRACTOR_NAME].str.lower()
+    df[CONTRACTOR_ID], ls_unique_values = pd.factorize( df[CONTRACTOR_ID], sort=True )
+    df[CONTRACTOR_ID] = df[CONTRACTOR_ID] + 1
+
+    # Fix numeric values
     df[util.PROJECT_COUNT] = df[util.PROJECT_COUNT].astype(int)
     df[util.TOTAL_PROJECT_COST] = df[util.TOTAL_PROJECT_COST].round().astype(int)
     for s_fuel in util.FUELS:
