@@ -193,9 +193,9 @@ def make_wx_summary_by_period( df_permits, output_directory ):
 def make_wx_summary_by_contractor( df_permits, output_directory ):
 
     # Include most recent 8 quarters in summary
-    sr_yq = df_permits[YQ].sort_values().unique()
-    sr_yq = list( sr_yq )[-8:]
-    df_permits = df_permits[ df_permits[YQ].isin( sr_yq ) ]
+    # sr_yq = df_permits[YQ].sort_values().unique()
+    # sr_yq = list( sr_yq )[-8:]
+    # df_permits = df_permits[ df_permits[YQ].isin( sr_yq ) ]
 
     # Initialize empty summary dataframe
     df_summary = init_wx_summary( True )
