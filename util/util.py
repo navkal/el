@@ -738,11 +738,19 @@ SERV_ADDR_4 = SERV_ADDR_ + '4'
 THIRD_PARTY_SUPPLY = 'third_party_supply'
 NATIONAL_GRID_R1_ACCOUNT = 'ng_r1_account'
 NATIONAL_GRID_R2_ACCOUNT = 'ng_r2_account'
+
 LEAN_ELIGIBILITY = 'lean_eligibility'
 LEAN = 'LEAN'
 LEAN_MULTI_FAMILY = 'LMF'
 LEAN_UNKNOWN = '?'
 LEAN_NA = 'n/a'
+
+LEANS = \
+[
+    LEAN,
+    LEAN_MULTI_FAMILY,
+]
+
 SERVICE_DESCRIPTION = 'service_description'
 SERVICE_NAME = 'service_name'
 SERVICE_ADDRESS = 'service_address'

@@ -15,6 +15,7 @@ PARCELS_COLUMNS = \
 [
     util.ACCOUNT_NUMBER,
     util.HEATING_FUEL_DESC,
+    util.LEAN_ELIGIBILITY,
 ]
 
 # Set up dictionary representing columns in desired order
@@ -72,6 +73,13 @@ def analyze_contractor_activity( df, df_parcels, table_name, contractor_columns,
             CONTRACTOR_ROW[s_fuel_prefix + util.PROJECT_COUNT] = len( df_fuel )
             CONTRACTOR_ROW[s_fuel_prefix + util.PROJECT_COST] = df_fuel[util.PROJECT_COST].sum()
 
+        # Partition by LEAN eligibility designations
+        for s_lean in util.LEANS:
+            df_lean = df_group[df_group[util.LEAN_ELIGIBILITY] == s_lean]
+            s_lean_prefix = s_lean.lower() + '_'
+            CONTRACTOR_ROW[s_lean_prefix + util.PROJECT_COUNT] = len( df_lean )
+            CONTRACTOR_ROW[s_lean_prefix + util.PROJECT_COST] = df_lean[util.PROJECT_COST].sum()
+
         CONTRACTOR_ROW[util.PERMIT_REGEX] = '/' + '|'.join( list( df_group[util.PERMIT_NUMBER] ) ) + '/'
 
         df = df.append( CONTRACTOR_ROW, ignore_index=True )
@@ -113,6 +121,10 @@ if __name__ == '__main__':
         s_fuel_prefix = s_fuel.lower() + '_'
         df[s_fuel_prefix + util.PROJECT_COUNT ] =  df[s_fuel_prefix + util.PROJECT_COUNT ].astype(int)
         df[s_fuel_prefix + util.PROJECT_COST ] =  df[s_fuel_prefix + util.PROJECT_COST ].round().astype(int)
+    for s_lean in util.LEANS:
+        s_lean_prefix = s_lean.lower() + '_'
+        df[s_lean_prefix + util.PROJECT_COUNT ] =  df[s_lean_prefix + util.PROJECT_COUNT ].astype(int)
+        df[s_lean_prefix + util.PROJECT_COST ] =  df[s_lean_prefix + util.PROJECT_COST ].round().astype(int)
 
     # Sort final result
     df = df.sort_values( by=[util.PROJECT_TYPE, util.YEAR, util.PROJECT_COUNT], ascending=[True, False, False] )
