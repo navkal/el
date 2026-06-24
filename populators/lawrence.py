@@ -351,7 +351,7 @@ if __name__ == '__main__':
 
     # Publish database
     print( '\n=======> Publish' )
-    os.system( 'python lawrence_publish.py -k ../xl/lawrence/leap/leap_columns_keep.xlsx -m {0} -r {1} -l {2}'.format( args.master_filename, args.research_filename, args.leap_filename ) )
+    os.system( 'python lawrence_publish.py -k ../xl/lawrence/leap/parcels_columns_keep.xlsx -m {0} -r {1} -l {2}'.format( args.master_filename, args.research_filename, args.leap_filename ) )
 
     # ----------------------------------------------------
     # <-- Lawrence database publishing ends here <--

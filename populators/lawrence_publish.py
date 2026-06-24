@@ -15,10 +15,10 @@ import util
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser( description='Publish copies of the Lawrence master database tailored for specific audiences' )
-    parser.add_argument( '-m', dest='master_filename',  help='Output filename - Name of master database file', required=True )
-    parser.add_argument( '-r', dest='research_filename',  help='Output filename - Name of research database file', required=True )
-    parser.add_argument( '-k', dest='leap_columns_keep',  help='List of LEAP columns to keep', required=True )
-    parser.add_argument( '-l', dest='leap_filename',  help='Output filename - Name of LEAP database file', required=True )
+    parser.add_argument( '-m', dest='master_filename', help='Output filename - Name of master database file', required=True )
+    parser.add_argument( '-r', dest='research_filename', help='Output filename - Name of research database file', required=True )
+    parser.add_argument( '-k', dest='leap_parcels_columns_keep',  help='List of parcels columns to keep in LEAP database', required=True )
+    parser.add_argument( '-l', dest='leap_filename', help='Output filename - Name of LEAP database file', required=True )
     args = parser.parse_args()
 
     # Read all tables in master database
@@ -86,15 +86,14 @@ if __name__ == '__main__':
     conn, cur, engine = util.open_database( args.master_filename, False )
 
     # Retrieve parcels table from database
-    s_keep_table_name = 'Assessment_L_Parcels'
-    df_parcels = pd.read_sql_table( s_keep_table_name, engine, index_col=util.ID, parse_dates=True )
+    df_parcels = pd.read_sql_table( 'Assessment_L_Parcels', engine, index_col=util.ID, parse_dates=True )
 
     # Get list of columns to keep
-    df_keep = pd.read_excel( args.leap_columns_keep, header=None, dtype=object )
-    ls_keep = list( df_keep[0] )
+    df_parcels_columns_keep = pd.read_excel( args.leap_parcels_columns_keep, header=None, dtype=object )
+    ls_parcels_columns_keep = list( df_parcels_columns_keep[0] )
 
     # Generate list of columns to drop
-    ls_drop = [s for s in df_parcels.columns if s not in ls_keep]
+    ls_parcels_columns_drop = [s for s in df_parcels.columns if s not in ls_parcels_columns_keep]
 
     # Publish LEAP copy of database
     publish_info = \
@@ -103,7 +102,8 @@ if __name__ == '__main__':
         'drop_table_names_complement': True,
         'drop_table_names':
         [
-            s_keep_table_name,
+            'Assessment_L_Parcels',
+            'ContractorActivity_L',
             '_AboutLawrenceDatabase',
          ],
         'encipher_column_names':
@@ -111,7 +111,8 @@ if __name__ == '__main__':
         ],
         'drop_column_names':
         [
-            * ls_drop,
+            * ls_parcels_columns_drop,
+            util.CONTRACTOR_NAME,
         ]
     }
     util.publish_database( input_db, args.leap_filename, publish_info )

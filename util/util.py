@@ -496,6 +496,7 @@ BUILDING_CONDITION = 'building_condition'
 STYLE = 'style'
 WORK_DESCRIPTION = 'work_description'
 PERMIT_NUMBER = 'permit_number'
+CONTRACTOR_ID = 'contractor_id'
 CONTRACTOR_NAME = 'contractor_name'
 CONTRACTOR_NAME_1 = ( CONTRACTOR_NAME + '_{}' ).format( 1 )
 CONTRACTOR_NAME_2 = ( CONTRACTOR_NAME + '_{}' ).format( 2 )
